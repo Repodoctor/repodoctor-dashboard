@@ -1,0 +1,34 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  @apply bg-ink text-moss-100 antialiased;
+}
+
+.rd-input {
+  @apply w-full rounded-md border border-ink-400 bg-ink-800 px-3 py-2 text-sm text-moss-100 placeholder:text-ink-300 focus:border-moss-400 focus:outline-none focus:ring-1 focus:ring-moss-400;
+}
+
+.rd-btn {
+  @apply inline-flex items-center justify-center rounded-md bg-moss-400 px-4 py-2 text-sm font-semibold text-ink-900 transition hover:bg-moss-300 disabled:cursor-not-allowed disabled:opacity-50;
+}
+
+.rd-btn-ghost {
+  @apply inline-flex items-center justify-center rounded-md border border-ink-400 px-4 py-2 text-sm font-medium text-moss-100 transition hover:border-moss-400 hover:text-moss-300;
+}
+
+.rd-card {
+  @apply rounded-xl border border-ink-400 bg-ink-700/80 p-5 shadow-glow;
+}
