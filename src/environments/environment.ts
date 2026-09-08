@@ -1,4 +1,7 @@
 export const environment = {
   production: false,
-  apiBaseUrl: 'http://127.0.0.1:43121/api/v1',
+  gatewayUrl: 'http://127.0.0.1:43111',
+  supabaseUrl: '',
+  supabaseAnonKey: '',
+  apiBaseUrl: 'http://127.0.0.1:43111/api/v1',
 };

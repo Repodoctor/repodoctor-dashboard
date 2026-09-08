@@ -3,8 +3,8 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve --host 0.0.0.0 --port 43120",
-    "build": "ng build",
+    "start": "node scripts/inject-ng-env.mjs && ng serve --host 0.0.0.0 --port 43120",
+    "build": "node scripts/inject-ng-env.mjs && ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test --watch=false --browsers=ChromeHeadless",
     "typecheck": "tsc -p tsconfig.app.json --noEmit",

@@ -25,7 +25,7 @@ npm install
 npm start
 ```
 
-Serves `http://127.0.0.1:43120`. Start the gateway on `43121` first.
+Serves `http://127.0.0.1:43120`. Start the gateway on `43111` first.
 
 ```bash
 npm run typecheck
@@ -35,7 +35,7 @@ npm run build
 
 ## Environment
 
-See `.env.example`. Production Pages builds use `environment.prod.ts` (`apiBaseUrl: '/api/v1'`) behind Cloudflare routing to the gateway.
+See `.env.example` (`NG_APP_GATEWAY_URL`, `NG_APP_SUPABASE_URL`, `NG_APP_SUPABASE_ANON_KEY`). Cloudflare Pages uses the same build vars. Never put a service-role key in the browser.
 
 ## Testing
 

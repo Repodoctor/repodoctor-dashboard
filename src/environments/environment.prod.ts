@@ -1,4 +1,7 @@
 export const environment = {
   production: true,
-  apiBaseUrl: '/api/v1',
+  gatewayUrl: 'https://api.repodoctor.dev',
+  supabaseUrl: '',
+  supabaseAnonKey: '',
+  apiBaseUrl: 'https://api.repodoctor.dev/api/v1',
 };
