@@ -35,7 +35,7 @@ npm run build
 
 ## Environment
 
-See `.env.example` (`NG_APP_GATEWAY_URL`, `NG_APP_SUPABASE_URL`, `NG_APP_SUPABASE_ANON_KEY`). Cloudflare Pages uses the same build vars. Never put a service-role key in the browser.
+See `.env.example` (`NG_APP_GATEWAY_URL`, `NG_APP_SUPABASE_URL`, `NG_APP_SUPABASE_ANON_KEY`). Cloudflare builds use the same vars. Never put a service-role key in the browser.
 
 ## Testing
 
@@ -44,4 +44,4 @@ See `.env.example` (`NG_APP_GATEWAY_URL`, `NG_APP_SUPABASE_URL`, `NG_APP_SUPABAS
 
 ## Deployment
 
-Cloudflare Pages. SPA fallback is `public/_redirects`.
+Cloudflare Workers static assets (`wrangler.jsonc`). SPA fallback is `assets.not_found_handling = "single-page-application"` — do not use `/* /index.html 200` in `_redirects`; Wrangler rejects that rule as an infinite loop.
