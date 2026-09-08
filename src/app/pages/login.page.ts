@@ -26,7 +26,7 @@ import { errorMessage } from '../core/error-message';
           <h2 class="text-2xl font-semibold">Sign in</h2>
           <label class="block text-sm">
             Email
-            <input class="rd-input mt-1" type="email" formControlName="email" autocomplete="email" />
+            <input class="rd-input mt-1" type="email" formControlName="email" autocomplete="username" />
           </label>
           <label class="block text-sm">
             Password

@@ -17,6 +17,7 @@ import { AuthService } from '../core/auth.service';
             <a
               [routerLink]="item.path"
               routerLinkActive="bg-ink-600 text-moss-300"
+              [routerLinkActiveOptions]="{ exact: item.path === '/' }"
               class="whitespace-nowrap rounded-md px-3 py-2 text-sm text-ink-200 hover:bg-ink-600 hover:text-moss-200"
             >
               {{ item.label }}
@@ -42,6 +43,7 @@ import { AuthService } from '../core/auth.service';
 export class ShellComponent {
   readonly auth = inject(AuthService);
   readonly links = [
+    { path: '/', label: 'Home' },
     { path: '/dashboard', label: 'Dashboard' },
     { path: '/organizations', label: 'Organizations' },
     { path: '/settings', label: 'Settings' },

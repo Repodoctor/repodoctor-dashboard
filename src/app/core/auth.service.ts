@@ -58,16 +58,13 @@ export class AuthService {
         options: { data: { display_name: input.displayName } },
       });
       if (error) throw error;
-      if (!data.session) {
-        throw new Error('Check your email to confirm your account before signing in.');
+      if (data.session) {
+        await this.supabase.auth.signOut();
       }
-      this.applySupabaseSession(data.session);
+      this.userSignal.set(null);
       return;
     }
-    const session = await firstValueFrom(
-      this.http.post<Session>(`${environment.apiBaseUrl}/auth/signup`, input),
-    );
-    this.persist(session);
+    await firstValueFrom(this.http.post<Session>(`${environment.apiBaseUrl}/auth/signup`, input));
   }
 
   async login(input: { email: string; password: string }): Promise<void> {
@@ -117,6 +114,10 @@ export class AuthService {
 
   async getOrganization(id: string): Promise<Organization> {
     return firstValueFrom(this.http.get<Organization>(`${environment.apiBaseUrl}/organizations/${id}`));
+  }
+
+  async deleteOrganization(id: string): Promise<void> {
+    await firstValueFrom(this.http.delete(`${environment.apiBaseUrl}/organizations/${id}`));
   }
 
   async logout(): Promise<void> {

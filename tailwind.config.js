@@ -36,6 +36,26 @@ module.exports = {
       boxShadow: {
         glow: '0 0 40px rgba(124, 255, 154, 0.12)',
       },
+      keyframes: {
+        'home-rise': {
+          from: { opacity: '0', transform: 'translateY(18px)' },
+          to: { opacity: '1', transform: 'translateY(0)' },
+        },
+        'home-scan': {
+          from: { top: '18%' },
+          to: { top: '88%' },
+        },
+        'home-drift': {
+          from: { transform: 'translate(0, 0)' },
+          to: { transform: 'translate(18%, 12%)' },
+        },
+      },
+      animation: {
+        'home-rise': 'home-rise 0.8s ease-out both',
+        'home-rise-delayed': 'home-rise 1s 0.12s ease-out both',
+        'home-scan': 'home-scan 3.8s linear infinite',
+        'home-drift': 'home-drift 8s ease-in-out infinite alternate',
+      },
     },
   },
   plugins: [],
