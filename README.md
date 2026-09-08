@@ -1,6 +1,7 @@
 # RepoDoctor Dashboard
 
-Angular 19 standalone application for RepoDoctor. The browser talks **only** to `repodoctor-gateway`.
+Angular frontend for RepoDoctor. The browser authenticates with **Supabase Auth** and talks to **repodoctor-gateway** for product APIs. Internal microservices are not exposed to the browser.
+
 
 ## Purpose
 

@@ -8,5 +8,8 @@ export function errorMessage(error: unknown, fallback = 'Something went wrong'):
     if (error.status === 0) return 'Cannot reach the RepoDoctor gateway.';
     return error.statusText || fallback;
   }
+  if (error instanceof Error && error.message) {
+    return error.message;
+  }
   return fallback;
 }

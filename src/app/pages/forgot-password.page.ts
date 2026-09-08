@@ -12,7 +12,7 @@ import { errorMessage } from '../core/error-message';
       <form class="w-full space-y-4" [formGroup]="form" (ngSubmit)="submit()">
         <h1 class="text-3xl font-semibold">Reset password</h1>
         <p class="text-sm text-ink-200">
-          If an account exists, the gateway accepts the request. Production sends mail through Supabase Auth.
+          If an account exists, Supabase Auth sends a reset email.
         </p>
         <label class="block text-sm">Email
           <input class="rd-input mt-1" type="email" formControlName="email" />
