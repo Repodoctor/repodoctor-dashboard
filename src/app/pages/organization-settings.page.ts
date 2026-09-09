@@ -166,7 +166,7 @@ export class OrganizationSettingsPage {
     this.actionError.set(null);
     try {
       this.scm.rememberOrganization(org.id);
-      const { url } = await this.scm.getGithubInstallUrl(org.id);
+      const { url } = await this.scm.getGithubInstallUrl(org.id, this.githubInstall()?.externalInstallationId);
       const popup = window.open(url, 'repodoctor-github-install', 'popup=yes,width=980,height=780');
       if (!popup) {
         window.location.assign(url);

@@ -28,16 +28,28 @@ export class ScmService {
     return state;
   }
 
-  async getGithubInstallUrl(organizationId: string): Promise<{ url: string; slug: string }> {
+  async getGithubInstallUrl(
+    organizationId: string,
+    externalInstallationId?: string,
+  ): Promise<{ url: string; slug: string }> {
     const slug = environment.githubAppSlug.trim();
+    if (slug && externalInstallationId) {
+      return {
+        slug,
+        url: `https://github.com/apps/${encodeURIComponent(slug)}/installations/${encodeURIComponent(externalInstallationId)}`,
+      };
+    }
     if (slug) {
       const url = new URL(`https://github.com/apps/${encodeURIComponent(slug)}/installations/new`);
       url.searchParams.set('state', organizationId);
       return { url: url.toString(), slug };
     }
+    const query = externalInstallationId
+      ? `?externalInstallationId=${encodeURIComponent(externalInstallationId)}`
+      : '';
     return firstValueFrom(
       this.http.get<{ url: string; slug: string }>(
-        `${environment.apiBaseUrl}/organizations/${organizationId}/scm/github/install`,
+        `${environment.apiBaseUrl}/organizations/${organizationId}/scm/github/install${query}`,
       ),
     );
   }
