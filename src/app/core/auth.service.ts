@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { createClient, type Session as SupabaseSession, type SupabaseClient } from '@supabase/supabase-js';
 import { environment } from '../../environments/environment';
-import type { Organization, OrganizationMember, Session, User } from './models';
+import type { Organization, OrganizationInvite, OrganizationInvitePreview, OrganizationMember, Session, User } from './models';
 
 const ACCESS_KEY = 'repodoctor.accessToken';
 const REFRESH_KEY = 'repodoctor.refreshToken';
@@ -140,9 +140,38 @@ export class AuthService {
   async addMember(
     organizationId: string,
     input: { email: string; role: OrganizationMember['role'] },
-  ): Promise<OrganizationMember> {
+  ): Promise<{ member?: OrganizationMember; invite?: OrganizationInvite }> {
+    const response = await firstValueFrom(
+      this.http.post<{ status: 'added' | 'invited'; member?: OrganizationMember; invite?: OrganizationInvite }>(
+        `${environment.apiBaseUrl}/organizations/${organizationId}/members`,
+        input,
+      ),
+    );
+    return { member: response.member, invite: response.invite };
+  }
+
+  async listInvites(organizationId: string): Promise<OrganizationInvite[]> {
+    const response = await firstValueFrom(
+      this.http.get<{ items: OrganizationInvite[] }>(
+        `${environment.apiBaseUrl}/organizations/${organizationId}/invites`,
+      ),
+    );
+    return response.items ?? [];
+  }
+
+  async revokeInvite(organizationId: string, inviteId: string): Promise<void> {
+    await firstValueFrom(
+      this.http.delete(`${environment.apiBaseUrl}/organizations/${organizationId}/invites/${inviteId}`),
+    );
+  }
+
+  async previewInvite(token: string): Promise<OrganizationInvitePreview> {
+    return firstValueFrom(this.http.get<OrganizationInvitePreview>(`${environment.apiBaseUrl}/invites/${token}`));
+  }
+
+  async acceptInvite(token: string): Promise<OrganizationMember> {
     return firstValueFrom(
-      this.http.post<OrganizationMember>(`${environment.apiBaseUrl}/organizations/${organizationId}/members`, input),
+      this.http.post<OrganizationMember>(`${environment.apiBaseUrl}/invites/${token}/accept`, {}),
     );
   }
 

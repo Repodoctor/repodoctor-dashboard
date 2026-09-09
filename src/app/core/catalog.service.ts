@@ -43,11 +43,14 @@ export class CatalogService {
     );
   }
 
-  async listFindings(organizationId: string, repositoryId: string): Promise<Finding[]> {
+  async listFindings(organizationId?: string, repositoryId?: string): Promise<Finding[]> {
+    const params = new URLSearchParams();
+    if (organizationId) params.set('organizationId', organizationId);
+    if (repositoryId) params.set('repositoryId', repositoryId);
+    params.set('pageSize', '100');
+    const query = params.toString();
     const response = await firstValueFrom(
-      this.http.get<{ items: Finding[] }>(
-        `${environment.apiBaseUrl}/findings?organizationId=${encodeURIComponent(organizationId)}&repositoryId=${encodeURIComponent(repositoryId)}`,
-      ),
+      this.http.get<{ items: Finding[] }>(`${environment.apiBaseUrl}/findings${query ? `?${query}` : ''}`),
     );
     return response.items ?? [];
   }

@@ -41,7 +41,7 @@ import type { Organization } from '../core/models';
                 <p class="font-medium">{{ org.name }}</p>
                 <p class="font-mono text-xs text-ink-200">{{ org.slug }} · {{ org.role }}</p>
               </a>
-              @if (org.role === 'OWNER') {
+              @if (org.role === 'OWNER' || org.role === 'ADMIN') {
                 <div class="relative">
                   <button
                     class="rounded-md p-2 text-ink-200 hover:bg-ink-600 hover:text-moss-300"
@@ -81,7 +81,7 @@ import type { Organization } from '../core/models';
         <div class="rd-card w-full max-w-md" (click)="$event.stopPropagation()">
           <h2 class="text-lg font-semibold">Delete organization</h2>
           <p class="mt-2 text-sm text-ink-200">
-            Delete <span class="font-medium text-moss-200">{{ org.name }}</span>? Repositories, GitHub installations, analysis runs, and findings for this organization are removed. This cannot be undone.
+            Delete <span class="font-medium text-moss-200">{{ org.name }}</span>? Repositories, analysis runs, findings, and GitHub App installations are removed. RepoDoctor also uninstalls the GitHub App from that account. This cannot be undone.
           </p>
           <div class="mt-5 flex justify-end gap-2">
             <button class="rd-btn-ghost" type="button" (click)="pendingDelete.set(null)">Cancel</button>

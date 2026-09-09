@@ -1,6 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../core/auth.service';
 import { ToastService } from '../core/toast.service';
 import { errorMessage } from '../core/error-message';
@@ -25,6 +25,11 @@ function passwordsMatch(group: AbstractControl): ValidationErrors | null {
       >
         <p class="text-sm uppercase tracking-[0.2em] text-moss-400">RepoDoctor</p>
         <h1 class="text-3xl font-semibold">Create your workspace account</h1>
+        @if (inviteOrg()) {
+          <p class="rounded-md border border-moss-500/30 bg-ink-800 px-3 py-2 text-sm text-ink-200">
+            You were invited to <span class="text-moss-200">{{ inviteOrg() }}</span> as {{ inviteRole() }}.
+          </p>
+        }
         <label class="block text-sm">Display name
           <input
             class="rd-input mt-1"
@@ -100,7 +105,7 @@ function passwordsMatch(group: AbstractControl): ValidationErrors | null {
         <button class="rd-btn w-full" [disabled]="form.invalid || loading()">
           {{ loading() ? 'Creating account…' : 'Sign up' }}
         </button>
-        <a routerLink="/login" class="block text-sm text-ink-200 hover:text-moss-300">Already have an account</a>
+        <a routerLink="/login" [queryParams]="inviteToken() ? { invite: inviteToken() } : {}" class="block text-sm text-ink-200 hover:text-moss-300">Already have an account</a>
       </form>
     </div>
   `,
@@ -109,9 +114,13 @@ export class SignupPage {
   private readonly fb = inject(FormBuilder);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly toast = inject(ToastService);
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
+  readonly inviteOrg = signal<string | null>(null);
+  readonly inviteRole = signal<string | null>(null);
+  readonly inviteToken = signal('');
   readonly form = this.fb.nonNullable.group(
     {
       displayName: ['', Validators.required],
@@ -128,6 +137,24 @@ export class SignupPage {
     confirmPassword: true,
   });
 
+  constructor() {
+    const token = this.route.snapshot.queryParamMap.get('invite');
+    if (token) {
+      this.inviteToken.set(token);
+      void this.auth
+        .previewInvite(token)
+        .then((preview) => {
+          this.inviteOrg.set(preview.organizationName);
+          this.inviteRole.set(preview.role);
+          this.form.patchValue({ email: preview.email });
+          this.unlock('email');
+        })
+        .catch(() => {
+          this.error.set('That invite link is invalid or expired.');
+        });
+    }
+  }
+
   strength() {
     return passwordStrength(this.form.controls.password.value);
   }
@@ -143,7 +170,9 @@ export class SignupPage {
       const { displayName, email, password } = this.form.getRawValue();
       await this.auth.signup({ displayName, email, password });
       this.toast.show('You need to confirm your account before signing in.', 'info');
-      await this.router.navigateByUrl('/login');
+      await this.router.navigate(['/login'], {
+        queryParams: this.inviteToken() ? { invite: this.inviteToken() } : undefined,
+      });
     } catch (error) {
       this.error.set(errorMessage(error, 'Unable to create account'));
     } finally {

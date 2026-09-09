@@ -24,6 +24,11 @@ import { errorMessage } from '../core/error-message';
       <section class="flex items-center justify-center px-6 py-12">
         <form class="w-full max-w-sm space-y-4" [formGroup]="form" (ngSubmit)="submit()">
           <h2 class="text-2xl font-semibold">Sign in</h2>
+          @if (inviteHint()) {
+            <p class="rounded-md border border-moss-500/30 bg-ink-800 px-3 py-2 text-sm text-ink-200">
+              {{ inviteHint() }}
+            </p>
+          }
           <label class="block text-sm">
             Email
             <input class="rd-input mt-1" type="email" formControlName="email" autocomplete="username" />
@@ -39,7 +44,7 @@ import { errorMessage } from '../core/error-message';
             {{ loading() ? 'Signing in…' : 'Sign in' }}
           </button>
           <div class="flex justify-between text-sm text-ink-200">
-            <a routerLink="/signup" class="hover:text-moss-300">Create account</a>
+            <a routerLink="/signup" [queryParams]="inviteToken ? { invite: inviteToken } : {}" class="hover:text-moss-300">Create account</a>
             <a routerLink="/forgot-password" class="hover:text-moss-300">Forgot password</a>
           </div>
         </form>
@@ -54,16 +59,39 @@ export class LoginPage {
   private readonly route = inject(ActivatedRoute);
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
+  readonly inviteHint = signal<string | null>(null);
+  inviteToken = '';
   readonly form = this.fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
     password: ['', Validators.required],
   });
+
+  constructor() {
+    const token = this.route.snapshot.queryParamMap.get('invite');
+    if (token) {
+      this.inviteToken = token;
+      void this.auth
+        .previewInvite(token)
+        .then((preview) => {
+          this.form.patchValue({ email: preview.email });
+          this.inviteHint.set(`Join ${preview.organizationName} as ${preview.role} after you sign in.`);
+        })
+        .catch(() => undefined);
+    }
+  }
 
   async submit(): Promise<void> {
     this.error.set(null);
     this.loading.set(true);
     try {
       await this.auth.login(this.form.getRawValue());
+      if (this.inviteToken) {
+        try {
+          await this.auth.acceptInvite(this.inviteToken);
+        } catch {
+          // ensureUser also accepts pending invites for this email.
+        }
+      }
       await this.router.navigateByUrl(safeNext(this.route.snapshot.queryParamMap.get('next')));
     } catch (error) {
       this.error.set(errorMessage(error, 'Unable to sign in'));

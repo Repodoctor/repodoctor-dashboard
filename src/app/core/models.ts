@@ -30,6 +30,28 @@ export interface OrganizationMember {
   createdAt: string;
 }
 
+export interface OrganizationInvite {
+  id: string;
+  organizationId: string;
+  email: string;
+  role: 'OWNER' | 'ADMIN' | 'MEMBER' | 'VIEWER';
+  signupUrl?: string;
+  expiresAt: string;
+  createdAt: string;
+}
+
+export interface OrganizationInvitePreview {
+  organizationName: string;
+  email: string;
+  role: 'OWNER' | 'ADMIN' | 'MEMBER' | 'VIEWER';
+  expiresAt: string;
+  expired: boolean;
+}
+
+export type AddMemberResponse =
+  | { status: 'added'; member: OrganizationMember }
+  | { status: 'invited'; invite: OrganizationInvite };
+
 export interface ScmInstallation {
   id: string;
   organizationId: string;

@@ -3,7 +3,7 @@ import { RouterLink } from '@angular/router';
 import { AuthService } from '../core/auth.service';
 import { CatalogService } from '../core/catalog.service';
 import { errorMessage } from '../core/error-message';
-import type { Organization } from '../core/models';
+import type { Finding, Organization } from '../core/models';
 
 @Component({
   selector: 'app-dashboard-page',
@@ -36,11 +36,32 @@ import type { Organization } from '../core/models';
             <p class="mt-2 text-xs text-ink-300">Connected through GitHub App ingestion.</p>
           </div>
           <div class="rd-card">
-            <p class="text-xs uppercase text-ink-200">Health score</p>
-            <p class="mt-2 font-mono text-3xl text-moss-300">—</p>
-            <p class="mt-2 text-xs text-ink-300">Deterministic scoring is defined in contracts.</p>
+            <p class="text-xs uppercase text-ink-200">Open findings</p>
+            <p class="mt-2 font-mono text-3xl text-moss-300">{{ openFindings().length }}</p>
+            <p class="mt-2 text-xs text-ink-300">Across every organization you can access.</p>
           </div>
         </div>
+        @if (findings().length > 0) {
+          <div class="rd-card space-y-3">
+            <h2 class="text-lg font-medium">Organization findings</h2>
+            <ul class="divide-y divide-ink-400">
+              @for (finding of findings().slice(0, 8); track finding.id) {
+                <li class="py-3">
+                  <a
+                    class="flex items-start justify-between gap-3 hover:text-moss-300"
+                    [routerLink]="['/repositories', finding.repositoryId, 'findings']"
+                    [queryParams]="{ organizationId: finding.organizationId }"
+                  >
+                    <div>
+                      <p class="font-medium">{{ finding.title }}</p>
+                      <p class="mt-1 font-mono text-xs text-ink-200">{{ finding.severity }} · {{ finding.source }} · {{ finding.status }}</p>
+                    </div>
+                  </a>
+                </li>
+              }
+            </ul>
+          </div>
+        }
         <div class="rd-card">
           <h2 class="text-lg font-medium">Your organizations</h2>
           <ul class="mt-4 divide-y divide-ink-400">
@@ -64,8 +85,10 @@ export class DashboardPage {
   private readonly catalog = inject(CatalogService);
   readonly organizations = signal<Organization[]>([]);
   readonly repositoryCount = signal(0);
+  readonly findings = signal<Finding[]>([]);
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
+  readonly openFindings = () => this.findings().filter((item) => item.status === 'OPEN');
 
   constructor() {
     void this.refresh();
@@ -74,12 +97,14 @@ export class DashboardPage {
   private async refresh(): Promise<void> {
     this.loading.set(true);
     try {
-      const [organizations, repositories] = await Promise.all([
+      const [organizations, repositories, findings] = await Promise.all([
         this.auth.listOrganizations(),
         this.catalog.listMyRepositories().catch(() => []),
+        this.catalog.listFindings().catch(() => []),
       ]);
       this.organizations.set(organizations);
       this.repositoryCount.set(repositories.length);
+      this.findings.set(findings);
     } catch (error) {
       this.error.set(errorMessage(error));
     } finally {

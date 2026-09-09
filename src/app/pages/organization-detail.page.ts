@@ -3,8 +3,10 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { AuthService } from '../core/auth.service';
 import { ScmService } from '../core/scm.service';
+import { CatalogService } from '../core/catalog.service';
+import { ToastService } from '../core/toast.service';
 import { errorMessage } from '../core/error-message';
-import type { Organization, OrganizationMember, Repository, ScmInstallation } from '../core/models';
+import type { Finding, Organization, OrganizationInvite, OrganizationMember, Repository, ScmInstallation } from '../core/models';
 
 const ASSIGNABLE_ROLES = ['ADMIN', 'MEMBER', 'VIEWER'] as const;
 
@@ -60,10 +62,27 @@ const ASSIGNABLE_ROLES = ['ADMIN', 'MEMBER', 'VIEWER'] as const;
                     }
                   </select>
                   <button class="rd-btn" type="submit" [disabled]="inviteForm.invalid || inviting()">
-                    {{ inviting() ? 'Adding…' : 'Add' }}
+                    {{ inviting() ? 'Inviting…' : 'Invite' }}
                   </button>
                 </form>
-                <p class="text-xs text-ink-300">They must already have a RepoDoctor account. OWNER cannot be assigned here.</p>
+                <p class="text-xs text-ink-300">If they do not have an account yet, you get a signup link to share. OWNER cannot be assigned here.</p>
+              }
+              @if (invites().length > 0) {
+                <div class="space-y-2">
+                  <p class="text-xs uppercase tracking-[0.16em] text-ink-300">Pending invites</p>
+                  @for (invite of invites(); track invite.id) {
+                    <div class="flex items-center justify-between gap-3 rounded-md border border-ink-400 px-3 py-2">
+                      <div class="min-w-0">
+                        <p class="truncate font-mono text-xs text-moss-200">{{ invite.email }}</p>
+                        <p class="text-xs text-ink-300">{{ invite.role }} · expires {{ invite.expiresAt.slice(0, 10) }}</p>
+                      </div>
+                      <div class="flex items-center gap-2">
+                        <button class="rd-btn-ghost" type="button" (click)="copyInvite(invite)">Copy link</button>
+                        <button class="rd-btn-ghost text-red-200" type="button" (click)="revokeInvite(invite)">Revoke</button>
+                      </div>
+                    </div>
+                  }
+                </div>
               }
               <div class="space-y-2">
                 @for (member of members(); track member.userId) {
@@ -115,6 +134,31 @@ const ASSIGNABLE_ROLES = ['ADMIN', 'MEMBER', 'VIEWER'] as const;
               </div>
             }
           </div>
+          <div class="rd-card space-y-4">
+            <h2 class="font-medium">Findings</h2>
+            @if (findingsError()) {
+              <p class="text-sm text-red-200">{{ findingsError() }}</p>
+            } @else if (findings().length === 0) {
+              <p class="text-sm text-ink-200">No findings yet for this organization.</p>
+            } @else {
+              <div class="space-y-2">
+                @for (finding of findings(); track finding.id) {
+                  <a
+                    class="block rounded-md border border-ink-400 px-3 py-2 hover:border-moss-400"
+                    [routerLink]="['/repositories', finding.repositoryId, 'findings']"
+                    [queryParams]="{ organizationId: finding.organizationId }"
+                  >
+                    <div class="flex items-center justify-between gap-3">
+                      <p class="font-medium">{{ finding.title }}</p>
+                      <span class="font-mono text-xs text-moss-200">{{ finding.severity }}</span>
+                    </div>
+                    <p class="mt-1 text-sm text-ink-200">{{ finding.description }}</p>
+                    <p class="mt-1 font-mono text-xs text-ink-300">{{ finding.source }} · {{ finding.status }}</p>
+                  </a>
+                }
+              </div>
+            }
+          </div>
         }
       }
     </div>
@@ -123,6 +167,8 @@ const ASSIGNABLE_ROLES = ['ADMIN', 'MEMBER', 'VIEWER'] as const;
 export class OrganizationDetailPage {
   private readonly auth = inject(AuthService);
   private readonly scm = inject(ScmService);
+  private readonly catalog = inject(CatalogService);
+  private readonly toast = inject(ToastService);
   private readonly route = inject(ActivatedRoute);
   private readonly fb = inject(FormBuilder);
 
@@ -130,6 +176,9 @@ export class OrganizationDetailPage {
   readonly installations = signal<ScmInstallation[]>([]);
   readonly repositories = signal<Repository[]>([]);
   readonly members = signal<OrganizationMember[]>([]);
+  readonly invites = signal<OrganizationInvite[]>([]);
+  readonly findings = signal<Finding[]>([]);
+  readonly findingsError = signal<string | null>(null);
   readonly loading = signal(true);
   readonly connecting = signal(false);
   readonly inviting = signal(false);
@@ -183,13 +232,43 @@ export class OrganizationDetailPage {
     this.actionError.set(null);
     try {
       const { email, role } = this.inviteForm.getRawValue();
-      const member = await this.auth.addMember(org.id, { email, role });
-      this.members.set([...this.members().filter((item) => item.userId !== member.userId), member]);
+      const result = await this.auth.addMember(org.id, { email, role });
+      if (result.member) {
+        this.members.set([...this.members().filter((item) => item.userId !== result.member!.userId), result.member]);
+        this.toast.show(`${result.member.email} was added.`, 'success');
+      }
+      if (result.invite) {
+        this.invites.set([...this.invites().filter((item) => item.email !== result.invite!.email), result.invite]);
+        this.toast.show('Invite created. Copy the signup link to share it.', 'success');
+        await this.copyInvite(result.invite);
+      }
       this.inviteForm.reset({ email: '', role: 'MEMBER' });
     } catch (error) {
-      this.actionError.set(errorMessage(error, 'Unable to add that member. They must sign up first.'));
+      this.actionError.set(errorMessage(error, 'Unable to invite that member.'));
     } finally {
       this.inviting.set(false);
+    }
+  }
+
+  async copyInvite(invite: OrganizationInvite): Promise<void> {
+    if (!invite.signupUrl) return;
+    try {
+      await navigator.clipboard.writeText(invite.signupUrl);
+      this.toast.show('Signup link copied.', 'success');
+    } catch {
+      this.actionError.set(invite.signupUrl);
+    }
+  }
+
+  async revokeInvite(invite: OrganizationInvite): Promise<void> {
+    const org = this.org();
+    if (!org) return;
+    this.actionError.set(null);
+    try {
+      await this.auth.revokeInvite(org.id, invite.id);
+      this.invites.set(this.invites().filter((item) => item.id !== invite.id));
+    } catch (error) {
+      this.actionError.set(errorMessage(error, 'Unable to revoke that invite.'));
     }
   }
 
@@ -223,19 +302,23 @@ export class OrganizationDetailPage {
 
   private async load(id: string): Promise<void> {
     try {
-      const [org, installations, repositories, members] = await Promise.all([
+      const [org, installations, repositories, members, invites, findings] = await Promise.all([
         this.auth.getOrganization(id),
         this.scm.listInstallations(id).catch(() => [] as ScmInstallation[]),
         this.scm.listRepositories(id).catch(() => [] as Repository[]),
         this.auth.listMembers(id).catch(() => [] as OrganizationMember[]),
+        this.auth.listInvites(id).catch(() => [] as OrganizationInvite[]),
+        this.catalog.listFindings(id).catch((error) => {
+          this.findingsError.set(errorMessage(error, 'Unable to load findings.'));
+          return [] as Finding[];
+        }),
       ]);
       this.org.set(org);
       this.installations.set(installations);
       this.repositories.set(repositories);
       this.members.set(members);
-      if (!installations.length && !repositories.length) {
-        this.actionError.set(null);
-      }
+      this.invites.set(invites);
+      this.findings.set(findings);
     } catch (error) {
       this.error.set(errorMessage(error));
     } finally {
