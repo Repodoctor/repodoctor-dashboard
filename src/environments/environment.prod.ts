@@ -4,4 +4,5 @@ export const environment = {
   supabaseUrl: '',
   supabaseAnonKey: '',
   apiBaseUrl: 'https://api.repodoctor.dev/api/v1',
+  githubAppSlug: 'repodoctor-app',
 };

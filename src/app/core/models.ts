@@ -57,6 +57,40 @@ export interface Repository {
   updatedAt: string;
 }
 
+export interface AnalysisRun {
+  id: string;
+  repositoryId: string;
+  organizationId: string;
+  type: string;
+  status: 'QUEUED' | 'RUNNING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
+  commitSha: string;
+  branch: string;
+  startedAt: string | null;
+  completedAt: string | null;
+  durationMs: number | null;
+  trigger: string;
+  error: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Finding {
+  id: string;
+  organizationId: string;
+  repositoryId: string;
+  analysisRunId: string;
+  source: string;
+  ruleId: string;
+  severity: 'INFO' | 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  title: string;
+  description: string;
+  filePath: string | null;
+  lineNumber: number | null;
+  status: 'OPEN' | 'ACKNOWLEDGED' | 'RESOLVED' | 'IGNORED';
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface ApiError {
   statusCode: number;
   error: string;

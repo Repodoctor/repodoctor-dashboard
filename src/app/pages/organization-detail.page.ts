@@ -62,7 +62,7 @@ import type { Organization, Repository, ScmInstallation } from '../core/models';
           } @else {
             <div class="grid gap-2">
               @for (repo of repositories(); track repo.id) {
-                <a class="flex items-center justify-between rounded-md border border-ink-400 px-3 py-2 hover:border-moss-400" [routerLink]="['/repositories', repo.id, 'overview']">
+                <a class="flex items-center justify-between rounded-md border border-ink-400 px-3 py-2 hover:border-moss-400" [routerLink]="['/repositories', repo.id, 'overview']" [queryParams]="{ organizationId: repo.organizationId }">
                   <span>{{ repo.fullName }}</span>
                   <span class="font-mono text-xs text-ink-200">{{ repo.defaultBranch }}</span>
                 </a>

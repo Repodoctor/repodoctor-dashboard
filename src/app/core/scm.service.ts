@@ -29,11 +29,19 @@ export class ScmService {
   }
 
   async getGithubInstallUrl(organizationId: string): Promise<{ url: string; slug: string }> {
-    return firstValueFrom(
-      this.http.get<{ url: string; slug: string }>(
-        `${environment.apiBaseUrl}/organizations/${organizationId}/scm/github/install`,
-      ),
-    );
+    try {
+      return await firstValueFrom(
+        this.http.get<{ url: string; slug: string }>(
+          `${environment.apiBaseUrl}/organizations/${organizationId}/scm/github/install`,
+        ),
+      );
+    } catch (error) {
+      const slug = environment.githubAppSlug.trim();
+      if (!slug) throw error;
+      const url = new URL(`https://github.com/apps/${encodeURIComponent(slug)}/installations/new`);
+      url.searchParams.set('state', organizationId);
+      return { url: url.toString(), slug };
+    }
   }
 
   async connectGithub(

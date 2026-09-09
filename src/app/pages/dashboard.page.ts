@@ -1,6 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../core/auth.service';
+import { ScmService } from '../core/scm.service';
 import { errorMessage } from '../core/error-message';
 import type { Organization } from '../core/models';
 
@@ -31,8 +32,8 @@ import type { Organization } from '../core/models';
           </div>
           <div class="rd-card">
             <p class="text-xs uppercase text-ink-200">Repositories</p>
-            <p class="mt-2 font-mono text-3xl text-moss-300">0</p>
-            <p class="mt-2 text-xs text-ink-300">Ingestion ships in a later phase.</p>
+            <p class="mt-2 font-mono text-3xl text-moss-300">{{ repositoryCount() }}</p>
+            <p class="mt-2 text-xs text-ink-300">Connected through GitHub App ingestion.</p>
           </div>
           <div class="rd-card">
             <p class="text-xs uppercase text-ink-200">Health score</p>
@@ -60,7 +61,9 @@ import type { Organization } from '../core/models';
 })
 export class DashboardPage {
   readonly auth = inject(AuthService);
+  private readonly scm = inject(ScmService);
   readonly organizations = signal<Organization[]>([]);
+  readonly repositoryCount = signal(0);
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
 
@@ -71,7 +74,10 @@ export class DashboardPage {
   private async refresh(): Promise<void> {
     this.loading.set(true);
     try {
-      this.organizations.set(await this.auth.listOrganizations());
+      const organizations = await this.auth.listOrganizations();
+      this.organizations.set(organizations);
+      const lists = await Promise.all(organizations.map((org) => this.scm.listRepositories(org.id).catch(() => [])));
+      this.repositoryCount.set(lists.reduce((sum, items) => sum + items.length, 0));
     } catch (error) {
       this.error.set(errorMessage(error));
     } finally {

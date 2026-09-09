@@ -25,7 +25,7 @@ import type { Repository } from '../core/models';
       } @else {
         <div class="grid gap-3">
           @for (repo of items(); track repo.id) {
-            <a class="rd-card block hover:border-moss-400" [routerLink]="['/repositories', repo.id, 'overview']">
+            <a class="rd-card block hover:border-moss-400" [routerLink]="['/repositories', repo.id, 'overview']" [queryParams]="{ organizationId: repo.organizationId }">
               <p class="font-medium">{{ repo.fullName }}</p>
               <p class="mt-1 font-mono text-xs text-ink-200">
                 {{ repo.defaultBranch }} · {{ repo.private ? 'private' : 'public' }}
