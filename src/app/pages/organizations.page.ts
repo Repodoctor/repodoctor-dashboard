@@ -1,6 +1,6 @@
 import { Component, HostListener, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../core/auth.service';
 import { ToastService } from '../core/toast.service';
 import { errorMessage } from '../core/error-message';
@@ -98,6 +98,8 @@ export class OrganizationsPage {
   private readonly auth = inject(AuthService);
   private readonly toast = inject(ToastService);
   private readonly fb = inject(FormBuilder);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   readonly items = signal<Organization[]>([]);
   readonly loading = signal(true);
   readonly saving = signal(false);
@@ -110,6 +112,18 @@ export class OrganizationsPage {
   });
 
   constructor() {
+    const query = this.route.snapshot.queryParamMap;
+    const installationId = query.get('installation_id');
+    if (installationId) {
+      void this.router.navigate(['/settings/scm/github/callback'], {
+        queryParams: {
+          installation_id: installationId,
+          setup_action: query.get('setup_action'),
+          state: query.get('state'),
+        },
+      });
+      return;
+    }
     void this.refresh();
   }
 

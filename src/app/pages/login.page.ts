@@ -1,6 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../core/auth.service';
 import { errorMessage } from '../core/error-message';
 
@@ -51,6 +51,7 @@ export class LoginPage {
   private readonly fb = inject(FormBuilder);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
   readonly form = this.fb.nonNullable.group({
@@ -63,11 +64,18 @@ export class LoginPage {
     this.loading.set(true);
     try {
       await this.auth.login(this.form.getRawValue());
-      await this.router.navigateByUrl('/dashboard');
+      await this.router.navigateByUrl(safeNext(this.route.snapshot.queryParamMap.get('next')));
     } catch (error) {
       this.error.set(errorMessage(error, 'Unable to sign in'));
     } finally {
       this.loading.set(false);
     }
   }
+}
+
+function safeNext(raw: string | null): string {
+  if (!raw || !raw.startsWith('/') || raw.startsWith('//') || raw.includes('://')) {
+    return '/dashboard';
+  }
+  return raw;
 }

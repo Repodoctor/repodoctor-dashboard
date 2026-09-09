@@ -30,6 +30,33 @@ export interface OrganizationMember {
   createdAt: string;
 }
 
+export interface ScmInstallation {
+  id: string;
+  organizationId: string;
+  provider: 'github' | 'gitlab' | 'bitbucket' | 'azure_devops';
+  externalInstallationId: string;
+  accountLogin: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Repository {
+  id: string;
+  organizationId: string;
+  scmProvider: 'github' | 'gitlab' | 'bitbucket' | 'azure_devops';
+  scmRepositoryId: string;
+  installationId: string;
+  owner: string;
+  name: string;
+  fullName: string;
+  defaultBranch: string;
+  private: boolean;
+  url: string;
+  lastAnalyzedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface ApiError {
   statusCode: number;
   error: string;

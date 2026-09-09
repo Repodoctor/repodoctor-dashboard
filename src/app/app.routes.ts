@@ -42,8 +42,12 @@ export const routes: Routes = [
       },
       {
         path: 'organizations/:organizationId/repositories',
-        loadComponent: () => import('./pages/placeholder.page').then((m) => m.PlaceholderPage),
-        data: { title: 'Repositories', detail: 'Connect a GitHub App in a later phase to ingest repositories.' },
+        loadComponent: () => import('./pages/repositories.page').then((m) => m.RepositoriesPage),
+      },
+      {
+        path: 'settings/scm/github/callback',
+        loadComponent: () =>
+          import('./pages/github-callback.page').then((m) => m.GithubCallbackPage),
       },
       {
         path: 'repositories/:repositoryId',
