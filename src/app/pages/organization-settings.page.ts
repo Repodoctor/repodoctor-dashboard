@@ -53,7 +53,7 @@ import type { Organization, ScmInstallation } from '../core/models';
           <div class="flex flex-wrap gap-2">
             @if (canManage()) {
               <button class="rd-btn" type="button" [disabled]="connecting()" (click)="connectGithub()">
-                {{ connecting() ? 'Redirecting…' : githubInstall() ? 'Manage repos' : 'Connect GitHub' }}
+                {{ connecting() ? 'Opening GitHub…' : githubInstall() ? 'Manage repos' : 'Connect GitHub' }}
               </button>
             }
             @if (canAdmin() && githubInstall()) {
@@ -167,9 +167,14 @@ export class OrganizationSettingsPage {
     try {
       this.scm.rememberOrganization(org.id);
       const { url } = await this.scm.getGithubInstallUrl(org.id);
-      window.location.assign(url);
+      const popup = window.open(url, 'repodoctor-github-install', 'popup=yes,width=980,height=780');
+      if (!popup) {
+        window.location.assign(url);
+        return;
+      }
     } catch (error) {
       this.actionError.set(errorMessage(error, 'Unable to start GitHub App installation.'));
+    } finally {
       this.connecting.set(false);
     }
   }

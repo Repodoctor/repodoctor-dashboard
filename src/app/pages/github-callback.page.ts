@@ -67,12 +67,26 @@ export class GithubCallbackPage {
         count === 1 ? 'Connected 1 repository from GitHub.' : `Connected ${count} repositories from GitHub.`,
         'success',
       );
-      await this.router.navigate(['/organizations', organizationId, 'repositories']);
+      await this.finishConnect(organizationId);
     } catch (error) {
       this.error.set(errorMessage(error, 'Unable to connect the GitHub App installation.'));
     } finally {
       this.saving.set(false);
     }
+  }
+
+  private async finishConnect(organizationId: string): Promise<void> {
+    const path = `/organizations/${organizationId}/repositories`;
+    if (window.opener && !window.opener.closed) {
+      try {
+        window.opener.location.assign(path);
+        window.close();
+        return;
+      } catch {
+        // Fall through to in-tab navigation when the opener cannot be reached.
+      }
+    }
+    await this.router.navigate(['/organizations', organizationId, 'repositories']);
   }
 
   private async start(): Promise<void> {
