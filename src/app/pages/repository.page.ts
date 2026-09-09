@@ -53,7 +53,8 @@ const LATER: Record<string, { title: string; body: string }> = {
         <div class="rd-card">Loading repository…</div>
       } @else if (error()) {
         <div class="rd-card border-red-500/40 text-red-200">{{ error() }}</div>
-      } @else if (repository(); as repo) {
+      } @else {
+        @if (repository(); as repo) {
         <div>
           <p class="text-xs uppercase tracking-[0.2em] text-moss-400">{{ repo.owner }}</p>
           <h1 class="mt-1 text-3xl font-semibold">{{ repo.fullName }}</h1>
@@ -145,6 +146,7 @@ const LATER: Record<string, { title: string; body: string }> = {
             <h2 class="text-2xl font-semibold">{{ later().title }}</h2>
             <p class="mt-2 text-sm text-ink-200">{{ later().body }}</p>
           </div>
+        }
         }
       }
     </div>
