@@ -17,6 +17,7 @@ const NAV = [
   'docs',
   'analysis',
   'ai',
+  'settings',
 ] as const;
 
 const LATER: Record<string, { title: string; body: string }> = {
@@ -98,44 +99,6 @@ const PERMISSION_RANK: Record<(typeof PERMISSIONS)[number], number> = {
               <p class="text-sm text-ink-200">No analysis has been requested yet. A FULL run is queued when GitHub connects or a push webhook arrives.</p>
             }
           </div>
-          @if (canAdminRepo()) {
-            <div class="rd-card space-y-4">
-              <h2 class="font-medium">Repository access</h2>
-              <p class="text-sm text-ink-200">
-                Organization owners and admins always have ADMIN. Override MEMBER and VIEWER permissions here.
-              </p>
-              @if (accessError()) {
-                <p class="text-sm text-red-200">{{ accessError() }}</p>
-              }
-              @if (access().length === 0) {
-                <p class="text-sm text-ink-200">No members to show yet.</p>
-              } @else {
-                <div class="space-y-2">
-                  @for (grant of access(); track grant.userId) {
-                    <div class="flex items-center justify-between gap-3 rounded-md border border-ink-400 px-3 py-2">
-                      <div class="min-w-0">
-                        <p class="truncate font-medium">{{ grant.displayName }}</p>
-                        <p class="truncate font-mono text-xs text-ink-200">{{ grant.email }} · {{ grant.role }}</p>
-                      </div>
-                      @if (grant.role === 'OWNER' || grant.role === 'ADMIN') {
-                        <span class="font-mono text-xs text-moss-200">ADMIN</span>
-                      } @else {
-                        <select
-                          class="rd-input py-1"
-                          [value]="grant.permission"
-                          (change)="changeAccess(grant, selectPermission($event))"
-                        >
-                          @for (permission of permissions; track permission) {
-                            <option [value]="permission">{{ permission }}</option>
-                          }
-                        </select>
-                      }
-                    </div>
-                  }
-                </div>
-              }
-            </div>
-          }
         } @else if (section() === 'findings') {
           <div class="rd-card space-y-4">
             <h2 class="font-medium">Findings</h2>
@@ -187,6 +150,47 @@ const PERMISSION_RANK: Record<(typeof PERMISSIONS)[number], number> = {
                       <p class="text-xs text-ink-200">{{ run.trigger }} · {{ run.commitSha.slice(0, 7) }} · {{ run.branch }}</p>
                     </div>
                     <p class="font-mono text-xs text-ink-300">{{ run.createdAt }}</p>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        } @else if (section() === 'settings') {
+          <div class="rd-card space-y-4">
+            <h2 class="font-medium">Repository access</h2>
+            <p class="text-sm text-ink-200">
+              VIEW reads findings. ANALYZE can request runs. MANAGE is reserved. ADMIN sets grants.
+              Organization owners and admins always have ADMIN.
+            </p>
+            @if (!canAdminRepo()) {
+              <p class="text-sm text-ink-200">You can view this repository as {{ repository()?.permission }}. Only repo ADMIN can change grants.</p>
+            }
+            @if (accessError()) {
+              <p class="text-sm text-red-200">{{ accessError() }}</p>
+            }
+            @if (access().length === 0) {
+              <p class="text-sm text-ink-200">{{ canAdminRepo() ? 'No members to show yet.' : 'Access grants are hidden unless you have ADMIN on this repository.' }}</p>
+            } @else {
+              <div class="space-y-2">
+                @for (grant of access(); track grant.userId) {
+                  <div class="flex items-center justify-between gap-3 rounded-md border border-ink-400 px-3 py-2">
+                    <div class="min-w-0">
+                      <p class="truncate font-medium">{{ grant.displayName }}</p>
+                      <p class="truncate font-mono text-xs text-ink-200">{{ grant.email }} · {{ grant.role }}</p>
+                    </div>
+                    @if (canAdminRepo() && grant.role !== 'OWNER' && grant.role !== 'ADMIN') {
+                      <select
+                        class="rd-input py-1"
+                        [value]="grant.permission"
+                        (change)="changeAccess(grant, selectPermission($event))"
+                      >
+                        @for (permission of permissions; track permission) {
+                          <option [value]="permission">{{ permission }}</option>
+                        }
+                      </select>
+                    } @else {
+                      <span class="font-mono text-xs text-moss-200">{{ grant.permission }}</span>
+                    }
                   </div>
                 }
               </div>

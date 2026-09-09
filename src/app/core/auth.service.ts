@@ -124,6 +124,39 @@ export class AuthService {
     return firstValueFrom(this.http.get<Organization>(`${environment.apiBaseUrl}/organizations/${id}`));
   }
 
+  async updateOrganization(id: string, name: string): Promise<Organization> {
+    return firstValueFrom(
+      this.http.patch<Organization>(`${environment.apiBaseUrl}/organizations/${id}`, { name }),
+    );
+  }
+
+  async updateProfile(displayName: string): Promise<User> {
+    const user = await firstValueFrom(
+      this.http.patch<User>(`${environment.apiBaseUrl}/users/me`, { displayName }),
+    );
+    this.userSignal.set(user);
+    sessionStorage.setItem(USER_KEY, JSON.stringify(user));
+    return user;
+  }
+
+  async deleteAccount(): Promise<{ deletedOrganizationIds: string[] }> {
+    const token = await this.getAccessToken();
+    const result = await firstValueFrom(
+      this.http.delete<{ deletedOrganizationIds: string[] }>(`${environment.apiBaseUrl}/users/me`),
+    );
+    if (this.supabase && token && environment.supabaseUrl && environment.supabaseAnonKey) {
+      await fetch(`${environment.supabaseUrl.replace(/\/+$/, '')}/auth/v1/user`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          apikey: environment.supabaseAnonKey,
+        },
+      });
+    }
+    await this.logout();
+    return result;
+  }
+
   async deleteOrganization(id: string): Promise<void> {
     await firstValueFrom(this.http.delete(`${environment.apiBaseUrl}/organizations/${id}`));
   }

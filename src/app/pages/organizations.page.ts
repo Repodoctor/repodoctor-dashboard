@@ -59,6 +59,12 @@ import type { Organization } from '../core/models';
                   </button>
                   @if (menuId() === org.id) {
                     <div class="absolute right-0 z-20 mt-1 min-w-36 overflow-hidden rounded-md border border-ink-400 bg-ink-800 py-1 shadow-glow">
+                      <a
+                        class="block w-full px-3 py-2 text-left text-sm text-ink-100 hover:bg-ink-600"
+                        [routerLink]="['/organizations', org.id, 'settings']"
+                      >
+                        Settings
+                      </a>
                       <button
                         class="block w-full px-3 py-2 text-left text-sm text-red-200 hover:bg-ink-600"
                         type="button"

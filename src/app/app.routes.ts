@@ -41,6 +41,21 @@ export const routes: Routes = [
           import('./pages/organization-detail.page').then((m) => m.OrganizationDetailPage),
       },
       {
+        path: 'organizations/:organizationId/settings',
+        loadComponent: () =>
+          import('./pages/organization-settings.page').then((m) => m.OrganizationSettingsPage),
+      },
+      {
+        path: 'organizations/:organizationId/settings/members',
+        loadComponent: () =>
+          import('./pages/organization-members.page').then((m) => m.OrganizationMembersPage),
+      },
+      {
+        path: 'organizations/:organizationId/settings/permissions',
+        loadComponent: () =>
+          import('./pages/organization-permissions.page').then((m) => m.OrganizationPermissionsPage),
+      },
+      {
         path: 'organizations/:organizationId/repositories',
         loadComponent: () => import('./pages/repositories.page').then((m) => m.RepositoriesPage),
       },
