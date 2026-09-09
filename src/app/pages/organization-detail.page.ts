@@ -119,18 +119,26 @@ export class OrganizationDetailPage {
 
   private async load(id: string): Promise<void> {
     try {
-      const [org, memberships, installations, repositories] = await Promise.all([
+      const [org, memberships] = await Promise.all([
         this.auth.getOrganization(id),
         this.auth.listOrganizations(),
-        this.scm.listInstallations(id),
-        this.scm.listRepositories(id),
       ]);
       const role = memberships.find((item) => item.id === id)?.role;
       this.org.set({ ...org, role });
+    } catch (error) {
+      this.error.set(errorMessage(error));
+      this.loading.set(false);
+      return;
+    }
+    try {
+      const [installations, repositories] = await Promise.all([
+        this.scm.listInstallations(id),
+        this.scm.listRepositories(id),
+      ]);
       this.installations.set(installations);
       this.repositories.set(repositories);
     } catch (error) {
-      this.error.set(errorMessage(error));
+      this.actionError.set(errorMessage(error, 'Unable to load GitHub installations.'));
     } finally {
       this.loading.set(false);
     }
