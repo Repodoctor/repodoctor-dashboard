@@ -77,6 +77,16 @@ export interface Repository {
   lastAnalyzedAt: string | null;
   createdAt: string;
   updatedAt: string;
+  permission?: 'VIEW' | 'ANALYZE' | 'MANAGE' | 'ADMIN';
+}
+
+export interface RepositoryAccessGrant {
+  userId: string;
+  email: string;
+  displayName: string;
+  role: 'OWNER' | 'ADMIN' | 'MEMBER' | 'VIEWER';
+  permission: 'VIEW' | 'ANALYZE' | 'MANAGE' | 'ADMIN';
+  source: 'role' | 'override';
 }
 
 export interface AnalysisRun {

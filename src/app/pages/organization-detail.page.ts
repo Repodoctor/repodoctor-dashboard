@@ -29,6 +29,22 @@ const ASSIGNABLE_ROLES = ['ADMIN', 'MEMBER', 'VIEWER'] as const;
           @if (actionError()) {
             <div class="rd-card border-red-500/40 text-red-200">{{ actionError() }}</div>
           }
+          @if (confirmDisconnect()) {
+            <div class="rd-card space-y-3 border-red-500/40">
+              <p class="font-medium">Disconnect GitHub?</p>
+              <p class="text-sm text-ink-200">
+                This uninstalls the GitHub App and removes imported repositories. The organization and members stay.
+              </p>
+              <div class="flex gap-2">
+                <button class="rd-btn" type="button" [disabled]="disconnecting()" (click)="disconnectGithub()">
+                  {{ disconnecting() ? 'Disconnecting…' : 'Disconnect GitHub' }}
+                </button>
+                <button class="rd-btn-ghost" type="button" [disabled]="disconnecting()" (click)="confirmDisconnect.set(false)">
+                  Cancel
+                </button>
+              </div>
+            </div>
+          }
           <div class="grid gap-4 md:grid-cols-2">
             <div class="rd-card space-y-4">
               <div class="flex items-start justify-between gap-3">
@@ -44,10 +60,19 @@ const ASSIGNABLE_ROLES = ['ADMIN', 'MEMBER', 'VIEWER'] as const;
                     </p>
                   }
                 </div>
-                @if (canManage()) {
-                  <button class="rd-btn shrink-0" type="button" [disabled]="connecting()" (click)="connectGithub()">
-                    {{ connecting() ? 'Redirecting…' : githubInstall() ? 'Manage repos' : 'Connect GitHub' }}
-                  </button>
+                @if (canManage() || (canAdmin() && githubInstall())) {
+                  <div class="flex shrink-0 flex-col items-end gap-2">
+                    @if (canManage()) {
+                      <button class="rd-btn shrink-0" type="button" [disabled]="connecting()" (click)="connectGithub()">
+                        {{ connecting() ? 'Redirecting…' : githubInstall() ? 'Manage repos' : 'Connect GitHub' }}
+                      </button>
+                    }
+                    @if (canAdmin() && githubInstall()) {
+                      <button class="rd-btn-ghost text-red-200" type="button" [disabled]="disconnecting()" (click)="askDisconnect()">
+                        {{ disconnecting() ? 'Disconnecting…' : 'Disconnect' }}
+                      </button>
+                    }
+                  </div>
                 }
               </div>
             </div>
@@ -181,6 +206,8 @@ export class OrganizationDetailPage {
   readonly findingsError = signal<string | null>(null);
   readonly loading = signal(true);
   readonly connecting = signal(false);
+  readonly disconnecting = signal(false);
+  readonly confirmDisconnect = signal(false);
   readonly inviting = signal(false);
   readonly error = signal<string | null>(null);
   readonly actionError = signal<string | null>(null);
@@ -222,6 +249,29 @@ export class OrganizationDetailPage {
     } catch (error) {
       this.actionError.set(errorMessage(error, 'Unable to start GitHub App installation.'));
       this.connecting.set(false);
+    }
+  }
+
+  askDisconnect(): void {
+    this.confirmDisconnect.set(true);
+    this.actionError.set(null);
+  }
+
+  async disconnectGithub(): Promise<void> {
+    const org = this.org();
+    if (!org) return;
+    this.disconnecting.set(true);
+    this.actionError.set(null);
+    try {
+      await this.scm.disconnectGithub(org.id);
+      this.installations.set([]);
+      this.repositories.set([]);
+      this.confirmDisconnect.set(false);
+      this.toast.show('GitHub disconnected. The organization is unchanged.', 'success');
+    } catch (error) {
+      this.actionError.set(errorMessage(error, 'Unable to disconnect GitHub.'));
+    } finally {
+      this.disconnecting.set(false);
     }
   }
 

@@ -63,6 +63,12 @@ export class ScmService {
     return response.items ?? [];
   }
 
+  async disconnectGithub(organizationId: string): Promise<void> {
+    await firstValueFrom(
+      this.http.delete(`${environment.apiBaseUrl}/organizations/${organizationId}/scm/github`),
+    );
+  }
+
   async listRepositories(organizationId: string): Promise<Repository[]> {
     const response = await firstValueFrom(
       this.http.get<{ items: Repository[] }>(

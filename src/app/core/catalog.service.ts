@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../environments/environment';
-import type { AnalysisRun, Finding, Repository } from './models';
+import type { AnalysisRun, Finding, Repository, RepositoryAccessGrant } from './models';
 
 @Injectable({ providedIn: 'root' })
 export class CatalogService {
@@ -53,5 +53,37 @@ export class CatalogService {
       this.http.get<{ items: Finding[] }>(`${environment.apiBaseUrl}/findings${query ? `?${query}` : ''}`),
     );
     return response.items ?? [];
+  }
+
+  async listRepositoryAccess(repositoryId: string, organizationId?: string): Promise<RepositoryAccessGrant[]> {
+    const params = organizationId ? `?organizationId=${encodeURIComponent(organizationId)}` : '';
+    const response = await firstValueFrom(
+      this.http.get<{ items: RepositoryAccessGrant[] }>(
+        `${environment.apiBaseUrl}/repositories/${repositoryId}/access${params}`,
+      ),
+    );
+    return response.items ?? [];
+  }
+
+  async updateRepositoryAccess(
+    repositoryId: string,
+    userId: string,
+    permission: RepositoryAccessGrant['permission'],
+    organizationId?: string,
+  ): Promise<RepositoryAccessGrant> {
+    const params = organizationId ? `?organizationId=${encodeURIComponent(organizationId)}` : '';
+    return firstValueFrom(
+      this.http.put<RepositoryAccessGrant>(
+        `${environment.apiBaseUrl}/repositories/${repositoryId}/access/${userId}${params}`,
+        { permission },
+      ),
+    );
+  }
+
+  async resetRepositoryAccess(repositoryId: string, userId: string, organizationId?: string): Promise<void> {
+    const params = organizationId ? `?organizationId=${encodeURIComponent(organizationId)}` : '';
+    await firstValueFrom(
+      this.http.delete(`${environment.apiBaseUrl}/repositories/${repositoryId}/access/${userId}${params}`),
+    );
   }
 }

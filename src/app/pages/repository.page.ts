@@ -4,7 +4,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { map } from 'rxjs';
 import { CatalogService } from '../core/catalog.service';
 import { errorMessage } from '../core/error-message';
-import type { AnalysisRun, Finding, Repository } from '../core/models';
+import type { AnalysisRun, Finding, Repository, RepositoryAccessGrant } from '../core/models';
 
 const NAV = [
   'overview',
@@ -27,6 +27,14 @@ const LATER: Record<string, { title: string; body: string }> = {
   ci: { title: 'CI Doctor', body: 'Failure diagnosis and remediation suggestions from the CI worker.' },
   docs: { title: 'Documentation', body: 'README quality, onboarding, and generated summaries from the documentation worker.' },
   ai: { title: 'AI', body: 'Evidence-based explanations over analyzer facts. AI is never the source of truth.' },
+};
+
+const PERMISSIONS = ['VIEW', 'ANALYZE', 'MANAGE', 'ADMIN'] as const;
+const PERMISSION_RANK: Record<(typeof PERMISSIONS)[number], number> = {
+  VIEW: 0,
+  ANALYZE: 1,
+  MANAGE: 2,
+  ADMIN: 3,
 };
 
 @Component({
@@ -60,6 +68,9 @@ const LATER: Record<string, { title: string; body: string }> = {
           <h1 class="mt-1 text-3xl font-semibold">{{ repo.fullName }}</h1>
           <p class="mt-1 font-mono text-xs text-ink-200">
             {{ repo.defaultBranch }} · {{ repo.private ? 'private' : 'public' }} · {{ repo.scmProvider }}
+            @if (repo.permission) {
+              · {{ repo.permission }}
+            }
           </p>
         </div>
 
@@ -87,6 +98,44 @@ const LATER: Record<string, { title: string; body: string }> = {
               <p class="text-sm text-ink-200">No analysis has been requested yet. A FULL run is queued when GitHub connects or a push webhook arrives.</p>
             }
           </div>
+          @if (canAdminRepo()) {
+            <div class="rd-card space-y-4">
+              <h2 class="font-medium">Repository access</h2>
+              <p class="text-sm text-ink-200">
+                Organization owners and admins always have ADMIN. Override MEMBER and VIEWER permissions here.
+              </p>
+              @if (accessError()) {
+                <p class="text-sm text-red-200">{{ accessError() }}</p>
+              }
+              @if (access().length === 0) {
+                <p class="text-sm text-ink-200">No members to show yet.</p>
+              } @else {
+                <div class="space-y-2">
+                  @for (grant of access(); track grant.userId) {
+                    <div class="flex items-center justify-between gap-3 rounded-md border border-ink-400 px-3 py-2">
+                      <div class="min-w-0">
+                        <p class="truncate font-medium">{{ grant.displayName }}</p>
+                        <p class="truncate font-mono text-xs text-ink-200">{{ grant.email }} · {{ grant.role }}</p>
+                      </div>
+                      @if (grant.role === 'OWNER' || grant.role === 'ADMIN') {
+                        <span class="font-mono text-xs text-moss-200">ADMIN</span>
+                      } @else {
+                        <select
+                          class="rd-input py-1"
+                          [value]="grant.permission"
+                          (change)="changeAccess(grant, selectPermission($event))"
+                        >
+                          @for (permission of permissions; track permission) {
+                            <option [value]="permission">{{ permission }}</option>
+                          }
+                        </select>
+                      }
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          }
         } @else if (section() === 'findings') {
           <div class="rd-card space-y-4">
             <h2 class="font-medium">Findings</h2>
@@ -118,9 +167,11 @@ const LATER: Record<string, { title: string; body: string }> = {
           <div class="rd-card space-y-4">
             <div class="flex items-center justify-between gap-3">
               <h2 class="font-medium">Analysis runs</h2>
-              <button class="rd-btn" type="button" [disabled]="requesting()" (click)="requestAnalysis()">
-                {{ requesting() ? 'Queuing…' : 'Request FULL analysis' }}
-              </button>
+              @if (canAnalyze()) {
+                <button class="rd-btn" type="button" [disabled]="requesting()" (click)="requestAnalysis()">
+                  {{ requesting() ? 'Queuing…' : 'Request FULL analysis' }}
+                </button>
+              }
             </div>
             @if (actionError()) {
               <p class="text-sm text-red-200">{{ actionError() }}</p>
@@ -165,11 +216,14 @@ export class RepositoryPage {
   readonly repository = signal<Repository | null>(null);
   readonly analyses = signal<AnalysisRun[]>([]);
   readonly findings = signal<Finding[]>([]);
+  readonly access = signal<RepositoryAccessGrant[]>([]);
   readonly loading = signal(true);
   readonly requesting = signal(false);
   readonly error = signal<string | null>(null);
   readonly findingsError = signal<string | null>(null);
+  readonly accessError = signal<string | null>(null);
   readonly actionError = signal<string | null>(null);
+  readonly permissions = PERMISSIONS;
 
   readonly openFindings = computed(() => this.findings().filter((item) => item.status === 'OPEN'));
   readonly seriousFindings = computed(() =>
@@ -177,9 +231,30 @@ export class RepositoryPage {
   );
   readonly latestAnalysis = computed(() => this.analyses()[0] ?? null);
   readonly later = computed(() => LATER[this.section() ?? ''] ?? LATER['ai']!);
+  readonly canAnalyze = () => {
+    const permission = this.repository()?.permission;
+    return permission ? PERMISSION_RANK[permission] >= PERMISSION_RANK.ANALYZE : false;
+  };
+  readonly canAdminRepo = () => this.repository()?.permission === 'ADMIN';
 
   constructor() {
     void this.load();
+  }
+
+  selectPermission(event: Event): RepositoryAccessGrant['permission'] {
+    return (event.target as HTMLSelectElement).value as RepositoryAccessGrant['permission'];
+  }
+
+  async changeAccess(grant: RepositoryAccessGrant, permission: RepositoryAccessGrant['permission']): Promise<void> {
+    const repo = this.repository();
+    if (!repo) return;
+    this.accessError.set(null);
+    try {
+      const updated = await this.catalog.updateRepositoryAccess(repo.id, grant.userId, permission, repo.organizationId);
+      this.access.set(this.access().map((item) => (item.userId === updated.userId ? updated : item)));
+    } catch (error) {
+      this.accessError.set(errorMessage(error, 'Unable to update repository access.'));
+    }
   }
 
   async requestAnalysis(): Promise<void> {
@@ -211,15 +286,22 @@ export class RepositoryPage {
       const organizationId = this.route.snapshot.queryParamMap.get('organizationId') ?? undefined;
       const repo = await this.catalog.getRepository(this.repositoryId, organizationId);
       this.repository.set(repo);
-      const [analyses, findings] = await Promise.all([
+      const [analyses, findings, access] = await Promise.all([
         this.catalog.listAnalysis(repo.organizationId, repo.id),
         this.catalog.listFindings(repo.organizationId, repo.id).catch((error) => {
           this.findingsError.set(errorMessage(error, 'Unable to load findings.'));
           return [] as Finding[];
         }),
+        repo.permission === 'ADMIN'
+          ? this.catalog.listRepositoryAccess(repo.id, repo.organizationId).catch((error) => {
+              this.accessError.set(errorMessage(error, 'Unable to load repository access.'));
+              return [] as RepositoryAccessGrant[];
+            })
+          : Promise.resolve([] as RepositoryAccessGrant[]),
       ]);
       this.analyses.set(analyses);
       this.findings.set(findings);
+      this.access.set(access);
     } catch (error) {
       this.error.set(errorMessage(error, 'Unable to load this repository.'));
     } finally {
