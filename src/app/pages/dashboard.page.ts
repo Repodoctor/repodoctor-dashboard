@@ -1,7 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../core/auth.service';
-import { ScmService } from '../core/scm.service';
+import { CatalogService } from '../core/catalog.service';
 import { errorMessage } from '../core/error-message';
 import type { Organization } from '../core/models';
 
@@ -61,7 +61,7 @@ import type { Organization } from '../core/models';
 })
 export class DashboardPage {
   readonly auth = inject(AuthService);
-  private readonly scm = inject(ScmService);
+  private readonly catalog = inject(CatalogService);
   readonly organizations = signal<Organization[]>([]);
   readonly repositoryCount = signal(0);
   readonly loading = signal(true);
@@ -74,10 +74,12 @@ export class DashboardPage {
   private async refresh(): Promise<void> {
     this.loading.set(true);
     try {
-      const organizations = await this.auth.listOrganizations();
+      const [organizations, repositories] = await Promise.all([
+        this.auth.listOrganizations(),
+        this.catalog.listMyRepositories().catch(() => []),
+      ]);
       this.organizations.set(organizations);
-      const lists = await Promise.all(organizations.map((org) => this.scm.listRepositories(org.id).catch(() => [])));
-      this.repositoryCount.set(lists.reduce((sum, items) => sum + items.length, 0));
+      this.repositoryCount.set(repositories.length);
     } catch (error) {
       this.error.set(errorMessage(error));
     } finally {

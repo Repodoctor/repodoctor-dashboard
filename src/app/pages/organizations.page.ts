@@ -81,7 +81,7 @@ import type { Organization } from '../core/models';
         <div class="rd-card w-full max-w-md" (click)="$event.stopPropagation()">
           <h2 class="text-lg font-semibold">Delete organization</h2>
           <p class="mt-2 text-sm text-ink-200">
-            Delete <span class="font-medium text-moss-200">{{ org.name }}</span>? This cannot be undone.
+            Delete <span class="font-medium text-moss-200">{{ org.name }}</span>? Repositories, GitHub installations, analysis runs, and findings for this organization are removed. This cannot be undone.
           </p>
           <div class="mt-5 flex justify-end gap-2">
             <button class="rd-btn-ghost" type="button" (click)="pendingDelete.set(null)">Cancel</button>

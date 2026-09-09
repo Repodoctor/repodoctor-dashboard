@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { createClient, type Session as SupabaseSession, type SupabaseClient } from '@supabase/supabase-js';
 import { environment } from '../../environments/environment';
-import type { Organization, Session, User } from './models';
+import type { Organization, OrganizationMember, Session, User } from './models';
 
 const ACCESS_KEY = 'repodoctor.accessToken';
 const REFRESH_KEY = 'repodoctor.refreshToken';
@@ -43,11 +43,19 @@ export class AuthService {
   }
 
   async getAccessToken(): Promise<string | null> {
+    const cached = sessionStorage.getItem(ACCESS_KEY);
+    if (cached) return cached;
     if (this.supabase) {
       const { data } = await this.supabase.auth.getSession();
-      return data.session?.access_token ?? null;
+      if (data.session?.access_token) {
+        sessionStorage.setItem(ACCESS_KEY, data.session.access_token);
+        if (data.session.refresh_token) {
+          sessionStorage.setItem(REFRESH_KEY, data.session.refresh_token);
+        }
+        return data.session.access_token;
+      }
     }
-    return sessionStorage.getItem(ACCESS_KEY);
+    return null;
   }
 
   async signup(input: { email: string; password: string; displayName: string }): Promise<void> {
@@ -118,6 +126,43 @@ export class AuthService {
 
   async deleteOrganization(id: string): Promise<void> {
     await firstValueFrom(this.http.delete(`${environment.apiBaseUrl}/organizations/${id}`));
+  }
+
+  async listMembers(organizationId: string): Promise<OrganizationMember[]> {
+    const response = await firstValueFrom(
+      this.http.get<{ items: OrganizationMember[] }>(
+        `${environment.apiBaseUrl}/organizations/${organizationId}/members`,
+      ),
+    );
+    return response.items ?? [];
+  }
+
+  async addMember(
+    organizationId: string,
+    input: { email: string; role: OrganizationMember['role'] },
+  ): Promise<OrganizationMember> {
+    return firstValueFrom(
+      this.http.post<OrganizationMember>(`${environment.apiBaseUrl}/organizations/${organizationId}/members`, input),
+    );
+  }
+
+  async updateMember(
+    organizationId: string,
+    userId: string,
+    role: OrganizationMember['role'],
+  ): Promise<OrganizationMember> {
+    return firstValueFrom(
+      this.http.patch<OrganizationMember>(
+        `${environment.apiBaseUrl}/organizations/${organizationId}/members/${userId}`,
+        { role },
+      ),
+    );
+  }
+
+  async removeMember(organizationId: string, userId: string): Promise<void> {
+    await firstValueFrom(
+      this.http.delete(`${environment.apiBaseUrl}/organizations/${organizationId}/members/${userId}`),
+    );
   }
 
   async logout(): Promise<void> {

@@ -8,6 +8,13 @@ import type { AnalysisRun, Finding, Repository } from './models';
 export class CatalogService {
   constructor(private readonly http: HttpClient) {}
 
+  async listMyRepositories(): Promise<Repository[]> {
+    const response = await firstValueFrom(
+      this.http.get<{ items: Repository[] }>(`${environment.apiBaseUrl}/repositories`),
+    );
+    return response.items ?? [];
+  }
+
   async getRepository(repositoryId: string, organizationId?: string): Promise<Repository> {
     const params = organizationId ? `?organizationId=${encodeURIComponent(organizationId)}` : '';
     return firstValueFrom(this.http.get<Repository>(`${environment.apiBaseUrl}/repositories/${repositoryId}${params}`));
