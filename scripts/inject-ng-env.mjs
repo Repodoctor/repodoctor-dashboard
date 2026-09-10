@@ -11,7 +11,6 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const gateway = (process.env.NG_APP_GATEWAY_URL || 'http://127.0.0.1:43111').replace(/\/$/, '');
 const supabaseUrl = process.env.NG_APP_SUPABASE_URL || '';
 const supabaseAnonKey = process.env.NG_APP_SUPABASE_ANON_KEY || '';
-const githubAppSlug = process.env.NG_APP_GITHUB_APP_SLUG || 'repodoctor-app';
 
 function render(production) {
   return `export const environment = {
@@ -20,7 +19,6 @@ function render(production) {
   supabaseUrl: ${JSON.stringify(supabaseUrl)},
   supabaseAnonKey: ${JSON.stringify(supabaseAnonKey)},
   apiBaseUrl: ${JSON.stringify(`${gateway}/api/v1`)},
-  githubAppSlug: ${JSON.stringify(githubAppSlug)},
 };
 `;
 }

@@ -4,6 +4,7 @@ import { AuthService } from '../core/auth.service';
 import { ScmService } from '../core/scm.service';
 import { CatalogService } from '../core/catalog.service';
 import { errorMessage } from '../core/error-message';
+import { scmProviderLabel, type ScmProviderName } from '../core/scm-providers';
 import type { Finding, Organization, Repository, ScmInstallation } from '../core/models';
 
 @Component({
@@ -27,14 +28,20 @@ import type { Finding, Organization, Repository, ScmInstallation } from '../core
         </div>
         <div class="grid gap-4 md:grid-cols-2">
           <div class="rd-card space-y-2">
-            <h2 class="font-medium">GitHub</h2>
-            @if (githubInstall(); as install) {
-              <p class="text-sm text-ink-200">
-                Installed on <span class="font-mono text-moss-200">{{ install.accountLogin }}</span>
-              </p>
+            <h2 class="font-medium">Source control</h2>
+            @if (installations().length === 0) {
+              <p class="text-sm text-ink-200">Not connected. Add a provider from Integrations.</p>
             } @else {
-              <p class="text-sm text-ink-200">Not connected. Connect from organization settings.</p>
+              @for (install of installations(); track install.id) {
+                <p class="text-sm text-ink-200">
+                  {{ providerLabel(install.provider) }} as
+                  <span class="font-mono text-moss-200">{{ install.accountLogin }}</span>
+                </p>
+              }
             }
+            <a class="rd-btn-ghost" [routerLink]="['/organizations', current.id, 'settings', 'integrations']">
+              Integrations
+            </a>
           </div>
           <div class="rd-card space-y-2">
             <h2 class="font-medium">Access</h2>
@@ -107,7 +114,9 @@ export class OrganizationDetailPage {
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
 
-  readonly githubInstall = () => this.installations().find((item) => item.provider === 'github') ?? null;
+  providerLabel(provider: ScmProviderName): string {
+    return scmProviderLabel(provider);
+  }
 
   constructor() {
     const id = this.route.snapshot.paramMap.get('organizationId');

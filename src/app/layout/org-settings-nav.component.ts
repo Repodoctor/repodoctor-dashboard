@@ -17,6 +17,13 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
       </a>
       <a
         class="rd-btn-ghost"
+        [routerLink]="['/organizations', organizationId(), 'settings', 'integrations']"
+        routerLinkActive="border-moss-400 text-moss-200"
+      >
+        Integrations
+      </a>
+      <a
+        class="rd-btn-ghost"
         [routerLink]="['/organizations', organizationId(), 'settings', 'members']"
         routerLinkActive="border-moss-400 text-moss-200"
       >

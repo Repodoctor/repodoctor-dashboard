@@ -46,6 +46,11 @@ export const routes: Routes = [
           import('./pages/organization-settings.page').then((m) => m.OrganizationSettingsPage),
       },
       {
+        path: 'organizations/:organizationId/settings/integrations',
+        loadComponent: () =>
+          import('./pages/organization-integrations.page').then((m) => m.OrganizationIntegrationsPage),
+      },
+      {
         path: 'organizations/:organizationId/settings/members',
         loadComponent: () =>
           import('./pages/organization-members.page').then((m) => m.OrganizationMembersPage),
@@ -62,7 +67,7 @@ export const routes: Routes = [
       {
         path: 'settings/scm/:provider/callback',
         loadComponent: () =>
-          import('./pages/github-callback.page').then((m) => m.GithubCallbackPage),
+          import('./pages/scm-callback.page').then((m) => m.ScmCallbackPage),
       },
       {
         path: 'repositories/:repositoryId',

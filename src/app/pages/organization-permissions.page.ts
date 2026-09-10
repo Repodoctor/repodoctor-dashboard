@@ -27,7 +27,7 @@ import type { Organization, Repository } from '../core/models';
         <app-org-settings-nav [organizationId]="current.id" />
         <div class="rd-card space-y-3">
           @if (repositories().length === 0) {
-            <p class="text-sm text-ink-200">No repositories yet. Connect GitHub from Organization settings.</p>
+            <p class="text-sm text-ink-200">No repositories yet. Connect a provider from Integrations.</p>
           } @else {
             @for (repo of repositories(); track repo.id) {
               <div class="flex items-center justify-between gap-3 rounded-md border border-ink-400 px-3 py-2">

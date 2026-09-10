@@ -40,3 +40,11 @@ body {
 .rd-spinner-sm {
   @apply inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent;
 }
+
+.rd-menu {
+  @apply absolute right-0 z-20 mt-1 min-w-[15rem] rounded-lg border border-ink-400 bg-ink-800 py-1 shadow-glow;
+}
+
+.rd-menu-item {
+  @apply flex w-full flex-col items-start gap-0.5 px-3 py-2 text-left text-sm text-moss-100 transition hover:bg-ink-700;
+}
