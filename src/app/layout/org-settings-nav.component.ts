@@ -10,7 +10,7 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
       <a
         class="rd-btn-ghost"
         [routerLink]="['/organizations', organizationId(), 'settings']"
-        routerLinkActive="border-moss-400 text-moss-200"
+        routerLinkActive="border-pulse text-pulse"
         [routerLinkActiveOptions]="{ exact: true }"
       >
         Organization
@@ -18,21 +18,21 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
       <a
         class="rd-btn-ghost"
         [routerLink]="['/organizations', organizationId(), 'settings', 'integrations']"
-        routerLinkActive="border-moss-400 text-moss-200"
+        routerLinkActive="border-pulse text-pulse"
       >
         Integrations
       </a>
       <a
         class="rd-btn-ghost"
         [routerLink]="['/organizations', organizationId(), 'settings', 'members']"
-        routerLinkActive="border-moss-400 text-moss-200"
+        routerLinkActive="border-pulse text-pulse"
       >
         Members
       </a>
       <a
         class="rd-btn-ghost"
         [routerLink]="['/organizations', organizationId(), 'settings', 'permissions']"
-        routerLinkActive="border-moss-400 text-moss-200"
+        routerLinkActive="border-pulse text-pulse"
       >
         Permissions
       </a>

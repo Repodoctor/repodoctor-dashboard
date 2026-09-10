@@ -7,7 +7,7 @@ import { AuthService } from '../core/auth.service';
   imports: [RouterLink],
   template: `
     <div
-      class="overflow-hidden bg-[radial-gradient(ellipse_80%_50%_at_50%_-10%,rgba(124,255,154,0.16),transparent_55%),radial-gradient(ellipse_40%_30%_at_100%_20%,rgba(245,165,36,0.06),transparent_50%),#070b08]"
+      class="overflow-hidden bg-[radial-gradient(ellipse_80%_50%_at_50%_-10%,rgba(62,224,178,0.16),transparent_55%),radial-gradient(ellipse_40%_30%_at_100%_20%,rgba(245,165,36,0.06),transparent_50%),#0b0f14]"
     >
       <section
         class="relative grid min-h-screen items-end gap-8 px-4 pb-12 pt-4 sm:gap-12 sm:px-6 sm:pb-16 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] lg:items-center lg:gap-16 lg:px-12 lg:pb-16"
@@ -47,10 +47,10 @@ import { AuthService } from '../core/auth.service';
 
         <div class="relative min-h-72 animate-home-rise-delayed sm:min-h-80 lg:min-h-[28rem]" aria-hidden="true">
           <div
-            class="relative h-full min-h-[inherit] overflow-hidden rounded-2xl border border-ink-400 bg-[linear-gradient(160deg,rgba(16,24,18,0.95),rgba(7,11,8,0.98))] shadow-glow"
+            class="relative h-full min-h-[inherit] overflow-hidden rounded-2xl border border-line bg-[linear-gradient(160deg,rgba(18,24,31,0.95),rgba(11,15,20,0.98))] shadow-glow"
           >
             <div
-              class="pointer-events-none absolute -top-[40%] -left-[20%] h-[70%] w-[70%] animate-home-drift rounded-full bg-[radial-gradient(circle,rgba(124,255,154,0.18),transparent_65%)]"
+              class="pointer-events-none absolute -top-[40%] -left-[20%] h-[70%] w-[70%] animate-home-drift rounded-full bg-[radial-gradient(circle,rgba(62,224,178,0.18),transparent_65%)]"
             ></div>
             <div class="absolute inset-x-0 h-0.5 animate-home-scan bg-gradient-to-r from-transparent via-moss-400 to-transparent opacity-55"></div>
             <div class="flex items-center gap-2 border-b border-ink-400 px-4 py-3.5">

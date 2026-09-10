@@ -38,7 +38,7 @@ import type { Organization } from '../core/models';
                 <p class="font-mono text-xs text-ink-200">{{ org.slug }} · {{ org.role }}</p>
               </a>
               @if (org.role === 'OWNER' || org.role === 'ADMIN') {
-                <div class="relative">
+                <div class="relative z-[70]">
                   <button
                     class="rounded-md p-2 text-ink-200 hover:bg-ink-600 hover:text-moss-300"
                     type="button"
@@ -54,7 +54,7 @@ import type { Organization } from '../core/models';
                     </svg>
                   </button>
                   @if (menuId() === org.id) {
-                    <div class="absolute right-0 z-20 mt-1 min-w-36 overflow-hidden rounded-md border border-ink-400 bg-ink-800 py-1 shadow-glow">
+                    <div class="rd-menu min-w-36">
                       <a
                         class="block w-full px-3 py-2 text-left text-sm text-ink-100 hover:bg-ink-600"
                         [routerLink]="['/organizations', org.id, 'settings']"

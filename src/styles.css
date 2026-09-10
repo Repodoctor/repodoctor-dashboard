@@ -14,27 +14,27 @@ body {
 }
 
 body {
-  @apply bg-ink text-moss-100 antialiased;
+  @apply bg-ink text-cloud antialiased;
 }
 
 .rd-input {
-  @apply w-full rounded-md border border-ink-400 bg-ink-800 px-3 py-2 text-sm text-moss-100 placeholder:text-ink-300 focus:border-moss-400 focus:outline-none focus:ring-1 focus:ring-moss-400;
+  @apply w-full rounded-md border border-line bg-panel px-3 py-2 text-sm text-cloud placeholder:text-mute focus:border-pulse focus:outline-none focus:ring-1 focus:ring-pulse;
 }
 
 .rd-btn {
-  @apply inline-flex items-center justify-center rounded-md bg-moss-400 px-4 py-2 text-sm font-semibold text-ink-900 transition hover:bg-moss-300 disabled:cursor-not-allowed disabled:opacity-50;
+  @apply inline-flex items-center justify-center rounded-md bg-pulse px-4 py-2 text-sm font-semibold text-ink transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50;
 }
 
 .rd-btn-ghost {
-  @apply inline-flex items-center justify-center rounded-md border border-ink-400 px-4 py-2 text-sm font-medium text-moss-100 transition hover:border-moss-400 hover:text-moss-300;
+  @apply inline-flex items-center justify-center rounded-md border border-line bg-panel px-4 py-2 text-sm font-medium text-cloud transition hover:border-pulse/45 hover:text-cloud;
 }
 
 .rd-card {
-  @apply rounded-xl border border-ink-400 bg-ink-700/80 p-5 shadow-glow;
+  @apply rounded-xl border border-line bg-panel p-5;
 }
 
 .rd-spinner {
-  @apply inline-block h-8 w-8 animate-spin rounded-full border-2 border-ink-400 border-t-moss-400;
+  @apply inline-block h-8 w-8 animate-spin rounded-full border-2 border-line border-t-pulse;
 }
 
 .rd-spinner-sm {
@@ -42,9 +42,9 @@ body {
 }
 
 .rd-menu {
-  @apply absolute right-0 z-50 mt-1 min-w-[15rem] rounded-lg border border-ink-400 bg-ink-800 py-1 shadow-glow;
+  @apply absolute right-0 z-[80] mt-1 min-w-[15rem] rounded-lg border border-line bg-panel py-1 shadow-glow;
 }
 
 .rd-menu-item {
-  @apply flex w-full flex-col items-start gap-0.5 px-3 py-2 text-left text-sm text-moss-100 transition hover:bg-ink-700 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent;
+  @apply flex w-full flex-col items-start gap-0.5 px-3 py-2 text-left text-sm text-cloud transition hover:bg-line disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent;
 }

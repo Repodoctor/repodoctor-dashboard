@@ -45,7 +45,7 @@ interface ProviderRow {
           <div class="flex items-center justify-between gap-3">
             <h2 class="text-sm font-medium text-ink-200">Source Control</h2>
             @if (canManage()) {
-              <div class="relative">
+              <div class="relative z-[70]">
                 <button class="rd-btn-ghost" type="button" (click)="toggleAdd($event)">
                   Add Provider
                   <span class="ml-2 text-xs text-ink-300">▾</span>
@@ -70,7 +70,7 @@ interface ProviderRow {
               </div>
             }
           </div>
-          <div class="divide-y divide-ink-400 overflow-visible rounded-xl border border-ink-400 bg-ink-700/80">
+          <div class="divide-y divide-line overflow-visible rounded-xl border border-line bg-panel">
             @if (providerRows().length === 0) {
               <p class="px-5 py-8 text-sm text-ink-300">No source-control accounts yet. Add a provider to import repositories.</p>
             }
