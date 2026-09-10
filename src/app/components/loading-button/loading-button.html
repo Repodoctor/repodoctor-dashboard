@@ -1,0 +1,13 @@
+    <button
+      mat-flat-button
+      [class]="hostClass()"
+      [disabled]="disabled() || loading()"
+      [attr.type]="type()"
+      [color]="color()"
+    >
+      @if (loading()) {
+        <mat-progress-spinner class="mr-2" diameter="18" mode="indeterminate" />
+      }
+      {{ loading() ? loadingLabel() : label() }}
+    </button>
+  

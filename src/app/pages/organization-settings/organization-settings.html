@@ -1,0 +1,48 @@
+    <div class="space-y-6">
+      <app-busy-overlay [message]="saving() ? 'Processing…' : null" />
+      @if (loading()) {
+        <mat-card appearance="outlined">
+          <mat-card-content>
+            <app-loading-state label="Loading details…" />
+          </mat-card-content>
+        </mat-card>
+      } @else {
+        @if (org(); as current) {
+        <mat-card appearance="outlined">
+          <mat-card-header>
+            <mat-card-title>Details</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            @if (canAdmin()) {
+              <form class="flex flex-wrap items-start gap-3" [formGroup]="nameForm" (ngSubmit)="saveName()">
+                <mat-form-field appearance="outline" subscriptSizing="dynamic" class="min-w-[16rem] flex-1">
+                  <mat-label>Name</mat-label>
+                  <input matInput formControlName="name" />
+                </mat-form-field>
+                <button mat-flat-button class="ml-auto" type="submit" [disabled]="nameForm.invalid || saving()">
+                  {{ saving() ? 'Saving…' : 'Save' }}
+                </button>
+              </form>
+            } @else {
+              <p class="text-sm text-ink-200">{{ current.name }} · {{ current.slug }}</p>
+              <p class="text-xs text-ink-300">Only OWNER or ADMIN can rename the organization.</p>
+            }
+          </mat-card-content>
+        </mat-card>
+        @if (canAdmin()) {
+          <mat-card appearance="outlined">
+            <mat-card-header>
+              <mat-card-title class="text-red-200">Delete organization</mat-card-title>
+            </mat-card-header>
+            <mat-card-content class="space-y-4">
+              <p class="text-sm text-ink-200">
+                Removes repositories, analysis, findings, and every source-control installation. OWNER and ADMIN can do this.
+              </p>
+              <button mat-flat-button color="warn" type="button" (click)="askDelete()">Delete organization</button>
+            </mat-card-content>
+          </mat-card>
+        }
+        }
+      }
+    </div>
+  

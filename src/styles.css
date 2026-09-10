@@ -83,8 +83,8 @@ body {
 }
 
 .mat-mdc-card.mat-mdc-card-outlined {
-  --mdc-outlined-card-container-color: #12181f;
-  --mdc-outlined-card-outline-color: #1e2a36;
+  --mat-card-outlined-container-color: #12181f;
+  --mat-card-outlined-outline-color: #1e2a36;
 }
 
 .mat-mdc-card-header {
@@ -101,12 +101,12 @@ body {
 }
 
 .rd-org-tabs {
-  --mat-tab-header-active-label-text-color: #3ee0b2;
-  --mat-tab-header-active-focus-label-text-color: #3ee0b2;
-  --mat-tab-header-active-hover-label-text-color: #3ee0b2;
-  --mat-tab-header-active-indicator-color: #3ee0b2;
-  --mat-tab-header-inactive-label-text-color: #8b9bb0;
-  --mdc-tab-indicator-active-indicator-color: #3ee0b2;
+  --mat-tab-active-label-text-color: #3ee0b2;
+  --mat-tab-active-focus-label-text-color: #3ee0b2;
+  --mat-tab-active-hover-label-text-color: #3ee0b2;
+  --mat-tab-active-indicator-color: #3ee0b2;
+  --mat-tab-inactive-label-text-color: #8b9bb0;
+  --mat-tab-active-indicator-color: #3ee0b2;
 }
 
 .rd-org-tabs .mat-mdc-tab-link.mdc-tab--active {

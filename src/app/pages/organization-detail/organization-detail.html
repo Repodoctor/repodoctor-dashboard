@@ -1,0 +1,70 @@
+    <div class="space-y-6">
+      @if (loading()) {
+        <mat-card appearance="outlined">
+          <mat-card-content>
+            <app-loading-state label="Loading overview…" />
+          </mat-card-content>
+        </mat-card>
+      } @else {
+        @if (org(); as current) {
+        <div class="grid gap-4 md:grid-cols-2">
+          <mat-card appearance="outlined">
+            <mat-card-header>
+              <mat-card-title>Source control</mat-card-title>
+            </mat-card-header>
+            <mat-card-content class="space-y-2">
+              @if (installations().length === 0) {
+                <p class="text-sm text-ink-200">Not connected. Add a provider from Integrations.</p>
+              } @else {
+                @for (install of installations(); track install.id) {
+                  <p class="text-sm text-ink-200">
+                    {{ providerLabel(install.provider) }} as
+                    <span class="font-mono text-moss-200">{{ install.accountLogin }}</span>
+                  </p>
+                }
+              }
+              @if (canAdmin()) {
+                <a mat-stroked-button [routerLink]="['/organizations', current.id, 'integrations']">Integrations</a>
+              }
+            </mat-card-content>
+          </mat-card>
+          <mat-card appearance="outlined">
+            <mat-card-header>
+              <mat-card-title>Details</mat-card-title>
+            </mat-card-header>
+            <mat-card-content class="space-y-2">
+              <p class="text-sm text-ink-200">{{ current.name }}</p>
+              <p class="font-mono text-xs text-ink-300">{{ current.slug }} · {{ current.role }}</p>
+              <a mat-stroked-button [routerLink]="['/organizations', current.id, 'details']">Edit details</a>
+            </mat-card-content>
+          </mat-card>
+        </div>
+        <mat-card appearance="outlined">
+          <mat-card-content>
+            <div class="mb-4 flex items-center justify-between gap-3">
+              <h2 class="text-lg font-medium">Repositories</h2>
+              <a mat-stroked-button [routerLink]="['/organizations', current.id, 'repositories']">View all</a>
+            </div>
+            @if (repositories().length === 0) {
+              <p class="text-sm text-ink-200">No repositories connected yet.</p>
+            } @else {
+              <app-repository-table [repositories]="repositories()" (rowClick)="openRepository($event)" />
+            }
+          </mat-card-content>
+        </mat-card>
+        <mat-card appearance="outlined">
+          <mat-card-header>
+            <mat-card-title>Findings</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            @if (findings().length === 0) {
+              <p class="text-sm text-ink-200">No findings yet for this organization.</p>
+            } @else {
+              <app-finding-table [findings]="findings()" (rowClick)="openFinding($event)" />
+            }
+          </mat-card-content>
+        </mat-card>
+        }
+      }
+    </div>
+  

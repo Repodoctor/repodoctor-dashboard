@@ -1,0 +1,75 @@
+    <div class="space-y-6">
+      @if (loading()) {
+        <mat-card appearance="outlined">
+          <mat-card-content>
+            <app-loading-state label="Loading permissions…" />
+          </mat-card-content>
+        </mat-card>
+      } @else {
+        @if (org()) {
+        <mat-card appearance="outlined">
+          <mat-card-header>
+            <mat-card-title>Repository permissions</mat-card-title>
+          </mat-card-header>
+          <mat-card-content class="space-y-4">
+            <p class="text-sm text-ink-200">
+              Org roles set the default: VIEWER can VIEW, MEMBER can ANALYZE, ADMIN and OWNER have ADMIN.
+              Overrides here change what a member can do on one repository.
+            </p>
+            <ul class="list-disc space-y-1 pl-5 text-xs text-ink-300">
+              <li><span class="font-mono text-moss-200">VIEW</span> — read findings and repository details</li>
+              <li><span class="font-mono text-moss-200">ANALYZE</span> — request analysis runs</li>
+              <li><span class="font-mono text-moss-200">MANAGE</span> — reserved for later repository settings</li>
+              <li><span class="font-mono text-moss-200">ADMIN</span> — change access grants</li>
+            </ul>
+            @if (rows().length === 0) {
+              <p class="text-sm text-ink-200">No repositories yet. Connect a provider from Integrations.</p>
+            } @else {
+              <div class="rd-table-wrap rd-table-static">
+                <table mat-table [dataSource]="tableData">
+                  <ng-container matColumnDef="repository">
+                    <th mat-header-cell *matHeaderCellDef>Repository</th>
+                    <td mat-cell *matCellDef="let row">{{ row.fullName }}</td>
+                  </ng-container>
+                  <ng-container matColumnDef="member">
+                    <th mat-header-cell *matHeaderCellDef>Member</th>
+                    <td mat-cell *matCellDef="let row">
+                      <p>{{ row.displayName }}</p>
+                      <p class="font-mono text-xs text-ink-300">{{ row.email }} · {{ row.role }}</p>
+                    </td>
+                  </ng-container>
+                  <ng-container matColumnDef="permission">
+                    <th mat-header-cell *matHeaderCellDef>Permission</th>
+                    <td mat-cell *matCellDef="let row">
+                      @if (canEdit(row)) {
+                        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="!w-36">
+                          <mat-select [value]="draftPermission(row)" (selectionChange)="setDraft(row, $event.value)">
+                            @for (permission of permissions; track permission) {
+                              <mat-option [value]="permission">{{ permission }}</mat-option>
+                            }
+                          </mat-select>
+                        </mat-form-field>
+                      } @else {
+                        <span class="font-mono text-xs text-moss-200">{{ row.permission }}</span>
+                      }
+                    </td>
+                  </ng-container>
+                  <tr mat-header-row *matHeaderRowDef="columns"></tr>
+                  <tr mat-row *matRowDef="let row; columns: columns"></tr>
+                </table>
+                <mat-paginator [pageSize]="10" [pageSizeOptions]="[5, 10, 25]" showFirstLastButtons />
+              </div>
+              @if (canAdmin()) {
+                <div class="flex justify-end">
+                  <button mat-flat-button type="button" [disabled]="!dirty() || saving()" (click)="save()">
+                    {{ saving() ? 'Saving…' : 'Save permissions' }}
+                  </button>
+                </div>
+              }
+            }
+          </mat-card-content>
+        </mat-card>
+        }
+      }
+    </div>
+  

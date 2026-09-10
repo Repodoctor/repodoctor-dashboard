@@ -1,0 +1,10 @@
+    <div class="space-y-6">
+      <app-page-header
+        eyebrow="Organization"
+        [title]="org()?.name ?? '…'"
+        [subtitle]="(org()?.slug ?? '') + (org()?.role ? ' · ' + org()?.role : '')"
+      />
+      <app-org-settings-nav [organizationId]="organizationId" [role]="org()?.role" />
+      <router-outlet />
+    </div>
+  

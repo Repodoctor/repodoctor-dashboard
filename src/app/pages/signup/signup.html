@@ -1,0 +1,63 @@
+    <app-auth-shell>
+      <form class="space-y-4" [formGroup]="form" (ngSubmit)="submit()" autocomplete="off">
+        <h1 class="text-3xl font-semibold">Create your workspace account</h1>
+        @if (inviteOrg()) {
+          <p class="rounded-md border border-moss-500/30 bg-ink-800 px-3 py-2 text-sm text-ink-200">
+            You were invited to <span class="text-moss-200">{{ inviteOrg() }}</span> as {{ inviteRole() }}.
+            @if (finishingInvite()) {
+              This email is already confirmed. Choose a password or continue with GitHub to finish.
+            } @else {
+              Email is filled from the invite. Choose a password or continue with GitHub.
+            }
+          </p>
+        }
+        <mat-form-field appearance="outline">
+          <mat-label>Display name</mat-label>
+          <input
+            matInput
+            formControlName="displayName"
+            name="rd-signup-display-name"
+            autocomplete="off"
+            autocorrect="off"
+            autocapitalize="none"
+            spellcheck="false"
+            [readOnly]="locked().displayName"
+            (mousedown)="unlock('displayName')"
+            (focus)="unlock('displayName')"
+          />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Email</mat-label>
+          <input
+            matInput
+            type="email"
+            formControlName="email"
+            name="rd-signup-email"
+            autocomplete="off"
+            autocorrect="off"
+            autocapitalize="none"
+            spellcheck="false"
+            [readOnly]="locked().email || !!inviteToken()"
+            (mousedown)="unlock('email')"
+            (focus)="unlock('email')"
+          />
+        </mat-form-field>
+        <app-password-fields
+          [lockUntilFocus]="true"
+          passwordName="rd-signup-password"
+          confirmName="rd-signup-confirm-password"
+        />
+        <app-loading-button
+          hostClass="w-full"
+          [disabled]="form.invalid"
+          [loading]="loading()"
+          [label]="inviteToken() ? 'Create account' : 'Sign up'"
+          [loadingLabel]="inviteToken() ? 'Saving…' : 'Creating account…'"
+        />
+        <app-github-button [disabled]="loading()" (pressed)="github()" />
+        @if (!inviteToken()) {
+          <a routerLink="/login" class="block text-sm text-ink-200 hover:text-moss-300">Already have an account</a>
+        }
+      </form>
+    </app-auth-shell>
+  

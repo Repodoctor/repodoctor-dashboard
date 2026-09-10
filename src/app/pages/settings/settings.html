@@ -1,0 +1,94 @@
+    <div class="space-y-6">
+      <app-page-header
+        eyebrow="Account"
+        title="Settings"
+        subtitle="Personal profile and account deletion. Organization settings live on each organization."
+      />
+      <mat-card appearance="outlined">
+        <mat-card-header>
+          <mat-card-title>Profile</mat-card-title>
+        </mat-card-header>
+        <mat-card-content class="space-y-4">
+          <div class="flex flex-wrap items-center gap-4">
+            <app-avatar
+              [url]="auth.avatarUrl()"
+              [name]="auth.user()?.displayName"
+              [email]="auth.user()?.email"
+              size="lg"
+            />
+            <div class="space-y-2">
+              <p class="font-medium">Profile photo</p>
+              <p class="text-sm text-ink-200">Photo upload will be available here later. GitHub photos appear automatically.</p>
+              <button mat-stroked-button type="button" disabled>Change photo</button>
+            </div>
+          </div>
+          <p class="font-mono text-sm text-ink-200">{{ auth.user()?.email }}</p>
+          <form class="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-start" [formGroup]="profileForm" (ngSubmit)="saveProfile()">
+            <mat-form-field appearance="outline" subscriptSizing="dynamic">
+              <mat-label>Display name</mat-label>
+              <input matInput formControlName="displayName" />
+            </mat-form-field>
+            <button mat-flat-button class="sm:mt-1" type="submit" [disabled]="profileForm.invalid || saving()">
+              {{ saving() ? 'Saving…' : 'Save' }}
+            </button>
+          </form>
+        </mat-card-content>
+      </mat-card>
+      <mat-card appearance="outlined">
+        <mat-card-header>
+          <mat-card-title>Password</mat-card-title>
+        </mat-card-header>
+        <mat-card-content class="space-y-4">
+          @if (!changingPassword()) {
+            <button mat-stroked-button type="button" (click)="changingPassword.set(true)">Change password</button>
+          } @else {
+            <form class="space-y-3" [formGroup]="passwordForm" (ngSubmit)="savePassword()">
+              <app-password-fields
+                [showCurrent]="true"
+                passwordLabel="New password"
+                confirmLabel="Confirm new password"
+              />
+              <div class="flex flex-wrap gap-2">
+                <app-loading-button
+                  [disabled]="passwordForm.invalid"
+                  [loading]="savingPassword()"
+                  label="Save"
+                />
+                <button mat-stroked-button type="button" (click)="cancelPasswordChange()">Cancel</button>
+              </div>
+            </form>
+          }
+        </mat-card-content>
+      </mat-card>
+      <mat-card appearance="outlined">
+        <mat-card-header>
+          <mat-card-title>Organizations you belong to</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          @if (organizations().length === 0) {
+            <p class="text-sm text-ink-200">You are not in any organizations.</p>
+          } @else {
+            <app-organization-table [organizations]="organizations()" (rowClick)="openOrgSettings($event)" />
+          }
+        </mat-card-content>
+      </mat-card>
+      <mat-card appearance="outlined">
+        <mat-card-header>
+          <mat-card-title class="text-red-200">Delete account</mat-card-title>
+        </mat-card-header>
+        <mat-card-content class="space-y-4">
+          <p class="text-sm text-ink-200">
+            This signs you out and removes your RepoDoctor user. Organizations you <span class="font-medium">own</span>
+            are deleted with their repositories, findings, and GitHub App installations. Organizations where you are only
+            ADMIN, MEMBER, or VIEWER stay; you are removed from them.
+          </p>
+          @if (ownedOrgs().length > 0) {
+            <p class="text-sm text-red-200">Owned organizations that will be deleted: {{ ownedNames() }}</p>
+          }
+          <button mat-flat-button color="warn" type="button" [disabled]="deleting()" (click)="askDeleteAccount()">
+            {{ deleting() ? 'Deleting…' : 'Delete my account' }}
+          </button>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  

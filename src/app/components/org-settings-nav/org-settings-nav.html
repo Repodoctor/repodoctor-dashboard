@@ -1,0 +1,13 @@
+    <nav mat-tab-nav-bar [tabPanel]="panel" [mat-stretch-tabs]="false" class="rd-org-tabs">
+      @for (tab of tabs(); track tab.id) {
+        <a
+          mat-tab-link
+          [routerLink]="tab.id === 'overview' ? ['/organizations', organizationId()] : ['/organizations', organizationId(), tab.id]"
+          [active]="isTab(tab.id)"
+        >
+          {{ tab.label }}
+        </a>
+      }
+    </nav>
+    <mat-tab-nav-panel #panel />
+  

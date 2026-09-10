@@ -1,0 +1,8 @@
+    @if (url()) {
+      <img [class]="imageClass()" [src]="url()" alt="" />
+    } @else {
+      <span [class]="fallbackClass()">
+        {{ initials() }}
+      </span>
+    }
+  
