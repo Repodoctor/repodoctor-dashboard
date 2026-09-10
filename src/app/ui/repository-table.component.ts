@@ -7,7 +7,7 @@ import type { Repository } from '../core/models';
   selector: 'app-repository-table',
   imports: [MatTableModule, MatPaginatorModule],
   template: `
-    <div class="rd-table-wrap">
+    <div class="rd-table-wrap" [class.rd-table-static]="!clickable()">
       <table mat-table [dataSource]="dataSource">
         <ng-container matColumnDef="fullName">
           <th mat-header-cell *matHeaderCellDef>Repository</th>
@@ -32,7 +32,12 @@ import type { Repository } from '../core/models';
           </td>
         </ng-container>
         <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-        <tr mat-row *matRowDef="let row; columns: displayedColumns" (click)="rowClick.emit(row)"></tr>
+        <tr
+          mat-row
+          *matRowDef="let row; columns: displayedColumns"
+          [class.cursor-pointer]="clickable()"
+          (click)="clickable() && rowClick.emit(row)"
+        ></tr>
       </table>
       <mat-paginator [pageSize]="10" [pageSizeOptions]="[5, 10, 25]" showFirstLastButtons />
     </div>
@@ -40,6 +45,7 @@ import type { Repository } from '../core/models';
 })
 export class RepositoryTableComponent {
   readonly repositories = input.required<Repository[]>();
+  readonly clickable = input(true);
   readonly rowClick = output<Repository>();
   readonly displayedColumns = ['fullName', 'branch', 'visibility', 'permission'];
   readonly dataSource = new MatTableDataSource<Repository>([]);

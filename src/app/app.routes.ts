@@ -27,6 +27,10 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/reset-password.page').then((m) => m.ResetPasswordPage),
   },
   {
+    path: 'auth/callback',
+    loadComponent: () => import('./pages/auth-callback.page').then((m) => m.AuthCallbackPage),
+  },
+  {
     path: '',
     canActivate: [authGuard],
     loadComponent: () => import('./layout/shell.component').then((m) => m.ShellComponent),
@@ -42,31 +46,42 @@ export const routes: Routes = [
       {
         path: 'organizations/:organizationId',
         loadComponent: () =>
-          import('./pages/organization-detail.page').then((m) => m.OrganizationDetailPage),
-      },
-      {
-        path: 'organizations/:organizationId/settings',
-        loadComponent: () =>
-          import('./pages/organization-settings.page').then((m) => m.OrganizationSettingsPage),
-      },
-      {
-        path: 'organizations/:organizationId/settings/integrations',
-        loadComponent: () =>
-          import('./pages/organization-integrations.page').then((m) => m.OrganizationIntegrationsPage),
-      },
-      {
-        path: 'organizations/:organizationId/settings/members',
-        loadComponent: () =>
-          import('./pages/organization-members.page').then((m) => m.OrganizationMembersPage),
-      },
-      {
-        path: 'organizations/:organizationId/settings/permissions',
-        loadComponent: () =>
-          import('./pages/organization-permissions.page').then((m) => m.OrganizationPermissionsPage),
-      },
-      {
-        path: 'organizations/:organizationId/repositories',
-        loadComponent: () => import('./pages/repositories.page').then((m) => m.RepositoriesPage),
+          import('./layout/organization-shell.component').then((m) => m.OrganizationShellComponent),
+        children: [
+          {
+            path: '',
+            loadComponent: () =>
+              import('./pages/organization-detail.page').then((m) => m.OrganizationDetailPage),
+          },
+          {
+            path: 'details',
+            loadComponent: () =>
+              import('./pages/organization-settings.page').then((m) => m.OrganizationSettingsPage),
+          },
+          {
+            path: 'integrations',
+            loadComponent: () =>
+              import('./pages/organization-integrations.page').then((m) => m.OrganizationIntegrationsPage),
+          },
+          {
+            path: 'members',
+            loadComponent: () =>
+              import('./pages/organization-members.page').then((m) => m.OrganizationMembersPage),
+          },
+          {
+            path: 'permissions',
+            loadComponent: () =>
+              import('./pages/organization-permissions.page').then((m) => m.OrganizationPermissionsPage),
+          },
+          {
+            path: 'repositories',
+            loadComponent: () => import('./pages/repositories.page').then((m) => m.RepositoriesPage),
+          },
+          { path: 'settings', redirectTo: 'details', pathMatch: 'full' },
+          { path: 'settings/integrations', redirectTo: 'integrations' },
+          { path: 'settings/members', redirectTo: 'members' },
+          { path: 'settings/permissions', redirectTo: 'permissions' },
+        ],
       },
       {
         path: 'settings/scm/:provider/callback',

@@ -48,6 +48,9 @@ import { errorMessage, isHttpError } from '../core/error-message';
             }
             {{ loading() ? 'Signing in…' : 'Sign in' }}
           </button>
+          <button mat-stroked-button class="w-full" type="button" [disabled]="loading()" (click)="github()">
+            Continue with GitHub
+          </button>
           <div class="flex justify-between text-sm text-ink-200">
             <a routerLink="/signup" [queryParams]="inviteToken ? { invite: inviteToken } : {}" class="hover:text-moss-300">Create account</a>
             <a routerLink="/forgot-password" class="hover:text-moss-300">Forgot password</a>
@@ -82,6 +85,21 @@ export class LoginPage {
           this.inviteHint.set(`Join ${preview.organizationName} as ${preview.role} after you sign in.`);
         })
         .catch(() => undefined);
+    }
+  }
+
+  async github(): Promise<void> {
+    this.loading.set(true);
+    try {
+      await this.auth.signInWithGithub({
+        invite: this.inviteToken || undefined,
+        next: this.route.snapshot.queryParamMap.get('next') ?? undefined,
+      });
+    } catch (error) {
+      this.loading.set(false);
+      if (!isHttpError(error)) {
+        this.toast.show(errorMessage(error, 'Unable to start GitHub sign-in'), 'error');
+      }
     }
   }
 

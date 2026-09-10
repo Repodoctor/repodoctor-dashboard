@@ -170,7 +170,7 @@ export class SettingsPage {
   }
 
   openOrgSettings(org: Organization): void {
-    void this.router.navigate(['/organizations', org.id, 'settings']);
+    void this.router.navigate(['/organizations', org.id]);
   }
 
   async saveProfile(): Promise<void> {

@@ -29,8 +29,8 @@ import type { Organization } from '../core/models';
           </td>
         </ng-container>
         <ng-container matColumnDef="actions">
-          <th mat-header-cell *matHeaderCellDef></th>
-          <td mat-cell *matCellDef="let org">
+          <th mat-header-cell *matHeaderCellDef class="rd-col-end"></th>
+          <td mat-cell *matCellDef="let org" class="rd-col-end">
             @if (org.role === 'OWNER' || org.role === 'ADMIN') {
               <button
                 mat-icon-button
@@ -42,7 +42,6 @@ import type { Organization } from '../core/models';
                 <mat-icon>more_vert</mat-icon>
               </button>
               <mat-menu #menu="matMenu">
-                <button mat-menu-item type="button" (click)="settings.emit(org)">Settings</button>
                 <button mat-menu-item type="button" (click)="remove.emit(org)">Delete</button>
               </mat-menu>
             }

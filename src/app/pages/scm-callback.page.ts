@@ -109,7 +109,7 @@ export class ScmCallbackPage {
         window.opener.postMessage({ type: 'repodoctor-scm-connected', organizationId }, origin);
       } catch {
         try {
-          window.opener.location.assign(`/organizations/${organizationId}/settings/integrations`);
+          window.opener.location.assign(`/organizations/${organizationId}/integrations`);
         } catch {
           // Fall through to close or in-tab navigation.
         }
@@ -119,7 +119,7 @@ export class ScmCallbackPage {
       window.close();
       return;
     }
-    await this.router.navigate(['/organizations', organizationId, 'settings', 'integrations']);
+    await this.router.navigate(['/organizations', organizationId, 'integrations']);
   }
 
   private async start(): Promise<void> {

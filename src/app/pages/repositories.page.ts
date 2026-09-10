@@ -13,10 +13,6 @@ import { RepositoryTableComponent } from '../ui/repository-table.component';
   imports: [RouterLink, MatButtonModule, MatCardModule, LoadingStateComponent, RepositoryTableComponent],
   template: `
     <div class="space-y-6">
-      <div>
-        <p class="text-xs uppercase tracking-[0.2em] text-moss-400">Organization</p>
-        <h1 class="text-3xl font-semibold">Repositories</h1>
-      </div>
       @if (loading()) {
         <mat-card appearance="outlined">
           <mat-card-content>

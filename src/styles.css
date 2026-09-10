@@ -112,3 +112,9 @@ body {
 .rd-org-tabs .mat-mdc-tab-link.mdc-tab--active {
   color: #3ee0b2;
 }
+
+.rd-col-end {
+  text-align: right;
+  width: 1%;
+  white-space: nowrap;
+}

@@ -62,6 +62,20 @@ export class AuthService {
     return this.readyPromise;
   }
 
+  async waitForSession(timeoutMs = 4000): Promise<boolean> {
+    await this.whenReady();
+    if (this.isAuthenticated()) return true;
+    if (!this.supabase) return false;
+    const start = Date.now();
+    while (Date.now() - start < timeoutMs) {
+      const { data } = await this.supabase.auth.getSession();
+      this.applySupabaseSession(data.session);
+      if (data.session) return true;
+      await new Promise((resolve) => setTimeout(resolve, 200));
+    }
+    return this.isAuthenticated();
+  }
+
   async getAccessToken(): Promise<string | null> {
     const cached = sessionStorage.getItem(ACCESS_KEY);
     if (cached) return cached;
@@ -78,7 +92,7 @@ export class AuthService {
     return null;
   }
 
-  async signup(input: { email: string; password: string; displayName: string }): Promise<void> {
+  async signup(input: { email: string; password: string; displayName: string }, options?: { keepSession?: boolean }): Promise<void> {
     if (this.supabase) {
       const { data, error } = await this.supabase.auth.signUp({
         email: input.email,
@@ -86,6 +100,10 @@ export class AuthService {
         options: { data: { display_name: input.displayName } },
       });
       if (error) throw error;
+      if (data.session && options?.keepSession) {
+        this.applySupabaseSession(data.session);
+        return;
+      }
       if (data.session) {
         await this.supabase.auth.signOut();
       }
@@ -93,6 +111,34 @@ export class AuthService {
       return;
     }
     await firstValueFrom(this.http.post<Session>(`${environment.apiBaseUrl}/auth/signup`, input));
+  }
+
+  async signInWithGithub(options?: { invite?: string; next?: string }): Promise<void> {
+    if (!this.supabase) {
+      throw new Error('GitHub sign-in requires Supabase Auth.');
+    }
+    const params = new URLSearchParams();
+    if (options?.invite) {
+      sessionStorage.setItem(PENDING_INVITE_KEY, options.invite);
+      params.set('invite', options.invite);
+    }
+    if (options?.next) params.set('next', options.next);
+    const query = params.toString();
+    const { error } = await this.supabase.auth.signInWithOAuth({
+      provider: 'github',
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback${query ? `?${query}` : ''}`,
+      },
+    });
+    if (error) throw error;
+  }
+
+  pendingInviteToken(): string | null {
+    return sessionStorage.getItem(PENDING_INVITE_KEY);
+  }
+
+  clearPendingInvite(): void {
+    sessionStorage.removeItem(PENDING_INVITE_KEY);
   }
 
   async login(input: { email: string; password: string }): Promise<void> {
@@ -314,7 +360,7 @@ export class AuthService {
       this.setPendingPassword('recovery');
       return;
     }
-    if (type === 'invite' || type === 'signup' || Boolean(invite) && (query.has('code') || hash.has('access_token'))) {
+    if (type === 'invite') {
       this.setPendingPassword('invite');
     }
   }

@@ -10,7 +10,6 @@ import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { ActivatedRoute } from '@angular/router';
 import { AuthService } from '../core/auth.service';
 import { ToastService } from '../core/toast.service';
-import { OrgSettingsNavComponent } from '../layout/org-settings-nav.component';
 import type { Organization, OrganizationInvite, OrganizationMember } from '../core/models';
 import { LoadingStateComponent } from '../ui/loading-state.component';
 
@@ -20,7 +19,6 @@ const ASSIGNABLE_ROLES = ['ADMIN', 'MEMBER', 'VIEWER'] as const;
   selector: 'app-organization-members-page',
   imports: [
     ReactiveFormsModule,
-    OrgSettingsNavComponent,
     MatButtonModule,
     MatCardModule,
     MatFormFieldModule,
@@ -38,26 +36,19 @@ const ASSIGNABLE_ROLES = ['ADMIN', 'MEMBER', 'VIEWER'] as const;
             <app-loading-state label="Loading members…" />
           </mat-card-content>
         </mat-card>
-      } @else {
-        @if (org(); as current) {
-        <div>
-          <p class="text-xs uppercase tracking-[0.2em] text-moss-400">Member permissions</p>
-          <h1 class="text-3xl font-semibold">{{ current.name }}</h1>
-          <p class="text-sm text-ink-200">Organization roles control who can invite, connect GitHub, and delete.</p>
-        </div>
-        <app-org-settings-nav [organizationId]="current.id" />
+      } @else if (org(); as current) {
         <mat-card appearance="outlined">
           <mat-card-header>
             <mat-card-title>Members</mat-card-title>
           </mat-card-header>
           <mat-card-content class="space-y-4">
             @if (canAdmin()) {
-              <form class="grid gap-3 sm:grid-cols-[1fr_auto_auto] sm:items-start" [formGroup]="inviteForm" (ngSubmit)="invite()">
-                <mat-form-field appearance="outline" subscriptSizing="dynamic">
+              <form class="flex flex-wrap items-start gap-3" [formGroup]="inviteForm" (ngSubmit)="invite()">
+                <mat-form-field appearance="outline" subscriptSizing="dynamic" class="min-w-[16rem] flex-1">
                   <mat-label>Email</mat-label>
                   <input matInput type="email" formControlName="email" placeholder="user@example.com" />
                 </mat-form-field>
-                <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                <mat-form-field appearance="outline" subscriptSizing="dynamic" class="w-36">
                   <mat-label>Role</mat-label>
                   <mat-select formControlName="role">
                     @for (role of assignableRoles; track role) {
@@ -65,11 +56,13 @@ const ASSIGNABLE_ROLES = ['ADMIN', 'MEMBER', 'VIEWER'] as const;
                     }
                   </mat-select>
                 </mat-form-field>
-                <button mat-flat-button class="sm:mt-1" type="submit" [disabled]="inviteForm.invalid || inviting()">
+                <button mat-flat-button class="ml-auto" type="submit" [disabled]="inviteForm.invalid || inviting()">
                   {{ inviting() ? 'Inviting…' : 'Invite' }}
                 </button>
               </form>
-              <p class="text-xs text-ink-300">OWNER cannot be assigned here. VIEWER can read; MEMBER can analyze; ADMIN can manage.</p>
+              <p class="text-xs text-ink-300">
+                OWNER cannot be assigned here. VIEWER can read; MEMBER can analyze; ADMIN can manage.
+              </p>
             }
             @if (invites().length > 0) {
               <div>
@@ -123,7 +116,7 @@ const ASSIGNABLE_ROLES = ['ADMIN', 'MEMBER', 'VIEWER'] as const;
                   <td mat-cell *matCellDef="let member">
                     @if (canAdmin() && member.role !== 'OWNER') {
                       <mat-form-field appearance="outline" subscriptSizing="dynamic" class="!w-36">
-                        <mat-select [value]="member.role" (selectionChange)="changeRole(member, $event.value)">
+                        <mat-select [value]="draftRole(member)" (selectionChange)="setDraftRole(member, $event.value)">
                           @for (role of assignableRoles; track role) {
                             <mat-option [value]="role">{{ role }}</mat-option>
                           }
@@ -147,9 +140,15 @@ const ASSIGNABLE_ROLES = ['ADMIN', 'MEMBER', 'VIEWER'] as const;
               </table>
               <mat-paginator #memberPaginator [pageSize]="10" [pageSizeOptions]="[5, 10, 25]" showFirstLastButtons />
             </div>
+            @if (canAdmin()) {
+              <div class="flex justify-end">
+                <button mat-flat-button type="button" [disabled]="!rolesDirty() || savingRoles()" (click)="saveRoles()">
+                  {{ savingRoles() ? 'Saving…' : 'Save roles' }}
+                </button>
+              </div>
+            }
           </mat-card-content>
         </mat-card>
-        }
       }
     </div>
   `,
@@ -163,8 +162,10 @@ export class OrganizationMembersPage {
   readonly org = signal<Organization | null>(null);
   readonly members = signal<OrganizationMember[]>([]);
   readonly invites = signal<OrganizationInvite[]>([]);
+  readonly drafts = signal<Record<string, OrganizationMember['role']>>({});
   readonly loading = signal(true);
   readonly inviting = signal(false);
+  readonly savingRoles = signal(false);
   readonly assignableRoles = ASSIGNABLE_ROLES;
   readonly inviteForm = this.fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
@@ -181,6 +182,9 @@ export class OrganizationMembersPage {
     const role = this.org()?.role;
     return role === 'OWNER' || role === 'ADMIN';
   };
+
+  readonly rolesDirty = () =>
+    this.members().some((member) => this.draftRole(member) !== member.role);
 
   constructor() {
     effect(() => {
@@ -204,6 +208,15 @@ export class OrganizationMembersPage {
       return;
     }
     void this.load(id);
+  }
+
+  draftRole(member: OrganizationMember): OrganizationMember['role'] {
+    return this.drafts()[member.userId] ?? member.role;
+  }
+
+  setDraftRole(member: OrganizationMember, role: OrganizationMember['role']): void {
+    if (role === 'OWNER') return;
+    this.drafts.update((current) => ({ ...current, [member.userId]: role }));
   }
 
   async invite(): Promise<void> {
@@ -251,14 +264,24 @@ export class OrganizationMembersPage {
     }
   }
 
-  async changeRole(member: OrganizationMember, role: OrganizationMember['role']): Promise<void> {
+  async saveRoles(): Promise<void> {
     const org = this.org();
-    if (!org || role === 'OWNER') return;
+    if (!org || !this.canAdmin()) return;
+    const changes = this.members().filter((member) => member.role !== 'OWNER' && this.draftRole(member) !== member.role);
+    if (changes.length === 0) return;
+    this.savingRoles.set(true);
     try {
-      const updated = await this.auth.updateMember(org.id, member.userId, role);
-      this.members.set(this.members().map((item) => (item.userId === updated.userId ? updated : item)));
+      const updated = await Promise.all(
+        changes.map((member) => this.auth.updateMember(org.id, member.userId, this.draftRole(member))),
+      );
+      const byId = new Map(updated.map((item) => [item.userId, item]));
+      this.members.set(this.members().map((item) => byId.get(item.userId) ?? item));
+      this.drafts.set({});
+      this.toast.show('Member roles saved.', 'success');
     } catch {
       // HTTP errors are toasted by the interceptor.
+    } finally {
+      this.savingRoles.set(false);
     }
   }
 
@@ -268,6 +291,11 @@ export class OrganizationMembersPage {
     try {
       await this.auth.removeMember(org.id, member.userId);
       this.members.set(this.members().filter((item) => item.userId !== member.userId));
+      this.drafts.update((current) => {
+        const next = { ...current };
+        delete next[member.userId];
+        return next;
+      });
     } catch {
       // HTTP errors are toasted by the interceptor.
     }
@@ -283,6 +311,7 @@ export class OrganizationMembersPage {
       this.org.set(org);
       this.members.set(members);
       this.invites.set(invites);
+      this.drafts.set({});
     } catch {
       // HTTP errors are toasted by the interceptor.
     } finally {

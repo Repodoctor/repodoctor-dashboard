@@ -9,37 +9,25 @@ import { filter, map, startWith } from 'rxjs';
   imports: [RouterLink, MatTabsModule],
   template: `
     <nav mat-tab-nav-bar [tabPanel]="panel" [mat-stretch-tabs]="false" class="rd-org-tabs">
-      <a
-        mat-tab-link
-        [routerLink]="['/organizations', organizationId()]"
-        [active]="isTab('overview')"
-      >
+      <a mat-tab-link [routerLink]="['/organizations', organizationId()]" [active]="isTab('overview')">
         Overview
       </a>
-      <a
-        mat-tab-link
-        [routerLink]="['/organizations', organizationId(), 'settings']"
-        [active]="isTab('organization')"
-      >
-        Organization
+      <a mat-tab-link [routerLink]="['/organizations', organizationId(), 'details']" [active]="isTab('details')">
+        Details
       </a>
       <a
         mat-tab-link
-        [routerLink]="['/organizations', organizationId(), 'settings', 'integrations']"
+        [routerLink]="['/organizations', organizationId(), 'integrations']"
         [active]="isTab('integrations')"
       >
         Integrations
       </a>
-      <a
-        mat-tab-link
-        [routerLink]="['/organizations', organizationId(), 'settings', 'members']"
-        [active]="isTab('members')"
-      >
+      <a mat-tab-link [routerLink]="['/organizations', organizationId(), 'members']" [active]="isTab('members')">
         Members
       </a>
       <a
         mat-tab-link
-        [routerLink]="['/organizations', organizationId(), 'settings', 'permissions']"
+        [routerLink]="['/organizations', organizationId(), 'permissions']"
         [active]="isTab('permissions')"
       >
         Permissions
@@ -60,11 +48,10 @@ export class OrgSettingsNavComponent {
     { initialValue: this.router.url },
   );
 
-  isTab(tab: 'overview' | 'organization' | 'integrations' | 'members' | 'permissions'): boolean {
+  isTab(tab: 'overview' | 'details' | 'integrations' | 'members' | 'permissions'): boolean {
     const path = (this.currentUrl() ?? '').split('?')[0];
     const base = `/organizations/${this.organizationId()}`;
     if (tab === 'overview') return path === base;
-    if (tab === 'organization') return path === `${base}/settings`;
-    return path === `${base}/settings/${tab}` || path.startsWith(`${base}/settings/${tab}/`);
+    return path === `${base}/${tab}` || path.startsWith(`${base}/${tab}/`);
   }
 }

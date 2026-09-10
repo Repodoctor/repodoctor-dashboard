@@ -10,7 +10,6 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../core/auth.service';
 import { ToastService } from '../core/toast.service';
-import { OrgSettingsNavComponent } from '../layout/org-settings-nav.component';
 import type { Organization } from '../core/models';
 import { ConfirmDialogComponent } from '../ui/confirm-dialog.component';
 import { LoadingStateComponent } from '../ui/loading-state.component';
@@ -19,7 +18,6 @@ import { LoadingStateComponent } from '../ui/loading-state.component';
   selector: 'app-organization-settings-page',
   imports: [
     ReactiveFormsModule,
-    OrgSettingsNavComponent,
     MatButtonModule,
     MatCardModule,
     MatFormFieldModule,
@@ -42,28 +40,22 @@ import { LoadingStateComponent } from '../ui/loading-state.component';
       @if (loading()) {
         <mat-card appearance="outlined">
           <mat-card-content>
-            <app-loading-state label="Loading settings…" />
+            <app-loading-state label="Loading details…" />
           </mat-card-content>
         </mat-card>
-      } @else {
-        @if (org(); as current) {
-        <div>
-          <p class="text-xs uppercase tracking-[0.2em] text-moss-400">Organization settings</p>
-          <h1 class="text-3xl font-semibold">{{ current.name }}</h1>
-        </div>
-        <app-org-settings-nav [organizationId]="current.id" />
+      } @else if (org(); as current) {
         <mat-card appearance="outlined">
           <mat-card-header>
             <mat-card-title>Details</mat-card-title>
           </mat-card-header>
           <mat-card-content>
             @if (canAdmin()) {
-              <form class="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-start" [formGroup]="nameForm" (ngSubmit)="saveName()">
-                <mat-form-field appearance="outline" subscriptSizing="dynamic">
+              <form class="flex flex-wrap items-start gap-3" [formGroup]="nameForm" (ngSubmit)="saveName()">
+                <mat-form-field appearance="outline" subscriptSizing="dynamic" class="min-w-[16rem] flex-1">
                   <mat-label>Name</mat-label>
                   <input matInput formControlName="name" />
                 </mat-form-field>
-                <button mat-flat-button class="sm:mt-1" type="submit" [disabled]="nameForm.invalid || saving()">
+                <button mat-flat-button class="ml-auto" type="submit" [disabled]="nameForm.invalid || saving()">
                   {{ saving() ? 'Saving…' : 'Save' }}
                 </button>
               </form>
@@ -85,7 +77,6 @@ import { LoadingStateComponent } from '../ui/loading-state.component';
               <button mat-flat-button color="warn" type="button" (click)="askDelete()">Delete organization</button>
             </mat-card-content>
           </mat-card>
-        }
         }
       }
     </div>

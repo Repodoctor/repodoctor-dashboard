@@ -35,16 +35,16 @@ import { OrganizationTableComponent } from '../ui/organization-table.component';
       </div>
       <mat-card appearance="outlined">
         <mat-card-content>
-          <form class="grid gap-3 md:grid-cols-[1fr_1fr_auto] md:items-start" [formGroup]="form" (ngSubmit)="create()">
-            <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <form class="flex flex-wrap items-start gap-3" [formGroup]="form" (ngSubmit)="create()">
+            <mat-form-field appearance="outline" subscriptSizing="dynamic" class="min-w-[12rem] flex-1">
               <mat-label>Name</mat-label>
               <input matInput formControlName="name" />
             </mat-form-field>
-            <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-form-field appearance="outline" subscriptSizing="dynamic" class="min-w-[12rem] flex-1">
               <mat-label>Slug (optional)</mat-label>
               <input matInput formControlName="slug" />
             </mat-form-field>
-            <button mat-flat-button class="md:mt-1" type="submit" [disabled]="form.invalid || saving()">Create</button>
+            <button mat-flat-button class="ml-auto" type="submit" [disabled]="form.invalid || saving()">Create</button>
           </form>
         </mat-card-content>
       </mat-card>
@@ -63,7 +63,6 @@ import { OrganizationTableComponent } from '../ui/organization-table.component';
           [organizations]="items()"
           [showActions]="true"
           (rowClick)="open($event)"
-          (settings)="openSettings($event)"
           (remove)="askDelete($event)"
         />
       }
@@ -103,10 +102,6 @@ export class OrganizationsPage {
 
   open(org: Organization): void {
     void this.router.navigate(['/organizations', org.id]);
-  }
-
-  openSettings(org: Organization): void {
-    void this.router.navigate(['/organizations', org.id, 'settings']);
   }
 
   async askDelete(org: Organization): Promise<void> {

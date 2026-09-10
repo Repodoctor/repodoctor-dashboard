@@ -14,32 +14,16 @@ import { RepositoryTableComponent } from '../ui/repository-table.component';
 
 @Component({
   selector: 'app-organization-detail-page',
-  imports: [
-    RouterLink,
-    MatButtonModule,
-    MatCardModule,
-    FindingTableComponent,
-    LoadingStateComponent,
-    RepositoryTableComponent,
-  ],
+  imports: [RouterLink, MatButtonModule, MatCardModule, FindingTableComponent, LoadingStateComponent, RepositoryTableComponent],
   template: `
     <div class="space-y-6">
       @if (loading()) {
         <mat-card appearance="outlined">
           <mat-card-content>
-            <app-loading-state label="Loading organization…" />
+            <app-loading-state label="Loading overview…" />
           </mat-card-content>
         </mat-card>
-      } @else {
-        @if (org(); as current) {
-        <div class="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <p class="text-xs uppercase tracking-[0.2em] text-moss-400">Organization</p>
-            <h1 class="text-3xl font-semibold">{{ current.name }}</h1>
-            <p class="font-mono text-sm text-ink-200">{{ current.slug }} · {{ current.role }}</p>
-          </div>
-          <a mat-stroked-button [routerLink]="['/organizations', current.id, 'settings']">Settings</a>
-        </div>
+      } @else if (org(); as current) {
         <div class="grid gap-4 md:grid-cols-2">
           <mat-card appearance="outlined">
             <mat-card-header>
@@ -56,18 +40,17 @@ import { RepositoryTableComponent } from '../ui/repository-table.component';
                   </p>
                 }
               }
-              <a mat-stroked-button [routerLink]="['/organizations', current.id, 'settings', 'integrations']">
-                Integrations
-              </a>
+              <a mat-stroked-button [routerLink]="['/organizations', current.id, 'integrations']">Integrations</a>
             </mat-card-content>
           </mat-card>
           <mat-card appearance="outlined">
             <mat-card-header>
-              <mat-card-title>Access</mat-card-title>
+              <mat-card-title>Details</mat-card-title>
             </mat-card-header>
             <mat-card-content class="space-y-2">
-              <p class="text-sm text-ink-200">Members and repository grants are managed in settings.</p>
-              <a mat-stroked-button [routerLink]="['/organizations', current.id, 'settings', 'members']">Members</a>
+              <p class="text-sm text-ink-200">{{ current.name }}</p>
+              <p class="font-mono text-xs text-ink-300">{{ current.slug }} · {{ current.role }}</p>
+              <a mat-stroked-button [routerLink]="['/organizations', current.id, 'details']">Edit details</a>
             </mat-card-content>
           </mat-card>
         </div>
@@ -96,7 +79,6 @@ import { RepositoryTableComponent } from '../ui/repository-table.component';
             }
           </mat-card-content>
         </mat-card>
-        }
       }
     </div>
   `,

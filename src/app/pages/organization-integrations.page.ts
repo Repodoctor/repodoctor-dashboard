@@ -10,7 +10,6 @@ import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../core/auth.service';
 import { ScmService } from '../core/scm.service';
 import { ToastService } from '../core/toast.service';
-import { OrgSettingsNavComponent } from '../layout/org-settings-nav.component';
 import { SCM_PROVIDERS, scmProviderLabel, type ScmProviderName } from '../core/scm-providers';
 import type { Organization, Repository, ScmInstallation } from '../core/models';
 import { ConfirmDialogComponent } from '../ui/confirm-dialog.component';
@@ -24,7 +23,6 @@ interface ProviderRow {
 @Component({
   selector: 'app-organization-integrations-page',
   imports: [
-    OrgSettingsNavComponent,
     MatButtonModule,
     MatCardModule,
     MatIconModule,
@@ -53,14 +51,7 @@ interface ProviderRow {
             <app-loading-state label="Loading integrations…" />
           </mat-card-content>
         </mat-card>
-      } @else {
-        @if (org(); as current) {
-        <div>
-          <p class="text-xs uppercase tracking-[0.2em] text-moss-400">Organization settings</p>
-          <h1 class="text-3xl font-semibold">Integrations</h1>
-          <p class="mt-1 text-sm text-ink-200">Connect external tools to extend your team's workflow.</p>
-        </div>
-        <app-org-settings-nav [organizationId]="current.id" />
+      } @else if (org(); as current) {
         <section class="space-y-3">
           <div class="flex items-center justify-between gap-3">
             <h2 class="text-sm font-medium text-ink-200">Source Control</h2>
@@ -147,7 +138,6 @@ interface ProviderRow {
             }
           </div>
         </section>
-        }
       }
     </div>
   `,

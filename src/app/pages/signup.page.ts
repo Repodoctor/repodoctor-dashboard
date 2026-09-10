@@ -38,7 +38,9 @@ import { PasswordFeedbackComponent } from '../ui/password-feedback.component';
           <p class="rounded-md border border-moss-500/30 bg-ink-800 px-3 py-2 text-sm text-ink-200">
             You were invited to <span class="text-moss-200">{{ inviteOrg() }}</span> as {{ inviteRole() }}.
             @if (finishingInvite()) {
-              Clicking the invite link confirmed this email. Choose a password to finish creating your account.
+              This email is already confirmed. Choose a password or continue with GitHub to finish.
+            } @else {
+              Email is filled from the invite. Choose a password or continue with GitHub.
             }
           </p>
         }
@@ -69,7 +71,7 @@ import { PasswordFeedbackComponent } from '../ui/password-feedback.component';
             autocorrect="off"
             autocapitalize="none"
             spellcheck="false"
-            [readOnly]="locked().email"
+            [readOnly]="locked().email || Boolean(inviteToken())"
             (mousedown)="unlock('email')"
             (focus)="unlock('email')"
           />
@@ -125,7 +127,12 @@ import { PasswordFeedbackComponent } from '../ui/password-feedback.component';
           }
           {{ submitLabel() }}
         </button>
-        <a routerLink="/login" [queryParams]="inviteToken() ? { invite: inviteToken() } : {}" class="block text-sm text-ink-200 hover:text-moss-300">Already have an account</a>
+        <button mat-stroked-button class="w-full" type="button" [disabled]="loading()" (click)="github()">
+          Continue with GitHub
+        </button>
+        @if (!inviteToken()) {
+          <a routerLink="/login" class="block text-sm text-ink-200 hover:text-moss-300">Already have an account</a>
+        }
       </form>
     </div>
   `,
@@ -168,7 +175,7 @@ export class SignupPage {
           this.inviteOrg.set(preview.organizationName);
           this.inviteRole.set(preview.role);
           this.form.patchValue({ email: preview.email });
-          this.unlock('email');
+          this.form.controls.email.disable();
         })
         .catch(() => {
           // HTTP errors are toasted by the interceptor.
@@ -191,31 +198,36 @@ export class SignupPage {
 
   submitLabel(): string {
     if (this.loading()) {
-      return this.finishingInvite() ? 'Saving…' : 'Creating account…';
+      return this.inviteToken() ? 'Saving…' : 'Creating account…';
     }
-    return this.finishingInvite() ? 'Create account' : 'Sign up';
+    return this.inviteToken() ? 'Create account' : 'Sign up';
+  }
+
+  async github(): Promise<void> {
+    this.loading.set(true);
+    try {
+      await this.auth.signInWithGithub({ invite: this.inviteToken() || undefined });
+    } catch (error) {
+      this.loading.set(false);
+      if (!isHttpError(error)) {
+        this.toast.show(errorMessage(error, 'Unable to start GitHub sign-in'), 'error');
+      }
+    }
   }
 
   async submit(): Promise<void> {
     this.loading.set(true);
     try {
       const { displayName, email, password } = this.form.getRawValue();
-      if (this.finishingInvite()) {
-        await this.auth.setPassword(password, displayName);
-        try {
-          await this.auth.acceptInvite(this.inviteToken());
-        } catch {
-          // ensureUser also attaches pending invites for this email.
-        }
-        this.toast.show('Account created. You can sign in with this password later.', 'success');
+      if (this.inviteToken()) {
+        await this.finishInvite(displayName, email, password);
+        this.toast.show('You are signed in.', 'success');
         await this.router.navigateByUrl('/dashboard');
         return;
       }
       await this.auth.signup({ displayName, email, password });
       this.toast.show('Confirm your email, then sign in.', 'info');
-      await this.router.navigate(['/login'], {
-        queryParams: this.inviteToken() ? { invite: this.inviteToken() } : undefined,
-      });
+      await this.router.navigateByUrl('/login');
     } catch (error) {
       if (!isHttpError(error)) {
         this.toast.show(errorMessage(error, 'Unable to create account'), 'error');
@@ -223,5 +235,30 @@ export class SignupPage {
     } finally {
       this.loading.set(false);
     }
+  }
+
+  private async finishInvite(displayName: string, email: string, password: string): Promise<void> {
+    if (this.auth.isAuthenticated()) {
+      await this.auth.setPassword(password, displayName);
+    } else {
+      try {
+        await this.auth.signup({ displayName, email, password }, { keepSession: true });
+      } catch (error) {
+        const message = errorMessage(error, '').toLowerCase();
+        if (!message.includes('already') && !message.includes('registered')) {
+          throw error;
+        }
+        await this.auth.login({ email, password });
+      }
+      if (!this.auth.isAuthenticated()) {
+        await this.auth.login({ email, password });
+      }
+    }
+    try {
+      await this.auth.acceptInvite(this.inviteToken());
+    } catch {
+      // ensureUser also attaches pending invites for this email.
+    }
+    await this.auth.loadProfile().catch(() => undefined);
   }
 }
