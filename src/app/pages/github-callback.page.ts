@@ -4,7 +4,7 @@ import { AuthService } from '../core/auth.service';
 import { ScmService } from '../core/scm.service';
 import { ToastService } from '../core/toast.service';
 import { errorMessage } from '../core/error-message';
-import type { Organization } from '../core/models';
+import type { Organization, ScmInstallation } from '../core/models';
 
 @Component({
   selector: 'app-github-callback-page',
@@ -60,6 +60,14 @@ export class GithubCallbackPage {
     void this.start();
   }
 
+  private provider(): ScmInstallation['provider'] {
+    const value = this.route.snapshot.paramMap.get('provider');
+    if (value === 'gitlab' || value === 'bitbucket' || value === 'azure_devops') {
+      return value;
+    }
+    return 'github';
+  }
+
   async complete(organizationId: string): Promise<void> {
     const installationId = this.route.snapshot.queryParamMap.get('installation_id');
     if (!installationId) {
@@ -70,7 +78,7 @@ export class GithubCallbackPage {
     this.saving.set(true);
     this.error.set(null);
     try {
-      const result = await this.scm.connectGithub(organizationId, installationId);
+      const result = await this.scm.connect(organizationId, this.provider(), installationId);
       this.scm.clearPendingOrganization();
       const count = result.repositories.length;
       this.toast.show(

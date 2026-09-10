@@ -7,6 +7,8 @@ import type { Repository, ScmInstallation } from './models';
 const PENDING_ORG_KEY = 'repodoctor.pendingGithubOrganizationId';
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+export type ScmProviderName = ScmInstallation['provider'];
+
 @Injectable({ providedIn: 'root' })
 export class ScmService {
   constructor(private readonly http: HttpClient) {}
@@ -28,18 +30,19 @@ export class ScmService {
     return state;
   }
 
-  async getGithubInstallUrl(
+  async getInstallUrl(
     organizationId: string,
+    provider: ScmProviderName = 'github',
     externalInstallationId?: string,
-  ): Promise<{ url: string; slug: string }> {
+  ): Promise<{ url: string; slug: string; configured?: boolean }> {
     const slug = environment.githubAppSlug.trim();
-    if (slug && externalInstallationId) {
+    if (provider === 'github' && slug && externalInstallationId) {
       return {
         slug,
         url: `https://github.com/apps/${encodeURIComponent(slug)}/installations/${encodeURIComponent(externalInstallationId)}`,
       };
     }
-    if (slug) {
+    if (provider === 'github' && slug) {
       const url = new URL(`https://github.com/apps/${encodeURIComponent(slug)}/installations/new`);
       url.searchParams.set('state', organizationId);
       return { url: url.toString(), slug };
@@ -48,22 +51,43 @@ export class ScmService {
       ? `?externalInstallationId=${encodeURIComponent(externalInstallationId)}`
       : '';
     return firstValueFrom(
-      this.http.get<{ url: string; slug: string }>(
-        `${environment.apiBaseUrl}/organizations/${organizationId}/scm/github/install${query}`,
+      this.http.get<{ url: string; slug: string; configured: boolean }>(
+        `${environment.apiBaseUrl}/organizations/${organizationId}/scm/${provider}/install${query}`,
       ),
     );
+  }
+
+  async connect(
+    organizationId: string,
+    provider: ScmProviderName,
+    externalInstallationId: string,
+  ): Promise<{ installation: ScmInstallation; repositories: Array<{ fullName: string }> }> {
+    return firstValueFrom(
+      this.http.post<{ installation: ScmInstallation; repositories: Array<{ fullName: string }> }>(
+        `${environment.apiBaseUrl}/organizations/${organizationId}/scm/${provider}`,
+        { externalInstallationId },
+      ),
+    );
+  }
+
+  async disconnect(organizationId: string, provider: ScmProviderName): Promise<void> {
+    await firstValueFrom(
+      this.http.delete(`${environment.apiBaseUrl}/organizations/${organizationId}/scm/${provider}`),
+    );
+  }
+
+  async getGithubInstallUrl(
+    organizationId: string,
+    externalInstallationId?: string,
+  ): Promise<{ url: string; slug: string }> {
+    return this.getInstallUrl(organizationId, 'github', externalInstallationId);
   }
 
   async connectGithub(
     organizationId: string,
     externalInstallationId: string,
   ): Promise<{ installation: ScmInstallation; repositories: Array<{ fullName: string }> }> {
-    return firstValueFrom(
-      this.http.post<{ installation: ScmInstallation; repositories: Array<{ fullName: string }> }>(
-        `${environment.apiBaseUrl}/organizations/${organizationId}/scm/github`,
-        { externalInstallationId },
-      ),
-    );
+    return this.connect(organizationId, 'github', externalInstallationId);
   }
 
   async listInstallations(organizationId: string): Promise<ScmInstallation[]> {
@@ -76,9 +100,7 @@ export class ScmService {
   }
 
   async disconnectGithub(organizationId: string): Promise<void> {
-    await firstValueFrom(
-      this.http.delete(`${environment.apiBaseUrl}/organizations/${organizationId}/scm/github`),
-    );
+    return this.disconnect(organizationId, 'github');
   }
 
   async listRepositories(organizationId: string): Promise<Repository[]> {

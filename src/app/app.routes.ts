@@ -60,7 +60,7 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/repositories.page').then((m) => m.RepositoriesPage),
       },
       {
-        path: 'settings/scm/github/callback',
+        path: 'settings/scm/:provider/callback',
         loadComponent: () =>
           import('./pages/github-callback.page').then((m) => m.GithubCallbackPage),
       },
