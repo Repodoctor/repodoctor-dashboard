@@ -9,6 +9,10 @@ import type { Organization, OrganizationInvite, OrganizationInvitePreview, Organ
 const ACCESS_KEY = 'repodoctor.accessToken';
 const REFRESH_KEY = 'repodoctor.refreshToken';
 const USER_KEY = 'repodoctor.user';
+const PENDING_PASSWORD_KEY = 'repodoctor.pendingPassword';
+const PENDING_INVITE_KEY = 'repodoctor.pendingInvite';
+
+type PendingPassword = 'invite' | 'recovery';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -25,17 +29,33 @@ export class AuthService {
 
   readonly user = this.userSignal.asReadonly();
   readonly isAuthenticated = computed(() => this.userSignal() !== null);
+  readonly pendingPassword = signal<PendingPassword | null>(readStoredPendingPassword());
 
   constructor(
     private readonly http: HttpClient,
     private readonly router: Router,
   ) {
+    this.captureAuthLink();
     void this.hydrate();
     if (this.supabase) {
-      this.supabase.auth.onAuthStateChange((_event, session) => {
+      this.supabase.auth.onAuthStateChange((event, session) => {
+        if (event === 'PASSWORD_RECOVERY') {
+          this.setPendingPassword('recovery');
+        }
         this.applySupabaseSession(session);
       });
     }
+  }
+
+  passwordSetupUrl(): string {
+    if (this.pendingPassword() === 'recovery') return '/reset-password';
+    const invite = sessionStorage.getItem(PENDING_INVITE_KEY);
+    return invite ? `/signup?invite=${encodeURIComponent(invite)}` : '/signup';
+  }
+
+  clearPendingPassword(): void {
+    this.pendingPassword.set(null);
+    sessionStorage.removeItem(PENDING_PASSWORD_KEY);
   }
 
   whenReady(): Promise<void> {
@@ -93,11 +113,46 @@ export class AuthService {
 
   async forgotPassword(email: string): Promise<void> {
     if (this.supabase) {
-      const { error } = await this.supabase.auth.resetPasswordForEmail(email);
+      const { error } = await this.supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
       if (error) throw error;
       return;
     }
     await firstValueFrom(this.http.post(`${environment.apiBaseUrl}/auth/forgot-password`, { email }));
+  }
+
+  async setPassword(password: string, displayName?: string): Promise<void> {
+    if (!this.supabase) {
+      throw new Error('Password updates require Supabase Auth.');
+    }
+    const { error } = await this.supabase.auth.updateUser({
+      password,
+      data: displayName ? { display_name: displayName } : undefined,
+    });
+    if (error) throw error;
+    this.clearPendingPassword();
+    await this.loadProfile();
+  }
+
+  async changePassword(currentPassword: string, nextPassword: string): Promise<void> {
+    if (!this.supabase) {
+      throw new Error('Password updates require Supabase Auth.');
+    }
+    const email = this.user()?.email;
+    if (!email) {
+      throw new Error('Not signed in');
+    }
+    const { error: currentError } = await this.supabase.auth.signInWithPassword({
+      email,
+      password: currentPassword,
+    });
+    if (currentError) throw currentError;
+    const { error } = await this.supabase.auth.updateUser({
+      password: nextPassword,
+      current_password: currentPassword,
+    });
+    if (error) throw error;
   }
 
   async loadProfile(): Promise<void> {
@@ -239,8 +294,34 @@ export class AuthService {
     sessionStorage.removeItem(ACCESS_KEY);
     sessionStorage.removeItem(REFRESH_KEY);
     sessionStorage.removeItem(USER_KEY);
+    sessionStorage.removeItem(PENDING_PASSWORD_KEY);
+    sessionStorage.removeItem(PENDING_INVITE_KEY);
+    this.pendingPassword.set(null);
     this.userSignal.set(null);
     void this.router.navigateByUrl('/login');
+  }
+
+  private captureAuthLink(): void {
+    const hash = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+    const query = new URLSearchParams(window.location.search);
+    const invite = query.get('invite');
+    if (invite) {
+      sessionStorage.setItem(PENDING_INVITE_KEY, invite);
+    }
+    const type = hash.get('type') ?? query.get('type');
+    const path = window.location.pathname;
+    if (type === 'recovery' || (path.startsWith('/reset-password') && (query.has('code') || hash.has('access_token')))) {
+      this.setPendingPassword('recovery');
+      return;
+    }
+    if (type === 'invite' || type === 'signup' || Boolean(invite) && (query.has('code') || hash.has('access_token'))) {
+      this.setPendingPassword('invite');
+    }
+  }
+
+  private setPendingPassword(kind: PendingPassword): void {
+    this.pendingPassword.set(kind);
+    sessionStorage.setItem(PENDING_PASSWORD_KEY, kind);
   }
 
   private async hydrate(): Promise<void> {
@@ -248,6 +329,7 @@ export class AuthService {
       if (this.supabase) {
         const { data } = await this.supabase.auth.getSession();
         this.applySupabaseSession(data.session);
+        this.captureAuthLink();
       }
     } finally {
       this.readyResolve();
@@ -297,4 +379,9 @@ export class AuthService {
       return null;
     }
   }
+}
+
+function readStoredPendingPassword(): PendingPassword | null {
+  const value = sessionStorage.getItem(PENDING_PASSWORD_KEY);
+  return value === 'invite' || value === 'recovery' ? value : null;
 }

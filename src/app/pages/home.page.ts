@@ -1,5 +1,5 @@
 import { Component, inject } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../core/auth.service';
 
 @Component({
@@ -123,6 +123,15 @@ import { AuthService } from '../core/auth.service';
 })
 export class HomePage {
   readonly auth = inject(AuthService);
+  private readonly router = inject(Router);
+
+  constructor() {
+    void this.auth.whenReady().then(() => {
+      if (this.auth.pendingPassword()) {
+        void this.router.navigateByUrl(this.auth.passwordSetupUrl());
+      }
+    });
+  }
   readonly services = [
     {
       name: 'Gateway',

@@ -3,6 +3,8 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../core/auth.service';
 import { ToastService } from '../core/toast.service';
+import { errorMessage, isHttpError } from '../core/error-message';
+import { PASSWORD_HINT, passwordRules, passwordStrength, passwordsMatch } from '../core/password-strength';
 import type { Organization } from '../core/models';
 
 @Component({
@@ -24,6 +26,40 @@ import type { Organization } from '../core/models';
             {{ saving() ? 'Saving…' : 'Save' }}
           </button>
         </form>
+      </div>
+      <div class="rd-card space-y-4">
+        <h2 class="font-medium">Password</h2>
+        @if (!changingPassword()) {
+          <button class="rd-btn-ghost" type="button" (click)="changingPassword.set(true)">Change password</button>
+        } @else {
+          <form class="space-y-3" [formGroup]="passwordForm" (ngSubmit)="savePassword()">
+            <p class="text-sm text-ink-200">{{ hint }}</p>
+            <label class="block text-sm">Current password
+              <input class="rd-input mt-1" type="password" formControlName="currentPassword" autocomplete="current-password" />
+            </label>
+            <label class="block text-sm">New password
+              <input class="rd-input mt-1" type="password" formControlName="password" autocomplete="new-password" />
+            </label>
+            @if (passwordForm.controls.password.value) {
+              <p class="text-xs text-ink-200">{{ passwordStrengthLabel() }}</p>
+            }
+            <label class="block text-sm">Confirm new password
+              <input class="rd-input mt-1" type="password" formControlName="confirmPassword" autocomplete="new-password" />
+            </label>
+            @if (passwordForm.hasError('mismatch') && passwordForm.touched) {
+              <p class="text-sm text-red-200">Passwords do not match.</p>
+            }
+            @if (passwordForm.controls.password.touched && passwordForm.controls.password.hasError('passwordRules')) {
+              <p class="text-sm text-red-200">{{ hint }}</p>
+            }
+            <div class="flex flex-wrap gap-2">
+              <button class="rd-btn" type="submit" [disabled]="passwordForm.invalid || savingPassword()">
+                {{ savingPassword() ? 'Saving…' : 'Save' }}
+              </button>
+              <button class="rd-btn-ghost" type="button" (click)="cancelPasswordChange()">Cancel</button>
+            </div>
+          </form>
+        }
       </div>
       <div class="rd-card space-y-3">
         <h2 class="font-medium">Organizations you belong to</h2>
@@ -76,10 +112,21 @@ export class SettingsPage {
 
   readonly organizations = signal<Organization[]>([]);
   readonly saving = signal(false);
+  readonly savingPassword = signal(false);
   readonly deleting = signal(false);
+  readonly changingPassword = signal(false);
+  readonly hint = PASSWORD_HINT;
   readonly profileForm = this.fb.nonNullable.group({
     displayName: [this.auth.user()?.displayName ?? '', [Validators.required, Validators.minLength(1)]],
   });
+  readonly passwordForm = this.fb.nonNullable.group(
+    {
+      currentPassword: ['', Validators.required],
+      password: ['', [Validators.required, passwordRules()]],
+      confirmPassword: ['', Validators.required],
+    },
+    { validators: passwordsMatch },
+  );
   readonly confirmEmail = this.fb.nonNullable.control('');
 
   readonly ownedOrgs = () => this.organizations().filter((item) => item.role === 'OWNER');
@@ -99,6 +146,32 @@ export class SettingsPage {
       // HTTP errors are toasted by the interceptor.
     } finally {
       this.saving.set(false);
+    }
+  }
+
+  passwordStrengthLabel(): string {
+    return passwordStrength(this.passwordForm.controls.password.value).label;
+  }
+
+  cancelPasswordChange(): void {
+    this.changingPassword.set(false);
+    this.passwordForm.reset({ currentPassword: '', password: '', confirmPassword: '' });
+  }
+
+  async savePassword(): Promise<void> {
+    if (this.passwordForm.invalid) return;
+    this.savingPassword.set(true);
+    try {
+      const { currentPassword, password } = this.passwordForm.getRawValue();
+      await this.auth.changePassword(currentPassword, password);
+      this.toast.show('Password updated.', 'success');
+      this.cancelPasswordChange();
+    } catch (error) {
+      if (!isHttpError(error)) {
+        this.toast.show(errorMessage(error, 'Unable to update password. Check your current password.'), 'error');
+      }
+    } finally {
+      this.savingPassword.set(false);
     }
   }
 

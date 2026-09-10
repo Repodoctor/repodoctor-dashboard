@@ -1,16 +1,10 @@
 import { Component, inject, signal } from '@angular/core';
-import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../core/auth.service';
 import { ToastService } from '../core/toast.service';
 import { errorMessage, isHttpError } from '../core/error-message';
-import { passwordStrength } from '../core/password-strength';
-
-function passwordsMatch(group: AbstractControl): ValidationErrors | null {
-  const password = group.get('password')?.value;
-  const confirm = group.get('confirmPassword')?.value;
-  return password && confirm && password !== confirm ? { mismatch: true } : null;
-}
+import { PASSWORD_HINT, passwordRules, passwordStrength, passwordsMatch } from '../core/password-strength';
 
 @Component({
   selector: 'app-signup-page',
@@ -28,8 +22,12 @@ function passwordsMatch(group: AbstractControl): ValidationErrors | null {
         @if (inviteOrg()) {
           <p class="rounded-md border border-moss-500/30 bg-ink-800 px-3 py-2 text-sm text-ink-200">
             You were invited to <span class="text-moss-200">{{ inviteOrg() }}</span> as {{ inviteRole() }}.
+            @if (finishingInvite()) {
+              Clicking the invite link confirmed this email. Choose a password to finish creating your account.
+            }
           </p>
         }
+        <p class="text-sm text-ink-200">{{ hint }}</p>
         <label class="block text-sm">Display name
           <input
             class="rd-input mt-1"
@@ -99,11 +97,14 @@ function passwordsMatch(group: AbstractControl): ValidationErrors | null {
         @if (form.hasError('mismatch') && form.touched) {
           <p class="text-sm text-red-200">Passwords do not match.</p>
         }
+        @if (form.controls.password.touched && form.controls.password.hasError('passwordRules')) {
+          <p class="text-sm text-red-200">{{ hint }}</p>
+        }
         <button class="rd-btn w-full" [disabled]="form.invalid || loading()">
           @if (loading()) {
             <span class="rd-spinner-sm mr-2"></span>
           }
-          {{ loading() ? 'Creating account…' : 'Sign up' }}
+          {{ submitLabel() }}
         </button>
         <a routerLink="/login" [queryParams]="inviteToken() ? { invite: inviteToken() } : {}" class="block text-sm text-ink-200 hover:text-moss-300">Already have an account</a>
       </form>
@@ -120,11 +121,13 @@ export class SignupPage {
   readonly inviteOrg = signal<string | null>(null);
   readonly inviteRole = signal<string | null>(null);
   readonly inviteToken = signal('');
+  readonly hint = PASSWORD_HINT;
+  readonly finishingInvite = () => this.auth.isAuthenticated() && Boolean(this.inviteToken());
   readonly form = this.fb.nonNullable.group(
     {
       displayName: ['', Validators.required],
       email: ['', [Validators.required, Validators.email]],
-      password: ['', [Validators.required, Validators.minLength(8)]],
+      password: ['', [Validators.required, passwordRules()]],
       confirmPassword: ['', Validators.required],
     },
     { validators: passwordsMatch },
@@ -162,12 +165,30 @@ export class SignupPage {
     this.locked.update((current) => ({ ...current, [field]: false }));
   }
 
+  submitLabel(): string {
+    if (this.loading()) {
+      return this.finishingInvite() ? 'Saving…' : 'Creating account…';
+    }
+    return this.finishingInvite() ? 'Create account' : 'Sign up';
+  }
+
   async submit(): Promise<void> {
     this.loading.set(true);
     try {
       const { displayName, email, password } = this.form.getRawValue();
+      if (this.finishingInvite()) {
+        await this.auth.setPassword(password, displayName);
+        try {
+          await this.auth.acceptInvite(this.inviteToken());
+        } catch {
+          // ensureUser also attaches pending invites for this email.
+        }
+        this.toast.show('Account created. You can sign in with this password later.', 'success');
+        await this.router.navigateByUrl('/dashboard');
+        return;
+      }
       await this.auth.signup({ displayName, email, password });
-      this.toast.show('You need to confirm your account before signing in.', 'info');
+      this.toast.show('Confirm your email, then sign in.', 'info');
       await this.router.navigate(['/login'], {
         queryParams: this.inviteToken() ? { invite: this.inviteToken() } : undefined,
       });
