@@ -38,10 +38,8 @@ import { AuthService } from '../core/auth.service';
           <div class="mt-8 flex flex-wrap gap-3">
             @if (auth.isAuthenticated()) {
               <a mat-flat-button routerLink="/dashboard">Open dashboard</a>
-              <a mat-stroked-button routerLink="/organizations">Browse organizations</a>
             } @else {
               <a mat-flat-button routerLink="/login">Log in</a>
-              <a mat-stroked-button routerLink="/signup">Create account</a>
             }
           </div>
         </div>
@@ -128,6 +126,7 @@ export class HomePage {
 
   constructor() {
     void this.auth.whenReady().then(() => {
+      this.auth.consumeAuthUrlError();
       if (this.auth.pendingPassword()) {
         void this.router.navigateByUrl(this.auth.passwordSetupUrl());
       }

@@ -23,7 +23,6 @@ import { UserMenuComponent } from './user-menu.component';
               mat-list-item
               [routerLink]="item.path"
               routerLinkActive="mdc-list-item--activated"
-              [routerLinkActiveOptions]="{ exact: item.path === '/' }"
             >
               <mat-icon matListItemIcon>{{ item.icon }}</mat-icon>
               <span matListItemTitle>{{ item.label }}</span>

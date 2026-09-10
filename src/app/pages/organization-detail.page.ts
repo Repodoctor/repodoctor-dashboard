@@ -11,6 +11,7 @@ import type { Finding, Organization, Repository, ScmInstallation } from '../core
 import { FindingTableComponent } from '../ui/finding-table.component';
 import { LoadingStateComponent } from '../ui/loading-state.component';
 import { RepositoryTableComponent } from '../ui/repository-table.component';
+import { isOrgAdmin } from '../core/org-role';
 
 @Component({
   selector: 'app-organization-detail-page',
@@ -41,7 +42,9 @@ import { RepositoryTableComponent } from '../ui/repository-table.component';
                   </p>
                 }
               }
-              <a mat-stroked-button [routerLink]="['/organizations', current.id, 'integrations']">Integrations</a>
+              @if (canAdmin()) {
+                <a mat-stroked-button [routerLink]="['/organizations', current.id, 'integrations']">Integrations</a>
+              }
             </mat-card-content>
           </mat-card>
           <mat-card appearance="outlined">
@@ -98,6 +101,8 @@ export class OrganizationDetailPage {
   readonly repositories = signal<Repository[]>([]);
   readonly findings = signal<Finding[]>([]);
   readonly loading = signal(true);
+
+  readonly canAdmin = () => isOrgAdmin(this.org()?.role);
 
   providerLabel(provider: ScmProviderName): string {
     return scmProviderLabel(provider);

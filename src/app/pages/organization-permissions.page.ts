@@ -5,13 +5,14 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../core/auth.service';
 import { CatalogService } from '../core/catalog.service';
 import { ScmService } from '../core/scm.service';
 import { ToastService } from '../core/toast.service';
 import type { Organization, Repository, RepositoryAccessGrant } from '../core/models';
 import { LoadingStateComponent } from '../ui/loading-state.component';
+import { isOrgAdmin } from '../core/org-role';
 
 const PERMISSIONS = ['VIEW', 'ANALYZE', 'MANAGE', 'ADMIN'] as const;
 
@@ -114,6 +115,7 @@ export class OrganizationPermissionsPage {
   private readonly catalog = inject(CatalogService);
   private readonly toast = inject(ToastService);
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
   readonly org = signal<Organization | null>(null);
   readonly rows = signal<PermissionRow[]>([]);
@@ -125,10 +127,7 @@ export class OrganizationPermissionsPage {
   readonly tableData = new MatTableDataSource<PermissionRow>([]);
   private readonly paginator = viewChild(MatPaginator);
 
-  readonly canAdmin = () => {
-    const role = this.org()?.role;
-    return role === 'OWNER' || role === 'ADMIN';
-  };
+  readonly canAdmin = () => isOrgAdmin(this.org()?.role);
 
   constructor() {
     effect(() => {
@@ -204,20 +203,8 @@ export class OrganizationPermissionsPage {
         this.scm.listRepositories(id).catch(() => [] as Repository[]),
       ]);
       this.org.set(org);
-      const admin = org.role === 'OWNER' || org.role === 'ADMIN';
-      if (!admin) {
-        this.rows.set(
-          repositories.map((repository) => ({
-            repositoryId: repository.id,
-            fullName: repository.fullName,
-            userId: this.auth.user()?.id ?? '',
-            email: this.auth.user()?.email ?? '',
-            displayName: this.auth.user()?.displayName ?? 'You',
-            role: org.role ?? 'VIEWER',
-            permission: repository.permission ?? 'VIEW',
-            source: 'role' as const,
-          })),
-        );
+      if (!isOrgAdmin(org.role)) {
+        await this.router.navigate(['/organizations', id]);
         return;
       }
       const grants = await Promise.all(

@@ -24,3 +24,12 @@ test('set password page renders for email links', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Choose a new password' })).toBeVisible();
   await expect(page.getByText('This page is for the link in your email.')).toBeVisible();
 });
+
+test('expired auth links show a centered error page', async ({ page }) => {
+  await page.goto(
+    '/reset-password#error=access_denied&error_code=otp_expired&error_description=Email+link+is+invalid+or+has+expired',
+  );
+  await expect(page.getByRole('heading', { name: 'This link is no longer valid' })).toBeVisible();
+  await expect(page.getByText(/invalid or has expired/i)).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Sign in' })).toBeVisible();
+});

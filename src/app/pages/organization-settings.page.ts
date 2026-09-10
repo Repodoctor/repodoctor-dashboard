@@ -5,7 +5,6 @@ import { MatCardModule } from '@angular/material/card';
 import { MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ActivatedRoute, Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../core/auth.service';
@@ -13,6 +12,8 @@ import { ToastService } from '../core/toast.service';
 import type { Organization } from '../core/models';
 import { ConfirmDialogComponent } from '../ui/confirm-dialog.component';
 import { LoadingStateComponent } from '../ui/loading-state.component';
+import { BusyOverlayComponent } from '../ui/busy-overlay.component';
+import { isOrgAdmin } from '../core/org-role';
 
 @Component({
   selector: 'app-organization-settings-page',
@@ -22,21 +23,12 @@ import { LoadingStateComponent } from '../ui/loading-state.component';
     MatCardModule,
     MatFormFieldModule,
     MatInputModule,
-    MatProgressSpinnerModule,
     LoadingStateComponent,
+    BusyOverlayComponent,
   ],
   template: `
     <div class="space-y-6">
-      @if (saving()) {
-        <div class="fixed inset-0 z-50 flex items-center justify-center bg-ink/80">
-          <mat-card appearance="outlined">
-            <mat-card-content class="flex flex-col items-center gap-4 text-center">
-              <mat-progress-spinner diameter="40" mode="indeterminate" />
-              <p class="font-medium">Processing…</p>
-            </mat-card-content>
-          </mat-card>
-        </div>
-      }
+      <app-busy-overlay [message]="saving() ? 'Processing…' : null" />
       @if (loading()) {
         <mat-card appearance="outlined">
           <mat-card-content>
@@ -99,10 +91,7 @@ export class OrganizationSettingsPage {
     name: ['', [Validators.required, Validators.minLength(2)]],
   });
 
-  readonly canAdmin = () => {
-    const role = this.org()?.role;
-    return role === 'OWNER' || role === 'ADMIN';
-  };
+  readonly canAdmin = () => isOrgAdmin(this.org()?.role);
 
   constructor() {
     const id = this.route.snapshot.paramMap.get('organizationId');

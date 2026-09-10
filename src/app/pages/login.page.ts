@@ -4,14 +4,23 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { AuthService } from '../core/auth.service';
 import { ToastService } from '../core/toast.service';
 import { errorMessage, isHttpError } from '../core/error-message';
+import { GithubButtonComponent } from '../ui/github-button.component';
+import { LoadingButtonComponent } from '../ui/loading-button.component';
 
 @Component({
   selector: 'app-login-page',
-  imports: [ReactiveFormsModule, RouterLink, MatButtonModule, MatFormFieldModule, MatInputModule, MatProgressSpinnerModule],
+  imports: [
+    ReactiveFormsModule,
+    RouterLink,
+    MatButtonModule,
+    MatFormFieldModule,
+    MatInputModule,
+    GithubButtonComponent,
+    LoadingButtonComponent,
+  ],
   template: `
     <div class="grid min-h-screen lg:grid-cols-2">
       <section class="hidden border-r border-ink-400 bg-ink-800 p-12 lg:flex lg:flex-col lg:justify-between">
@@ -42,15 +51,14 @@ import { errorMessage, isHttpError } from '../core/error-message';
             <mat-label>Password</mat-label>
             <input matInput type="password" formControlName="password" autocomplete="current-password" />
           </mat-form-field>
-          <button mat-flat-button class="w-full" type="submit" [disabled]="form.invalid || loading()">
-            @if (loading()) {
-              <mat-progress-spinner class="mr-2" diameter="18" mode="indeterminate" />
-            }
-            {{ loading() ? 'Signing in…' : 'Sign in' }}
-          </button>
-          <button mat-stroked-button class="w-full" type="button" [disabled]="loading()" (click)="github()">
-            Continue with GitHub
-          </button>
+          <app-loading-button
+            hostClass="w-full"
+            [disabled]="form.invalid"
+            [loading]="loading()"
+            label="Sign in"
+            loadingLabel="Signing in…"
+          />
+          <app-github-button [disabled]="loading()" (pressed)="github()" />
           <div class="flex justify-between text-sm text-ink-200">
             <a routerLink="/signup" [queryParams]="inviteToken ? { invite: inviteToken } : {}" class="hover:text-moss-300">Create account</a>
             <a routerLink="/forgot-password" class="hover:text-moss-300">Forgot password</a>

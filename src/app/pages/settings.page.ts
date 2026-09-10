@@ -5,18 +5,19 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../core/auth.service';
 import { ToastService } from '../core/toast.service';
 import { errorMessage, isHttpError } from '../core/error-message';
-import { meetsPasswordPolicy, PASSWORD_HINT, passwordRules, passwordsMatch } from '../core/password-strength';
+import { passwordRules, passwordsMatch } from '../core/password-strength';
 import type { Organization } from '../core/models';
 import { ConfirmDialogComponent } from '../ui/confirm-dialog.component';
 import { OrganizationTableComponent } from '../ui/organization-table.component';
-import { PasswordFeedbackComponent } from '../ui/password-feedback.component';
 import { AvatarComponent } from '../layout/avatar.component';
+import { LoadingButtonComponent } from '../ui/loading-button.component';
+import { PageHeaderComponent } from '../ui/page-header.component';
+import { PasswordFieldsComponent } from '../ui/password-fields.component';
 
 @Component({
   selector: 'app-settings-page',
@@ -25,19 +26,20 @@ import { AvatarComponent } from '../layout/avatar.component';
     MatButtonModule,
     MatCardModule,
     MatFormFieldModule,
-    MatIconModule,
     MatInputModule,
     OrganizationTableComponent,
-    PasswordFeedbackComponent,
     AvatarComponent,
+    LoadingButtonComponent,
+    PageHeaderComponent,
+    PasswordFieldsComponent,
   ],
   template: `
     <div class="space-y-6">
-      <div>
-        <p class="text-xs uppercase tracking-[0.2em] text-moss-400">Account</p>
-        <h1 class="text-3xl font-semibold">Settings</h1>
-        <p class="mt-1 text-sm text-ink-200">Personal profile and account deletion. Organization settings live on each organization.</p>
-      </div>
+      <app-page-header
+        eyebrow="Account"
+        title="Settings"
+        subtitle="Personal profile and account deletion. Organization settings live on each organization."
+      />
       <mat-card appearance="outlined">
         <mat-card-header>
           <mat-card-title>Profile</mat-card-title>
@@ -77,42 +79,17 @@ import { AvatarComponent } from '../layout/avatar.component';
             <button mat-stroked-button type="button" (click)="changingPassword.set(true)">Change password</button>
           } @else {
             <form class="space-y-3" [formGroup]="passwordForm" (ngSubmit)="savePassword()">
-              <p class="text-sm text-ink-200">{{ hint }}</p>
-              <mat-form-field appearance="outline">
-                <mat-label>Current password</mat-label>
-                <input matInput type="password" formControlName="currentPassword" autocomplete="current-password" />
-              </mat-form-field>
-              <mat-form-field appearance="outline">
-                <mat-label>New password</mat-label>
-                <input matInput type="password" formControlName="password" autocomplete="new-password" />
-                @if (passwordForm.controls.password.value) {
-                  <mat-icon matSuffix [class]="passwordValid() ? 'text-moss-400' : 'text-red-400'">
-                    {{ passwordValid() ? 'check' : 'close' }}
-                  </mat-icon>
-                }
-              </mat-form-field>
-              <app-password-feedback [showStrength]="true" [password]="passwordForm.controls.password.value" />
-              <mat-form-field appearance="outline">
-                <mat-label>Confirm new password</mat-label>
-                <input matInput type="password" formControlName="confirmPassword" autocomplete="new-password" />
-                @if (passwordForm.controls.confirmPassword.value) {
-                  <mat-icon matSuffix [class]="passwordsEqual() ? 'text-moss-400' : 'text-red-400'">
-                    {{ passwordsEqual() ? 'check' : 'close' }}
-                  </mat-icon>
-                }
-              </mat-form-field>
-              <app-password-feedback
-                [showMatch]="true"
-                [password]="passwordForm.controls.password.value"
-                [confirm]="passwordForm.controls.confirmPassword.value"
+              <app-password-fields
+                [showCurrent]="true"
+                passwordLabel="New password"
+                confirmLabel="Confirm new password"
               />
-              @if (passwordForm.controls.password.touched && passwordForm.controls.password.hasError('passwordRules')) {
-                <p class="text-sm text-red-200">{{ hint }}</p>
-              }
               <div class="flex flex-wrap gap-2">
-                <button mat-flat-button type="submit" [disabled]="passwordForm.invalid || savingPassword()">
-                  {{ savingPassword() ? 'Saving…' : 'Save' }}
-                </button>
+                <app-loading-button
+                  [disabled]="passwordForm.invalid"
+                  [loading]="savingPassword()"
+                  label="Save"
+                />
                 <button mat-stroked-button type="button" (click)="cancelPasswordChange()">Cancel</button>
               </div>
             </form>
@@ -164,7 +141,6 @@ export class SettingsPage {
   readonly savingPassword = signal(false);
   readonly deleting = signal(false);
   readonly changingPassword = signal(false);
-  readonly hint = PASSWORD_HINT;
   readonly profileForm = this.fb.nonNullable.group({
     displayName: [this.auth.user()?.displayName ?? '', [Validators.required, Validators.minLength(1)]],
   });
@@ -199,15 +175,6 @@ export class SettingsPage {
     } finally {
       this.saving.set(false);
     }
-  }
-
-  passwordValid(): boolean {
-    return meetsPasswordPolicy(this.passwordForm.controls.password.value);
-  }
-
-  passwordsEqual(): boolean {
-    const { password, confirmPassword } = this.passwordForm.getRawValue();
-    return password.length > 0 && password === confirmPassword;
   }
 
   cancelPasswordChange(): void {

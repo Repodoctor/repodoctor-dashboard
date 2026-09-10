@@ -8,6 +8,7 @@ import type { Finding, Organization } from '../core/models';
 import { FindingTableComponent } from '../ui/finding-table.component';
 import { LoadingStateComponent } from '../ui/loading-state.component';
 import { OrganizationTableComponent } from '../ui/organization-table.component';
+import { PageHeaderComponent } from '../ui/page-header.component';
 
 @Component({
   selector: 'app-dashboard-page',
@@ -18,13 +19,11 @@ import { OrganizationTableComponent } from '../ui/organization-table.component';
     FindingTableComponent,
     LoadingStateComponent,
     OrganizationTableComponent,
+    PageHeaderComponent,
   ],
   template: `
     <div class="space-y-6">
-      <div>
-        <p class="text-xs uppercase tracking-[0.2em] text-moss-400">Overview</p>
-        <h1 class="mt-1 text-3xl font-semibold">Welcome back{{ auth.user() ? ', ' + auth.user()!.displayName : '' }}</h1>
-      </div>
+      <app-page-header eyebrow="Overview" [title]="'Welcome back' + (auth.user() ? ', ' + auth.user()!.displayName : '')" />
       @if (loading()) {
         <mat-card appearance="outlined">
           <mat-card-content>

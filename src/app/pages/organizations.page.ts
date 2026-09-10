@@ -13,6 +13,7 @@ import type { Organization } from '../core/models';
 import { ConfirmDialogComponent } from '../ui/confirm-dialog.component';
 import { LoadingStateComponent } from '../ui/loading-state.component';
 import { OrganizationTableComponent } from '../ui/organization-table.component';
+import { PageHeaderComponent } from '../ui/page-header.component';
 
 @Component({
   selector: 'app-organizations-page',
@@ -24,15 +25,11 @@ import { OrganizationTableComponent } from '../ui/organization-table.component';
     MatInputModule,
     LoadingStateComponent,
     OrganizationTableComponent,
+    PageHeaderComponent,
   ],
   template: `
     <div class="space-y-6">
-      <div class="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p class="text-xs uppercase tracking-[0.2em] text-moss-400">Tenancy</p>
-          <h1 class="text-3xl font-semibold">Organizations</h1>
-        </div>
-      </div>
+      <app-page-header eyebrow="Tenancy" title="Organizations" />
       <mat-card appearance="outlined">
         <mat-card-content>
           <form class="flex flex-wrap items-start gap-3" [formGroup]="form" (ngSubmit)="create()">

@@ -1,38 +1,32 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { AuthService } from '../core/auth.service';
 import { ToastService } from '../core/toast.service';
 import { errorMessage, isHttpError } from '../core/error-message';
-import { meetsPasswordPolicy, PASSWORD_HINT, passwordRules, passwordsMatch } from '../core/password-strength';
-import { PasswordFeedbackComponent } from '../ui/password-feedback.component';
+import { passwordRules, passwordsMatch } from '../core/password-strength';
+import { AuthShellComponent } from '../ui/auth-shell.component';
+import { GithubButtonComponent } from '../ui/github-button.component';
+import { LoadingButtonComponent } from '../ui/loading-button.component';
+import { PasswordFieldsComponent } from '../ui/password-fields.component';
 
 @Component({
   selector: 'app-signup-page',
   imports: [
     ReactiveFormsModule,
     RouterLink,
-    MatButtonModule,
     MatFormFieldModule,
-    MatIconModule,
     MatInputModule,
-    MatProgressSpinnerModule,
-    PasswordFeedbackComponent,
+    AuthShellComponent,
+    GithubButtonComponent,
+    LoadingButtonComponent,
+    PasswordFieldsComponent,
   ],
   template: `
-    <div class="mx-auto flex min-h-screen max-w-md items-center px-6">
-      <form
-        class="w-full space-y-4"
-        [formGroup]="form"
-        (ngSubmit)="submit()"
-        autocomplete="off"
-      >
-        <p class="text-sm uppercase tracking-[0.2em] text-moss-400">RepoDoctor</p>
+    <app-auth-shell>
+      <form class="space-y-4" [formGroup]="form" (ngSubmit)="submit()" autocomplete="off">
         <h1 class="text-3xl font-semibold">Create your workspace account</h1>
         @if (inviteOrg()) {
           <p class="rounded-md border border-moss-500/30 bg-ink-800 px-3 py-2 text-sm text-ink-200">
@@ -44,7 +38,6 @@ import { PasswordFeedbackComponent } from '../ui/password-feedback.component';
             }
           </p>
         }
-        <p class="text-sm text-ink-200">{{ hint }}</p>
         <mat-form-field appearance="outline">
           <mat-label>Display name</mat-label>
           <input
@@ -76,65 +69,24 @@ import { PasswordFeedbackComponent } from '../ui/password-feedback.component';
             (focus)="unlock('email')"
           />
         </mat-form-field>
-        <mat-form-field appearance="outline">
-          <mat-label>Password</mat-label>
-          <input
-            matInput
-            type="password"
-            formControlName="password"
-            name="rd-signup-password"
-            autocomplete="new-password"
-            [readOnly]="locked().password"
-            (mousedown)="unlock('password')"
-            (focus)="unlock('password')"
-          />
-          @if (form.controls.password.value) {
-            <mat-icon matSuffix [class]="passwordValid() ? 'text-moss-400' : 'text-red-400'">
-              {{ passwordValid() ? 'check' : 'close' }}
-            </mat-icon>
-          }
-        </mat-form-field>
-        <app-password-feedback [showStrength]="true" [password]="form.controls.password.value" />
-        <mat-form-field appearance="outline">
-          <mat-label>Confirm password</mat-label>
-          <input
-            matInput
-            type="password"
-            formControlName="confirmPassword"
-            name="rd-signup-confirm-password"
-            autocomplete="new-password"
-            [readOnly]="locked().confirmPassword"
-            (mousedown)="unlock('confirmPassword')"
-            (focus)="unlock('confirmPassword')"
-          />
-          @if (form.controls.confirmPassword.value) {
-            <mat-icon matSuffix [class]="passwordsEqual() ? 'text-moss-400' : 'text-red-400'">
-              {{ passwordsEqual() ? 'check' : 'close' }}
-            </mat-icon>
-          }
-        </mat-form-field>
-        <app-password-feedback
-          [showMatch]="true"
-          [password]="form.controls.password.value"
-          [confirm]="form.controls.confirmPassword.value"
+        <app-password-fields
+          [lockUntilFocus]="true"
+          passwordName="rd-signup-password"
+          confirmName="rd-signup-confirm-password"
         />
-        @if (form.controls.password.touched && form.controls.password.hasError('passwordRules')) {
-          <p class="text-sm text-red-200">{{ hint }}</p>
-        }
-        <button mat-flat-button class="w-full" [disabled]="form.invalid || loading()">
-          @if (loading()) {
-            <mat-progress-spinner class="mr-2" diameter="18" mode="indeterminate" />
-          }
-          {{ submitLabel() }}
-        </button>
-        <button mat-stroked-button class="w-full" type="button" [disabled]="loading()" (click)="github()">
-          Continue with GitHub
-        </button>
+        <app-loading-button
+          hostClass="w-full"
+          [disabled]="form.invalid"
+          [loading]="loading()"
+          [label]="inviteToken() ? 'Create account' : 'Sign up'"
+          [loadingLabel]="inviteToken() ? 'Saving…' : 'Creating account…'"
+        />
+        <app-github-button [disabled]="loading()" (pressed)="github()" />
         @if (!inviteToken()) {
           <a routerLink="/login" class="block text-sm text-ink-200 hover:text-moss-300">Already have an account</a>
         }
       </form>
-    </div>
+    </app-auth-shell>
   `,
 })
 export class SignupPage {
@@ -147,7 +99,6 @@ export class SignupPage {
   readonly inviteOrg = signal<string | null>(null);
   readonly inviteRole = signal<string | null>(null);
   readonly inviteToken = signal('');
-  readonly hint = PASSWORD_HINT;
   readonly finishingInvite = () => this.auth.isAuthenticated() && Boolean(this.inviteToken());
   readonly form = this.fb.nonNullable.group(
     {
@@ -161,8 +112,6 @@ export class SignupPage {
   readonly locked = signal({
     displayName: true,
     email: true,
-    password: true,
-    confirmPassword: true,
   });
 
   constructor() {
@@ -183,24 +132,8 @@ export class SignupPage {
     }
   }
 
-  passwordValid(): boolean {
-    return meetsPasswordPolicy(this.form.controls.password.value);
-  }
-
-  passwordsEqual(): boolean {
-    const { password, confirmPassword } = this.form.getRawValue();
-    return password.length > 0 && password === confirmPassword;
-  }
-
-  unlock(field: 'displayName' | 'email' | 'password' | 'confirmPassword'): void {
+  unlock(field: 'displayName' | 'email'): void {
     this.locked.update((current) => ({ ...current, [field]: false }));
-  }
-
-  submitLabel(): string {
-    if (this.loading()) {
-      return this.inviteToken() ? 'Saving…' : 'Creating account…';
-    }
-    return this.inviteToken() ? 'Create account' : 'Sign up';
   }
 
   async github(): Promise<void> {

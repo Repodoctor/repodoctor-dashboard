@@ -1,11 +1,10 @@
 import { Component, DestroyRef, inject, signal } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../core/auth.service';
 import { ScmService } from '../core/scm.service';
@@ -14,6 +13,8 @@ import { SCM_PROVIDERS, scmProviderLabel, type ScmProviderName } from '../core/s
 import type { Organization, Repository, ScmInstallation } from '../core/models';
 import { ConfirmDialogComponent } from '../ui/confirm-dialog.component';
 import { LoadingStateComponent } from '../ui/loading-state.component';
+import { BusyOverlayComponent } from '../ui/busy-overlay.component';
+import { isOrgAdmin } from '../core/org-role';
 
 interface ProviderRow {
   provider: ScmProviderName;
@@ -27,24 +28,12 @@ interface ProviderRow {
     MatCardModule,
     MatIconModule,
     MatMenuModule,
-    MatProgressSpinnerModule,
     LoadingStateComponent,
+    BusyOverlayComponent,
   ],
   template: `
     <div class="space-y-6">
-      @if (busy()) {
-        <div class="fixed inset-0 z-50 flex items-center justify-center bg-ink/80">
-          <mat-card appearance="outlined">
-            <mat-card-content class="flex flex-col items-center gap-4 text-center">
-              <mat-progress-spinner diameter="40" mode="indeterminate" />
-              <p class="font-medium">{{ busy() }}</p>
-              @if (waitingPopup()) {
-                <p class="max-w-xs text-sm text-ink-200">Finish the provider window. This page will update when it closes.</p>
-              }
-            </mat-card-content>
-          </mat-card>
-        </div>
-      }
+      <app-busy-overlay [message]="busy()" [detail]="waitingPopup() ? 'Finish the provider window. This page will update when it closes.' : ''" />
       @if (loading()) {
         <mat-card appearance="outlined">
           <mat-card-content>
@@ -149,6 +138,7 @@ export class OrganizationIntegrationsPage {
   private readonly scm = inject(ScmService);
   private readonly toast = inject(ToastService);
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly dialog = inject(MatDialog);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -160,14 +150,8 @@ export class OrganizationIntegrationsPage {
   readonly busy = signal<string | null>(null);
   readonly waitingPopup = signal(false);
 
-  readonly canManage = () => {
-    const role = this.org()?.role;
-    return role === 'OWNER' || role === 'ADMIN' || role === 'MEMBER';
-  };
-  readonly canAdmin = () => {
-    const role = this.org()?.role;
-    return role === 'OWNER' || role === 'ADMIN';
-  };
+  readonly canManage = () => isOrgAdmin(this.org()?.role);
+  readonly canAdmin = () => isOrgAdmin(this.org()?.role);
 
   constructor() {
     const id = this.route.snapshot.paramMap.get('organizationId');
@@ -352,12 +336,16 @@ export class OrganizationIntegrationsPage {
 
   private async load(id: string): Promise<void> {
     try {
-      const [org, installations, repositories] = await Promise.all([
-        this.auth.getOrganization(id),
+      const org = await this.auth.getOrganization(id);
+      this.org.set(org);
+      if (!isOrgAdmin(org.role)) {
+        await this.router.navigate(['/organizations', id]);
+        return;
+      }
+      const [installations, repositories] = await Promise.all([
         this.scm.listInstallations(id).catch(() => [] as ScmInstallation[]),
         this.scm.listRepositories(id).catch(() => [] as Repository[]),
       ]);
-      this.org.set(org);
       this.installations.set(installations);
       this.repositories.set(repositories);
     } catch {

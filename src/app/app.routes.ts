@@ -35,6 +35,10 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/auth-callback.page').then((m) => m.AuthCallbackPage),
   },
   {
+    path: 'error',
+    loadComponent: () => import('./pages/error.page').then((m) => m.ErrorPage),
+  },
+  {
     path: '',
     canActivate: [authGuard],
     loadComponent: () => import('./layout/shell.component').then((m) => m.ShellComponent),

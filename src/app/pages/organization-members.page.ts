@@ -12,6 +12,7 @@ import { AuthService } from '../core/auth.service';
 import { ToastService } from '../core/toast.service';
 import type { Organization, OrganizationInvite, OrganizationMember } from '../core/models';
 import { LoadingStateComponent } from '../ui/loading-state.component';
+import { isOrgAdmin } from '../core/org-role';
 
 const ASSIGNABLE_ROLES = ['ADMIN', 'MEMBER', 'VIEWER'] as const;
 
@@ -93,8 +94,8 @@ const ASSIGNABLE_ROLES = ['ADMIN', 'MEMBER', 'VIEWER'] as const;
                         }
                       </td>
                     </ng-container>
-                    <tr mat-header-row *matHeaderRowDef="inviteColumns"></tr>
-                    <tr mat-row *matRowDef="let row; columns: inviteColumns"></tr>
+                    <tr mat-header-row *matHeaderRowDef="inviteColumns()"></tr>
+                    <tr mat-row *matRowDef="let row; columns: inviteColumns()"></tr>
                   </table>
                   <mat-paginator #invitePaginator [pageSize]="10" [pageSizeOptions]="[5, 10, 25]" showFirstLastButtons />
                 </div>
@@ -136,8 +137,8 @@ const ASSIGNABLE_ROLES = ['ADMIN', 'MEMBER', 'VIEWER'] as const;
                     }
                   </td>
                 </ng-container>
-                <tr mat-header-row *matHeaderRowDef="memberColumns"></tr>
-                <tr mat-row *matRowDef="let row; columns: memberColumns"></tr>
+                <tr mat-header-row *matHeaderRowDef="memberColumns()"></tr>
+                <tr mat-row *matRowDef="let row; columns: memberColumns()"></tr>
               </table>
               <mat-paginator #memberPaginator [pageSize]="10" [pageSizeOptions]="[5, 10, 25]" showFirstLastButtons />
             </div>
@@ -173,17 +174,17 @@ export class OrganizationMembersPage {
     email: ['', [Validators.required, Validators.email]],
     role: this.fb.nonNullable.control<(typeof ASSIGNABLE_ROLES)[number]>('MEMBER'),
   });
-  readonly memberColumns = ['name', 'email', 'role', 'actions'];
-  readonly inviteColumns = ['email', 'role', 'expires', 'actions'];
   readonly memberData = new MatTableDataSource<OrganizationMember>([]);
   readonly inviteData = new MatTableDataSource<OrganizationInvite>([]);
   private readonly memberPaginator = viewChild<MatPaginator>('memberPaginator');
   private readonly invitePaginator = viewChild<MatPaginator>('invitePaginator');
 
-  readonly canAdmin = () => {
-    const role = this.org()?.role;
-    return role === 'OWNER' || role === 'ADMIN';
-  };
+  readonly canAdmin = () => isOrgAdmin(this.org()?.role);
+
+  readonly memberColumns = () =>
+    this.canAdmin() ? ['name', 'email', 'role', 'actions'] : ['name', 'email', 'role'];
+  readonly inviteColumns = () =>
+    this.canAdmin() ? ['email', 'role', 'expires', 'actions'] : ['email', 'role', 'expires'];
 
   readonly rolesDirty = () =>
     this.members().some((member) => this.draftRole(member) !== member.role);
@@ -305,14 +306,15 @@ export class OrganizationMembersPage {
 
   private async load(id: string): Promise<void> {
     try {
-      const [org, members, invites] = await Promise.all([
-        this.auth.getOrganization(id),
-        this.auth.listMembers(id).catch(() => [] as OrganizationMember[]),
-        this.auth.listInvites(id).catch(() => [] as OrganizationInvite[]),
-      ]);
+      const org = await this.auth.getOrganization(id);
       this.org.set(org);
+      const members = await this.auth.listMembers(id).catch(() => [] as OrganizationMember[]);
       this.members.set(members);
-      this.invites.set(invites);
+      if (isOrgAdmin(org.role)) {
+        this.invites.set(await this.auth.listInvites(id).catch(() => [] as OrganizationInvite[]));
+      } else {
+        this.invites.set([]);
+      }
       this.drafts.set({});
     } catch {
       // HTTP errors are toasted by the interceptor.

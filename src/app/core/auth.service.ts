@@ -10,7 +10,7 @@ import {
   type User as SupabaseUser,
 } from '@supabase/supabase-js';
 import { environment } from '../../environments/environment';
-import { captureAuthLinkFromLocation, type CapturedAuthLink } from './auth-link';
+import { captureAuthLinkFromLocation, authErrorMessage, type CapturedAuthLink } from './auth-link';
 import type { Organization, OrganizationInvite, OrganizationInvitePreview, OrganizationMember, Session, User } from './models';
 
 const ACCESS_KEY = 'repodoctor.accessToken';
@@ -25,7 +25,14 @@ type PendingPassword = 'invite' | 'recovery';
 export class AuthService {
   private readonly supabaseConfigured = Boolean(environment.supabaseUrl && environment.supabaseAnonKey);
   private supabase: SupabaseClient | null = null;
-  private capturedLink: CapturedAuthLink = { kind: null, invite: null, hasAuthPayload: false };
+  private capturedLink: CapturedAuthLink = {
+    kind: null,
+    invite: null,
+    hasAuthPayload: false,
+    error: null,
+    errorCode: null,
+    errorDescription: null,
+  };
 
   private readonly userSignal = signal<User | null>(this.supabaseConfigured ? null : this.readUser());
   private readyResolve!: () => void;
@@ -43,6 +50,10 @@ export class AuthService {
     private readonly router: Router,
   ) {
     this.captureAuthLink();
+    window.addEventListener('hashchange', () => {
+      this.capturedLink = captureAuthLinkFromLocation();
+      this.redirectAuthError();
+    });
     if (this.supabaseConfigured) {
       this.supabase = createClient(environment.supabaseUrl, environment.supabaseAnonKey);
       this.supabase.auth.onAuthStateChange((event, session) => {
@@ -54,6 +65,11 @@ export class AuthService {
 
   passwordSetupUrl(): string {
     return '/set-password';
+  }
+
+  consumeAuthUrlError(): boolean {
+    this.capturedLink = captureAuthLinkFromLocation();
+    return this.redirectAuthError();
   }
 
   clearPendingPassword(): void {
@@ -360,6 +376,7 @@ export class AuthService {
 
   private captureAuthLink(): void {
     this.capturedLink = captureAuthLinkFromLocation();
+    if (this.redirectAuthError()) return;
     if (this.capturedLink.invite) {
       sessionStorage.setItem(PENDING_INVITE_KEY, this.capturedLink.invite);
     }
@@ -368,6 +385,20 @@ export class AuthService {
     } else if (this.capturedLink.kind === 'recovery') {
       this.setPendingPassword('recovery');
     }
+  }
+
+  private redirectAuthError(): boolean {
+    const message = authErrorMessage(this.capturedLink);
+    if (!message) return false;
+    this.clearPendingPassword();
+    void this.router.navigate(['/error'], {
+      queryParams: {
+        message,
+        ...(this.capturedLink.errorCode ? { code: this.capturedLink.errorCode } : {}),
+      },
+      replaceUrl: true,
+    });
+    return true;
   }
 
   private handleAuthEvent(event: AuthChangeEvent, session: SupabaseSession | null): void {

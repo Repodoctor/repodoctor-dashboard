@@ -4,23 +4,19 @@ import { AuthService } from '../core/auth.service';
 import { ToastService } from '../core/toast.service';
 import type { Organization } from '../core/models';
 import { OrgSettingsNavComponent } from './org-settings-nav.component';
+import { PageHeaderComponent } from '../ui/page-header.component';
 
 @Component({
   selector: 'app-organization-shell',
-  imports: [RouterOutlet, OrgSettingsNavComponent],
+  imports: [RouterOutlet, OrgSettingsNavComponent, PageHeaderComponent],
   template: `
     <div class="space-y-6">
-      <div>
-        <p class="text-xs uppercase tracking-[0.2em] text-moss-400">Organization</p>
-        <h1 class="text-3xl font-semibold">{{ org()?.name ?? '…' }}</h1>
-        <p class="font-mono text-sm text-ink-200">
-          {{ org()?.slug ?? '' }}
-          @if (org()?.role) {
-            <span> · {{ org()?.role }}</span>
-          }
-        </p>
-      </div>
-      <app-org-settings-nav [organizationId]="organizationId" />
+      <app-page-header
+        eyebrow="Organization"
+        [title]="org()?.name ?? '…'"
+        [subtitle]="(org()?.slug ?? '') + (org()?.role ? ' · ' + org()?.role : '')"
+      />
+      <app-org-settings-nav [organizationId]="organizationId" [role]="org()?.role" />
       <router-outlet />
     </div>
   `,

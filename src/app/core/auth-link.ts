@@ -4,6 +4,9 @@ export interface CapturedAuthLink {
   kind: AuthLinkKind;
   invite: string | null;
   hasAuthPayload: boolean;
+  error: string | null;
+  errorCode: string | null;
+  errorDescription: string | null;
 }
 
 export function captureAuthLinkFromLocation(
@@ -15,19 +18,36 @@ export function captureAuthLinkFromLocation(
   const invite = query.get('invite');
   const hasAuthPayload = query.has('code') || hash.has('access_token') || hash.has('refresh_token');
   const path = location.pathname;
+  const error = hash.get('error') ?? query.get('error');
+  const errorCode = hash.get('error_code') ?? query.get('error_code');
+  const errorDescription = hash.get('error_description') ?? query.get('error_description');
 
   let kind: AuthLinkKind = null;
-  if (type === 'recovery') {
-    kind = 'recovery';
-  } else if (type === 'invite') {
-    kind = 'invite';
-  } else if (hasAuthPayload && invite) {
-    kind = 'invite';
-  } else if (path.startsWith('/auth/callback') && hasAuthPayload) {
-    kind = 'oauth';
-  } else if (hasAuthPayload && (path.startsWith('/reset-password') || path.startsWith('/set-password'))) {
-    kind = 'recovery';
+  if (!error) {
+    if (type === 'recovery') {
+      kind = 'recovery';
+    } else if (type === 'invite') {
+      kind = 'invite';
+    } else if (hasAuthPayload && invite) {
+      kind = 'invite';
+    } else if (path.startsWith('/auth/callback') && hasAuthPayload) {
+      kind = 'oauth';
+    } else if (hasAuthPayload && (path.startsWith('/reset-password') || path.startsWith('/set-password'))) {
+      kind = 'recovery';
+    }
   }
 
-  return { kind, invite, hasAuthPayload };
+  return {
+    kind,
+    invite,
+    hasAuthPayload,
+    error,
+    errorCode,
+    errorDescription,
+  };
+}
+
+export function authErrorMessage(link: CapturedAuthLink): string | null {
+  if (!link.error && !link.errorDescription) return null;
+  return link.errorDescription?.trim() || 'This email link is invalid or has expired.';
 }
