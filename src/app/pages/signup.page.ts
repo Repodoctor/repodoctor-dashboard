@@ -71,7 +71,7 @@ import { PasswordFeedbackComponent } from '../ui/password-feedback.component';
             autocorrect="off"
             autocapitalize="none"
             spellcheck="false"
-            [readOnly]="locked().email || Boolean(inviteToken())"
+            [readOnly]="locked().email || !!inviteToken()"
             (mousedown)="unlock('email')"
             (focus)="unlock('email')"
           />

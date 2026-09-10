@@ -51,7 +51,8 @@ interface ProviderRow {
             <app-loading-state label="Loading integrations…" />
           </mat-card-content>
         </mat-card>
-      } @else if (org(); as current) {
+      } @else {
+        @if (org()) {
         <section class="space-y-3">
           <div class="flex items-center justify-between gap-3">
             <h2 class="text-sm font-medium text-ink-200">Source Control</h2>
@@ -138,6 +139,7 @@ interface ProviderRow {
             }
           </div>
         </section>
+        }
       }
     </div>
   `,

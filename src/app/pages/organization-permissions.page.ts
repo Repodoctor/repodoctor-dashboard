@@ -39,7 +39,8 @@ interface PermissionRow extends RepositoryAccessGrant {
             <app-loading-state label="Loading permissions…" />
           </mat-card-content>
         </mat-card>
-      } @else if (org(); as current) {
+      } @else {
+        @if (org()) {
         <mat-card appearance="outlined">
           <mat-card-header>
             <mat-card-title>Repository permissions</mat-card-title>
@@ -102,6 +103,7 @@ interface PermissionRow extends RepositoryAccessGrant {
             }
           </mat-card-content>
         </mat-card>
+        }
       }
     </div>
   `,

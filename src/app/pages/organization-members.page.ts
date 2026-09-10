@@ -36,7 +36,8 @@ const ASSIGNABLE_ROLES = ['ADMIN', 'MEMBER', 'VIEWER'] as const;
             <app-loading-state label="Loading members…" />
           </mat-card-content>
         </mat-card>
-      } @else if (org(); as current) {
+      } @else {
+        @if (org()) {
         <mat-card appearance="outlined">
           <mat-card-header>
             <mat-card-title>Members</mat-card-title>
@@ -149,6 +150,7 @@ const ASSIGNABLE_ROLES = ['ADMIN', 'MEMBER', 'VIEWER'] as const;
             }
           </mat-card-content>
         </mat-card>
+        }
       }
     </div>
   `,

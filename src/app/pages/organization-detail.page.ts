@@ -23,7 +23,8 @@ import { RepositoryTableComponent } from '../ui/repository-table.component';
             <app-loading-state label="Loading overview…" />
           </mat-card-content>
         </mat-card>
-      } @else if (org(); as current) {
+      } @else {
+        @if (org(); as current) {
         <div class="grid gap-4 md:grid-cols-2">
           <mat-card appearance="outlined">
             <mat-card-header>
@@ -79,6 +80,7 @@ import { RepositoryTableComponent } from '../ui/repository-table.component';
             }
           </mat-card-content>
         </mat-card>
+        }
       }
     </div>
   `,

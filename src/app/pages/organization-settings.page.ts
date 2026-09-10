@@ -43,7 +43,8 @@ import { LoadingStateComponent } from '../ui/loading-state.component';
             <app-loading-state label="Loading details…" />
           </mat-card-content>
         </mat-card>
-      } @else if (org(); as current) {
+      } @else {
+        @if (org(); as current) {
         <mat-card appearance="outlined">
           <mat-card-header>
             <mat-card-title>Details</mat-card-title>
@@ -77,6 +78,7 @@ import { LoadingStateComponent } from '../ui/loading-state.component';
               <button mat-flat-button color="warn" type="button" (click)="askDelete()">Delete organization</button>
             </mat-card-content>
           </mat-card>
+        }
         }
       }
     </div>
