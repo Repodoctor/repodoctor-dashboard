@@ -18,3 +18,9 @@ test('signup page renders', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Create your workspace account' })).toBeVisible();
   await expect(page.getByText('Confirm password')).toBeVisible();
 });
+
+test('set password page renders for email links', async ({ page }) => {
+  await page.goto('/set-password');
+  await expect(page.getByRole('heading', { name: 'Choose a new password' })).toBeVisible();
+  await expect(page.getByText('This page is for the link in your email.')).toBeVisible();
+});

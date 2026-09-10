@@ -23,8 +23,12 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/forgot-password.page').then((m) => m.ForgotPasswordPage),
   },
   {
+    path: 'set-password',
+    loadComponent: () => import('./pages/set-password.page').then((m) => m.SetPasswordPage),
+  },
+  {
     path: 'reset-password',
-    loadComponent: () => import('./pages/reset-password.page').then((m) => m.ResetPasswordPage),
+    loadComponent: () => import('./pages/set-password.page').then((m) => m.SetPasswordPage),
   },
   {
     path: 'auth/callback',

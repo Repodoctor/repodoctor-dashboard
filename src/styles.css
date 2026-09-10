@@ -118,3 +118,7 @@ body {
   width: 1%;
   white-space: nowrap;
 }
+
+.rd-user-menu {
+  min-width: 17rem;
+}

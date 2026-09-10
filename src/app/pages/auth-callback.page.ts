@@ -27,11 +27,7 @@ export class AuthCallbackPage {
 
   private async finish(): Promise<void> {
     await this.auth.waitForSession();
-    if (this.auth.pendingPassword() === 'recovery') {
-      await this.router.navigateByUrl('/reset-password');
-      return;
-    }
-    if (this.auth.pendingPassword() === 'invite') {
+    if (this.auth.pendingPassword()) {
       await this.router.navigateByUrl(this.auth.passwordSetupUrl());
       return;
     }

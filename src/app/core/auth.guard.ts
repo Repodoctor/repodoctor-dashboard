@@ -2,12 +2,16 @@ import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 import { AuthService } from './auth.service';
 
+function isPasswordSetupUrl(url: string): boolean {
+  return url.startsWith('/set-password') || url.startsWith('/reset-password');
+}
+
 export const authGuard: CanActivateFn = async (_route, state) => {
   const auth = inject(AuthService);
   const router = inject(Router);
   await auth.whenReady();
   if (auth.pendingPassword()) {
-    return router.parseUrl(auth.passwordSetupUrl());
+    return isPasswordSetupUrl(state.url) ? true : router.parseUrl(auth.passwordSetupUrl());
   }
   if (auth.isAuthenticated()) {
     return true;
@@ -20,13 +24,7 @@ export const guestGuard: CanActivateFn = async (_route, state) => {
   const router = inject(Router);
   await auth.whenReady();
   if (auth.pendingPassword()) {
-    if (auth.pendingPassword() === 'recovery' && state.url.startsWith('/reset-password')) {
-      return true;
-    }
-    if (auth.pendingPassword() === 'invite' && state.url.startsWith('/signup')) {
-      return true;
-    }
-    return router.parseUrl(auth.passwordSetupUrl());
+    return isPasswordSetupUrl(state.url) ? true : router.parseUrl(auth.passwordSetupUrl());
   }
   if (!auth.isAuthenticated()) {
     return true;

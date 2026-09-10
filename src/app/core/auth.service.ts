@@ -2,8 +2,15 @@ import { Injectable, computed, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
-import { createClient, type Session as SupabaseSession, type SupabaseClient } from '@supabase/supabase-js';
+import {
+  createClient,
+  type AuthChangeEvent,
+  type Session as SupabaseSession,
+  type SupabaseClient,
+  type User as SupabaseUser,
+} from '@supabase/supabase-js';
 import { environment } from '../../environments/environment';
+import { captureAuthLinkFromLocation, type CapturedAuthLink } from './auth-link';
 import type { Organization, OrganizationInvite, OrganizationInvitePreview, OrganizationMember, Session, User } from './models';
 
 const ACCESS_KEY = 'repodoctor.accessToken';
@@ -17,9 +24,8 @@ type PendingPassword = 'invite' | 'recovery';
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly supabaseConfigured = Boolean(environment.supabaseUrl && environment.supabaseAnonKey);
-  private readonly supabase: SupabaseClient | null = this.supabaseConfigured
-    ? createClient(environment.supabaseUrl, environment.supabaseAnonKey)
-    : null;
+  private supabase: SupabaseClient | null = null;
+  private capturedLink: CapturedAuthLink = { kind: null, invite: null, hasAuthPayload: false };
 
   private readonly userSignal = signal<User | null>(this.supabaseConfigured ? null : this.readUser());
   private readyResolve!: () => void;
@@ -29,6 +35,7 @@ export class AuthService {
 
   readonly user = this.userSignal.asReadonly();
   readonly isAuthenticated = computed(() => this.userSignal() !== null);
+  readonly avatarUrl = computed(() => this.userSignal()?.avatarUrl);
   readonly pendingPassword = signal<PendingPassword | null>(readStoredPendingPassword());
 
   constructor(
@@ -36,21 +43,17 @@ export class AuthService {
     private readonly router: Router,
   ) {
     this.captureAuthLink();
-    void this.hydrate();
-    if (this.supabase) {
+    if (this.supabaseConfigured) {
+      this.supabase = createClient(environment.supabaseUrl, environment.supabaseAnonKey);
       this.supabase.auth.onAuthStateChange((event, session) => {
-        if (event === 'PASSWORD_RECOVERY') {
-          this.setPendingPassword('recovery');
-        }
-        this.applySupabaseSession(session);
+        this.handleAuthEvent(event, session);
       });
     }
+    void this.hydrate();
   }
 
   passwordSetupUrl(): string {
-    if (this.pendingPassword() === 'recovery') return '/reset-password';
-    const invite = sessionStorage.getItem(PENDING_INVITE_KEY);
-    return invite ? `/signup?invite=${encodeURIComponent(invite)}` : '/signup';
+    return '/set-password';
   }
 
   clearPendingPassword(): void {
@@ -69,8 +72,11 @@ export class AuthService {
     const start = Date.now();
     while (Date.now() - start < timeoutMs) {
       const { data } = await this.supabase.auth.getSession();
-      this.applySupabaseSession(data.session);
-      if (data.session) return true;
+      if (data.session) {
+        this.applyPendingPassword(data.session);
+        this.applySupabaseSession(data.session);
+        return true;
+      }
       await new Promise((resolve) => setTimeout(resolve, 200));
     }
     return this.isAuthenticated();
@@ -160,7 +166,7 @@ export class AuthService {
   async forgotPassword(email: string): Promise<void> {
     if (this.supabase) {
       const { error } = await this.supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
+        redirectTo: `${window.location.origin}/set-password`,
       });
       if (error) throw error;
       return;
@@ -174,7 +180,10 @@ export class AuthService {
     }
     const { error } = await this.supabase.auth.updateUser({
       password,
-      data: displayName ? { display_name: displayName } : undefined,
+      data: {
+        password_set: true,
+        ...(displayName?.trim() ? { display_name: displayName.trim() } : {}),
+      },
     });
     if (error) throw error;
     this.clearPendingPassword();
@@ -204,8 +213,9 @@ export class AuthService {
   async loadProfile(): Promise<void> {
     if (!(await this.getAccessToken())) return;
     const user = await firstValueFrom(this.http.get<User>(`${environment.apiBaseUrl}/users/me`));
-    this.userSignal.set(user);
-    sessionStorage.setItem(USER_KEY, JSON.stringify(user));
+    const merged: User = { ...user, avatarUrl: user.avatarUrl ?? this.userSignal()?.avatarUrl };
+    this.userSignal.set(merged);
+    sessionStorage.setItem(USER_KEY, JSON.stringify(merged));
   }
 
   async listOrganizations(): Promise<Organization[]> {
@@ -235,9 +245,10 @@ export class AuthService {
     const user = await firstValueFrom(
       this.http.patch<User>(`${environment.apiBaseUrl}/users/me`, { displayName }),
     );
-    this.userSignal.set(user);
-    sessionStorage.setItem(USER_KEY, JSON.stringify(user));
-    return user;
+    const merged: User = { ...user, avatarUrl: user.avatarUrl ?? this.userSignal()?.avatarUrl };
+    this.userSignal.set(merged);
+    sessionStorage.setItem(USER_KEY, JSON.stringify(merged));
+    return merged;
   }
 
   async deleteAccount(): Promise<{ deletedOrganizationIds: string[] }> {
@@ -348,21 +359,71 @@ export class AuthService {
   }
 
   private captureAuthLink(): void {
-    const hash = new URLSearchParams(window.location.hash.replace(/^#/, ''));
-    const query = new URLSearchParams(window.location.search);
-    const invite = query.get('invite');
-    if (invite) {
-      sessionStorage.setItem(PENDING_INVITE_KEY, invite);
+    this.capturedLink = captureAuthLinkFromLocation();
+    if (this.capturedLink.invite) {
+      sessionStorage.setItem(PENDING_INVITE_KEY, this.capturedLink.invite);
     }
-    const type = hash.get('type') ?? query.get('type');
-    const path = window.location.pathname;
-    if (type === 'recovery' || (path.startsWith('/reset-password') && (query.has('code') || hash.has('access_token')))) {
+    if (this.capturedLink.kind === 'invite') {
+      this.setPendingPassword('invite');
+    } else if (this.capturedLink.kind === 'recovery') {
       this.setPendingPassword('recovery');
+    }
+  }
+
+  private handleAuthEvent(event: AuthChangeEvent, session: SupabaseSession | null): void {
+    if (event === 'PASSWORD_RECOVERY') {
+      this.setPendingPassword('recovery');
+    } else if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session) {
+      this.applyPendingPassword(session);
+    }
+    this.applySupabaseSession(session);
+  }
+
+  private applyPendingPassword(session: SupabaseSession): void {
+    const kind = this.passwordSetupKind(session);
+    if (kind) {
+      this.setPendingPassword(kind);
       return;
     }
-    if (type === 'invite') {
-      this.setPendingPassword('invite');
+    if (this.shouldClearPending(session)) {
+      this.clearPendingPassword();
     }
+  }
+
+  private passwordSetupKind(session: SupabaseSession): PendingPassword | null {
+    const user = session.user;
+    if (this.capturedLink.kind === 'oauth' || hasGithubIdentity(user)) {
+      return null;
+    }
+    if (user.user_metadata?.['password_set'] === true) {
+      return null;
+    }
+    if (this.capturedLink.kind === 'recovery') {
+      return 'recovery';
+    }
+    if (this.capturedLink.kind === 'invite') {
+      return 'invite';
+    }
+    if (this.pendingPassword() === 'recovery') {
+      return 'recovery';
+    }
+    if (user.invited_at) {
+      return 'invite';
+    }
+    return null;
+  }
+
+  private shouldClearPending(session: SupabaseSession): boolean {
+    if (hasGithubIdentity(session.user) || this.capturedLink.kind === 'oauth') {
+      return true;
+    }
+    if (session.user.user_metadata?.['password_set'] === true) {
+      return true;
+    }
+    if (this.capturedLink.kind === 'invite' || this.capturedLink.kind === 'recovery') {
+      return false;
+    }
+    return !session.user.invited_at;
   }
 
   private setPendingPassword(kind: PendingPassword): void {
@@ -374,8 +435,10 @@ export class AuthService {
     try {
       if (this.supabase) {
         const { data } = await this.supabase.auth.getSession();
+        if (data.session) {
+          this.applyPendingPassword(data.session);
+        }
         this.applySupabaseSession(data.session);
-        this.captureAuthLink();
       }
     } finally {
       this.readyResolve();
@@ -396,10 +459,14 @@ export class AuthService {
       (supabaseUser.user_metadata?.['display_name'] as string | undefined) ??
       (supabaseUser.user_metadata?.['full_name'] as string | undefined) ??
       email;
+    const avatarUrl =
+      (supabaseUser.user_metadata?.['avatar_url'] as string | undefined) ??
+      (supabaseUser.user_metadata?.['picture'] as string | undefined);
     const user: User = {
       id: supabaseUser.id,
       email,
       displayName,
+      avatarUrl,
       createdAt: supabaseUser.created_at,
       updatedAt: supabaseUser.updated_at ?? supabaseUser.created_at,
     };
@@ -430,4 +497,12 @@ export class AuthService {
 function readStoredPendingPassword(): PendingPassword | null {
   const value = sessionStorage.getItem(PENDING_PASSWORD_KEY);
   return value === 'invite' || value === 'recovery' ? value : null;
+}
+
+function hasGithubIdentity(user: SupabaseUser): boolean {
+  const provider = user.app_metadata?.['provider'];
+  const providers = user.app_metadata?.['providers'];
+  if (provider === 'github') return true;
+  if (Array.isArray(providers) && providers.includes('github')) return true;
+  return user.identities?.some((identity) => identity.provider === 'github') ?? false;
 }

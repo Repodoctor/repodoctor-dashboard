@@ -13,7 +13,7 @@ import { meetsPasswordPolicy, PASSWORD_HINT, passwordRules, passwordsMatch } fro
 import { PasswordFeedbackComponent } from '../ui/password-feedback.component';
 
 @Component({
-  selector: 'app-reset-password-page',
+  selector: 'app-set-password-page',
   imports: [
     ReactiveFormsModule,
     RouterLink,
@@ -28,17 +28,22 @@ import { PasswordFeedbackComponent } from '../ui/password-feedback.component';
     <div class="mx-auto flex min-h-screen max-w-md items-center px-6">
       <form class="w-full space-y-4" [formGroup]="form" (ngSubmit)="submit()">
         <p class="text-sm uppercase tracking-[0.2em] text-moss-400">RepoDoctor</p>
-        <h1 class="text-3xl font-semibold">Choose a new password</h1>
+        <h1 class="text-3xl font-semibold">{{ title() }}</h1>
         <p class="text-sm text-ink-200">{{ hint }}</p>
         @if (!auth.isAuthenticated()) {
           <p class="text-sm text-ink-200">
-            This page is for the link in your reset email.
-            <a routerLink="/forgot-password" class="text-moss-300 hover:text-moss-200">Request a new link</a>
-            if it expired.
+            This page is for the link in your email. If it expired,
+            <a routerLink="/forgot-password" class="text-moss-300 hover:text-moss-200">request a new one</a>.
           </p>
         }
+        @if (isInvite()) {
+          <mat-form-field appearance="outline">
+            <mat-label>Display name</mat-label>
+            <input matInput formControlName="displayName" autocomplete="nickname" />
+          </mat-form-field>
+        }
         <mat-form-field appearance="outline">
-          <mat-label>New password</mat-label>
+          <mat-label>Password</mat-label>
           <input matInput type="password" formControlName="password" autocomplete="new-password" />
           @if (form.controls.password.value) {
             <mat-icon matSuffix [class]="passwordValid() ? 'text-moss-400' : 'text-red-400'">
@@ -75,7 +80,7 @@ import { PasswordFeedbackComponent } from '../ui/password-feedback.component';
     </div>
   `,
 })
-export class ResetPasswordPage {
+export class SetPasswordPage {
   private readonly fb = inject(FormBuilder);
   readonly auth = inject(AuthService);
   private readonly router = inject(Router);
@@ -84,6 +89,7 @@ export class ResetPasswordPage {
   readonly loading = signal(false);
   readonly form = this.fb.nonNullable.group(
     {
+      displayName: [this.auth.user()?.displayName ?? ''],
       password: ['', [Validators.required, passwordRules()]],
       confirmPassword: ['', Validators.required],
     },
@@ -91,7 +97,22 @@ export class ResetPasswordPage {
   );
 
   constructor() {
-    void this.auth.whenReady();
+    void this.auth.whenReady().then(() => {
+      if (this.auth.isAuthenticated() && !this.auth.pendingPassword()) {
+        void this.router.navigateByUrl('/dashboard');
+        return;
+      }
+      const name = this.auth.user()?.displayName;
+      if (name) this.form.patchValue({ displayName: name });
+    });
+  }
+
+  isInvite(): boolean {
+    return this.auth.pendingPassword() === 'invite';
+  }
+
+  title(): string {
+    return this.isInvite() ? 'Create your password' : 'Choose a new password';
   }
 
   passwordValid(): boolean {
@@ -107,8 +128,18 @@ export class ResetPasswordPage {
     if (this.form.invalid || !this.auth.isAuthenticated()) return;
     this.loading.set(true);
     try {
-      await this.auth.setPassword(this.form.controls.password.value);
-      this.toast.show('Password saved. You can sign in with it from now on.', 'success');
+      const { password, displayName } = this.form.getRawValue();
+      await this.auth.setPassword(password, this.isInvite() ? displayName : undefined);
+      const invite = this.auth.pendingInviteToken();
+      if (invite) {
+        try {
+          await this.auth.acceptInvite(invite);
+        } catch {
+          // ensureUser also attaches pending invites for this email.
+        }
+        this.auth.clearPendingInvite();
+      }
+      this.toast.show('Password saved. You are signed in.', 'success');
       await this.router.navigateByUrl('/dashboard');
     } catch (error) {
       if (!isHttpError(error)) {

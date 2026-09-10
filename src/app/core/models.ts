@@ -2,6 +2,8 @@ export interface User {
   id: string;
   email: string;
   displayName: string;
+  /** GitHub (or future upload) photo. Optional until Settings upload exists. */
+  avatarUrl?: string;
   createdAt: string;
   updatedAt: string;
 }

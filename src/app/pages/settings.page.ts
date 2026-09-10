@@ -16,6 +16,7 @@ import type { Organization } from '../core/models';
 import { ConfirmDialogComponent } from '../ui/confirm-dialog.component';
 import { OrganizationTableComponent } from '../ui/organization-table.component';
 import { PasswordFeedbackComponent } from '../ui/password-feedback.component';
+import { AvatarComponent } from '../layout/avatar.component';
 
 @Component({
   selector: 'app-settings-page',
@@ -28,6 +29,7 @@ import { PasswordFeedbackComponent } from '../ui/password-feedback.component';
     MatInputModule,
     OrganizationTableComponent,
     PasswordFeedbackComponent,
+    AvatarComponent,
   ],
   template: `
     <div class="space-y-6">
@@ -41,6 +43,19 @@ import { PasswordFeedbackComponent } from '../ui/password-feedback.component';
           <mat-card-title>Profile</mat-card-title>
         </mat-card-header>
         <mat-card-content class="space-y-4">
+          <div class="flex flex-wrap items-center gap-4">
+            <app-avatar
+              [url]="auth.avatarUrl()"
+              [name]="auth.user()?.displayName"
+              [email]="auth.user()?.email"
+              size="lg"
+            />
+            <div class="space-y-2">
+              <p class="font-medium">Profile photo</p>
+              <p class="text-sm text-ink-200">Photo upload will be available here later. GitHub photos appear automatically.</p>
+              <button mat-stroked-button type="button" disabled>Change photo</button>
+            </div>
+          </div>
           <p class="font-mono text-sm text-ink-200">{{ auth.user()?.email }}</p>
           <form class="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-start" [formGroup]="profileForm" (ngSubmit)="saveProfile()">
             <mat-form-field appearance="outline" subscriptSizing="dynamic">
