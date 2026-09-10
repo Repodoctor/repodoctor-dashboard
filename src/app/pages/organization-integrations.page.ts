@@ -64,7 +64,7 @@ import type { Organization, Repository, ScmInstallation } from '../core/models';
               </div>
             }
           </div>
-          <div class="divide-y divide-ink-400 overflow-hidden rounded-xl border border-ink-400 bg-ink-700/80">
+          <div class="divide-y divide-ink-400 overflow-visible rounded-xl border border-ink-400 bg-ink-700/80">
             @if (installations().length === 0) {
               <p class="px-5 py-8 text-sm text-ink-300">No source-control accounts yet. Add a provider to import repositories.</p>
             }
@@ -82,7 +82,7 @@ import type { Organization, Repository, ScmInstallation } from '../core/models';
                   </p>
                 </div>
                 @if (canManage()) {
-                  <div class="relative">
+                  <div class="relative z-50">
                     <button class="rd-btn-ghost" type="button" (click)="toggleManage($event, install.id)">
                       Manage
                       <span class="ml-2 text-xs text-ink-300">▾</span>

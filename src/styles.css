@@ -42,7 +42,7 @@ body {
 }
 
 .rd-menu {
-  @apply absolute right-0 z-20 mt-1 min-w-[15rem] rounded-lg border border-ink-400 bg-ink-800 py-1 shadow-glow;
+  @apply absolute right-0 z-50 mt-1 min-w-[15rem] rounded-lg border border-ink-400 bg-ink-800 py-1 shadow-glow;
 }
 
 .rd-menu-item {
