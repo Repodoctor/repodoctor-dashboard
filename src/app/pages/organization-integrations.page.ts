@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -131,7 +131,10 @@ interface ProviderRow {
                     <mat-icon iconPositionEnd>arrow_drop_down</mat-icon>
                   </button>
                   <mat-menu #manageMenu="matMenu">
-                    <button mat-menu-item type="button" (click)="manage(row.provider)">
+                    <button mat-menu-item type="button" (click)="addProvider(row.provider, true)">
+                      Add organization
+                    </button>
+                    <button mat-menu-item type="button" (click)="manage(row)">
                       Manage in {{ providerLabel(row.provider) }}
                     </button>
                     <button mat-menu-item type="button" (click)="reconnect(row)">Reconnect</button>
@@ -155,6 +158,7 @@ export class OrganizationIntegrationsPage {
   private readonly toast = inject(ToastService);
   private readonly route = inject(ActivatedRoute);
   private readonly dialog = inject(MatDialog);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly providers = SCM_PROVIDERS;
   readonly org = signal<Organization | null>(null);
@@ -181,6 +185,14 @@ export class OrganizationIntegrationsPage {
       return;
     }
     void this.load(id);
+    const onMessage = (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return;
+      if (event.data?.type !== 'repodoctor-scm-connected') return;
+      const organizationId = typeof event.data.organizationId === 'string' ? event.data.organizationId : id;
+      void this.onScmConnected(organizationId);
+    };
+    window.addEventListener('message', onMessage);
+    this.destroyRef.onDestroy(() => window.removeEventListener('message', onMessage));
   }
 
   providerLabel(provider: ScmProviderName): string {
@@ -230,8 +242,9 @@ export class OrganizationIntegrationsPage {
     await this.openInstallPopup(provider);
   }
 
-  async manage(provider: ScmProviderName): Promise<void> {
-    await this.openInstallPopup(provider);
+  async manage(row: ProviderRow): Promise<void> {
+    const only = row.installations.length === 1 ? row.installations[0] : undefined;
+    await this.openInstallPopup(row.provider, only?.externalInstallationId);
   }
 
   async reconnect(row: ProviderRow): Promise<void> {
@@ -289,14 +302,14 @@ export class OrganizationIntegrationsPage {
     }
   }
 
-  private async openInstallPopup(provider: ScmProviderName): Promise<void> {
+  private async openInstallPopup(provider: ScmProviderName, externalInstallationId?: string): Promise<void> {
     const org = this.org();
     if (!org) return;
     this.busy.set(`Waiting for ${this.providerLabel(provider)}…`);
     this.waitingPopup.set(true);
     try {
       this.scm.rememberOrganization(org.id);
-      const { url } = await this.scm.getInstallUrl(org.id, provider);
+      const { url } = await this.scm.getInstallUrl(org.id, provider, externalInstallationId);
       const popup = window.open(url, 'repodoctor-scm-install', 'popup=yes,width=980,height=780');
       if (!popup) {
         window.location.assign(url);
@@ -312,14 +325,36 @@ export class OrganizationIntegrationsPage {
     }
   }
 
+  private async onScmConnected(organizationId: string): Promise<void> {
+    this.waitingPopup.set(false);
+    this.busy.set(null);
+    await this.load(organizationId);
+  }
+
   private waitForPopup(popup: Window): Promise<void> {
     return new Promise((resolve) => {
-      const timer = window.setInterval(() => {
-        if (popup.closed) {
-          window.clearInterval(timer);
-          resolve();
+      let done = false;
+      const finish = () => {
+        if (done) return;
+        done = true;
+        window.clearInterval(timer);
+        window.removeEventListener('message', onMessage);
+        resolve();
+      };
+      const onMessage = (event: MessageEvent) => {
+        if (event.origin !== window.location.origin) return;
+        if (event.data?.type !== 'repodoctor-scm-connected') return;
+        try {
+          popup.close();
+        } catch {
+          // The callback window also tries to close itself.
         }
+        finish();
+      };
+      const timer = window.setInterval(() => {
+        if (popup.closed) finish();
       }, 400);
+      window.addEventListener('message', onMessage);
     });
   }
 

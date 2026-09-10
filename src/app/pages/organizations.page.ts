@@ -115,8 +115,10 @@ export class OrganizationsPage {
         .open(ConfirmDialogComponent, {
           data: {
             title: 'Delete organization',
-            body: `Delete ${org.name}? Repositories, analysis runs, findings, and GitHub App installations are removed. RepoDoctor also uninstalls the GitHub App from that account. This cannot be undone.`,
-            confirm: 'Delete',
+            body: `Delete ${org.name}? Repositories, analysis runs, findings, and GitHub App installations are removed. RepoDoctor also uninstalls the GitHub App from that account. Type the organization name to confirm. This cannot be undone.`,
+            confirm: 'Delete organization',
+            typedValueLabel: 'Type the organization name to confirm',
+            typedValueToMatch: org.name,
           },
         })
         .afterClosed(),

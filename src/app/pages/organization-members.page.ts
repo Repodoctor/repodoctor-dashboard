@@ -219,7 +219,7 @@ export class OrganizationMembersPage {
       }
       if (result.invite) {
         this.invites.set([...this.invites().filter((item) => item.email !== result.invite!.email), result.invite]);
-        this.toast.show('Invite created. Copy the signup link to share it.', 'success');
+        this.toast.show('Invite created. The signup link is copied. Email can be delayed if the mail quota is busy.', 'success');
         await this.copyInvite(result.invite);
       }
       this.inviteForm.reset({ email: '', role: 'MEMBER' });

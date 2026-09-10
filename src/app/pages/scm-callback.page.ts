@@ -102,15 +102,22 @@ export class ScmCallbackPage {
   }
 
   private async finishConnect(organizationId: string): Promise<void> {
-    const path = `/organizations/${organizationId}/settings/integrations`;
+    const origin = window.location.origin;
+    const isPopup = window.name === 'repodoctor-scm-install' || Boolean(window.opener && !window.opener.closed);
     if (window.opener && !window.opener.closed) {
       try {
-        window.opener.location.assign(path);
-        window.close();
-        return;
+        window.opener.postMessage({ type: 'repodoctor-scm-connected', organizationId }, origin);
       } catch {
-        // Fall through to in-tab navigation when the opener cannot be reached.
+        try {
+          window.opener.location.assign(`/organizations/${organizationId}/settings/integrations`);
+        } catch {
+          // Fall through to close or in-tab navigation.
+        }
       }
+    }
+    if (isPopup) {
+      window.close();
+      return;
     }
     await this.router.navigate(['/organizations', organizationId, 'settings', 'integrations']);
   }

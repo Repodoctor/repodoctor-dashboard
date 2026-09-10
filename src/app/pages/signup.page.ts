@@ -3,16 +3,27 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { AuthService } from '../core/auth.service';
 import { ToastService } from '../core/toast.service';
 import { errorMessage, isHttpError } from '../core/error-message';
-import { PASSWORD_HINT, passwordRules, passwordStrength, passwordsMatch } from '../core/password-strength';
+import { meetsPasswordPolicy, PASSWORD_HINT, passwordRules, passwordsMatch } from '../core/password-strength';
+import { PasswordFeedbackComponent } from '../ui/password-feedback.component';
 
 @Component({
   selector: 'app-signup-page',
-  imports: [ReactiveFormsModule, RouterLink, MatButtonModule, MatFormFieldModule, MatInputModule, MatProgressSpinnerModule],
+  imports: [
+    ReactiveFormsModule,
+    RouterLink,
+    MatButtonModule,
+    MatFormFieldModule,
+    MatIconModule,
+    MatInputModule,
+    MatProgressSpinnerModule,
+    PasswordFeedbackComponent,
+  ],
   template: `
     <div class="mx-auto flex min-h-screen max-w-md items-center px-6">
       <form
@@ -75,20 +86,13 @@ import { PASSWORD_HINT, passwordRules, passwordStrength, passwordsMatch } from '
             (mousedown)="unlock('password')"
             (focus)="unlock('password')"
           />
+          @if (form.controls.password.value) {
+            <mat-icon matSuffix [class]="passwordValid() ? 'text-moss-400' : 'text-red-400'">
+              {{ passwordValid() ? 'check' : 'close' }}
+            </mat-icon>
+          }
         </mat-form-field>
-        @if (form.controls.password.value) {
-          <div>
-            <div class="flex gap-1">
-              @for (step of [1, 2, 3, 4]; track step) {
-                <span
-                  class="h-1.5 flex-1 rounded-full"
-                  [class]="strength().score >= step ? 'bg-moss-400' : 'bg-ink-400'"
-                ></span>
-              }
-            </div>
-            <p class="mt-1 text-xs text-ink-200">{{ strength().label }}</p>
-          </div>
-        }
+        <app-password-feedback [showStrength]="true" [password]="form.controls.password.value" />
         <mat-form-field appearance="outline">
           <mat-label>Confirm password</mat-label>
           <input
@@ -101,10 +105,17 @@ import { PASSWORD_HINT, passwordRules, passwordStrength, passwordsMatch } from '
             (mousedown)="unlock('confirmPassword')"
             (focus)="unlock('confirmPassword')"
           />
+          @if (form.controls.confirmPassword.value) {
+            <mat-icon matSuffix [class]="passwordsEqual() ? 'text-moss-400' : 'text-red-400'">
+              {{ passwordsEqual() ? 'check' : 'close' }}
+            </mat-icon>
+          }
         </mat-form-field>
-        @if (form.hasError('mismatch') && form.touched) {
-          <p class="text-sm text-red-200">Passwords do not match.</p>
-        }
+        <app-password-feedback
+          [showMatch]="true"
+          [password]="form.controls.password.value"
+          [confirm]="form.controls.confirmPassword.value"
+        />
         @if (form.controls.password.touched && form.controls.password.hasError('passwordRules')) {
           <p class="text-sm text-red-200">{{ hint }}</p>
         }
@@ -165,8 +176,13 @@ export class SignupPage {
     }
   }
 
-  strength() {
-    return passwordStrength(this.form.controls.password.value);
+  passwordValid(): boolean {
+    return meetsPasswordPolicy(this.form.controls.password.value);
+  }
+
+  passwordsEqual(): boolean {
+    const { password, confirmPassword } = this.form.getRawValue();
+    return password.length > 0 && password === confirmPassword;
   }
 
   unlock(field: 'displayName' | 'email' | 'password' | 'confirmPassword'): void {

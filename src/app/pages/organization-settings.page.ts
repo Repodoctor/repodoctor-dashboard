@@ -144,8 +144,10 @@ export class OrganizationSettingsPage {
         .open(ConfirmDialogComponent, {
           data: {
             title: 'Delete organization',
-            body: `Delete ${org.name}? Repositories, analysis, findings, and every source-control installation are removed. This cannot be undone.`,
-            confirm: 'Delete',
+            body: `Delete ${org.name}? Repositories, analysis, findings, and every source-control installation are removed. Type the organization name to confirm. This cannot be undone.`,
+            confirm: 'Delete organization',
+            typedValueLabel: 'Type the organization name to confirm',
+            typedValueToMatch: org.name,
           },
         })
         .afterClosed(),

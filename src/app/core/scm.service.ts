@@ -14,14 +14,16 @@ export class ScmService {
 
   rememberOrganization(organizationId: string): void {
     sessionStorage.setItem(PENDING_ORG_KEY, organizationId);
+    localStorage.setItem(PENDING_ORG_KEY, organizationId);
   }
 
   readPendingOrganization(): string | null {
-    return sessionStorage.getItem(PENDING_ORG_KEY);
+    return sessionStorage.getItem(PENDING_ORG_KEY) ?? localStorage.getItem(PENDING_ORG_KEY);
   }
 
   clearPendingOrganization(): void {
     sessionStorage.removeItem(PENDING_ORG_KEY);
+    localStorage.removeItem(PENDING_ORG_KEY);
   }
 
   organizationIdFromState(state: string | null): string | null {

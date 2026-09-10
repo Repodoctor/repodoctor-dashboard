@@ -3,14 +3,19 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
+import { MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
+import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../core/auth.service';
 import { ToastService } from '../core/toast.service';
 import { errorMessage, isHttpError } from '../core/error-message';
-import { PASSWORD_HINT, passwordRules, passwordStrength, passwordsMatch } from '../core/password-strength';
+import { meetsPasswordPolicy, PASSWORD_HINT, passwordRules, passwordsMatch } from '../core/password-strength';
 import type { Organization } from '../core/models';
+import { ConfirmDialogComponent } from '../ui/confirm-dialog.component';
 import { OrganizationTableComponent } from '../ui/organization-table.component';
+import { PasswordFeedbackComponent } from '../ui/password-feedback.component';
 
 @Component({
   selector: 'app-settings-page',
@@ -19,8 +24,10 @@ import { OrganizationTableComponent } from '../ui/organization-table.component';
     MatButtonModule,
     MatCardModule,
     MatFormFieldModule,
+    MatIconModule,
     MatInputModule,
     OrganizationTableComponent,
+    PasswordFeedbackComponent,
   ],
   template: `
     <div class="space-y-6">
@@ -63,17 +70,27 @@ import { OrganizationTableComponent } from '../ui/organization-table.component';
               <mat-form-field appearance="outline">
                 <mat-label>New password</mat-label>
                 <input matInput type="password" formControlName="password" autocomplete="new-password" />
+                @if (passwordForm.controls.password.value) {
+                  <mat-icon matSuffix [class]="passwordValid() ? 'text-moss-400' : 'text-red-400'">
+                    {{ passwordValid() ? 'check' : 'close' }}
+                  </mat-icon>
+                }
               </mat-form-field>
-              @if (passwordForm.controls.password.value) {
-                <p class="text-xs text-ink-200">{{ passwordStrengthLabel() }}</p>
-              }
+              <app-password-feedback [showStrength]="true" [password]="passwordForm.controls.password.value" />
               <mat-form-field appearance="outline">
                 <mat-label>Confirm new password</mat-label>
                 <input matInput type="password" formControlName="confirmPassword" autocomplete="new-password" />
+                @if (passwordForm.controls.confirmPassword.value) {
+                  <mat-icon matSuffix [class]="passwordsEqual() ? 'text-moss-400' : 'text-red-400'">
+                    {{ passwordsEqual() ? 'check' : 'close' }}
+                  </mat-icon>
+                }
               </mat-form-field>
-              @if (passwordForm.hasError('mismatch') && passwordForm.touched) {
-                <p class="text-sm text-red-200">Passwords do not match.</p>
-              }
+              <app-password-feedback
+                [showMatch]="true"
+                [password]="passwordForm.controls.password.value"
+                [confirm]="passwordForm.controls.confirmPassword.value"
+              />
               @if (passwordForm.controls.password.touched && passwordForm.controls.password.hasError('passwordRules')) {
                 <p class="text-sm text-red-200">{{ hint }}</p>
               }
@@ -112,17 +129,7 @@ import { OrganizationTableComponent } from '../ui/organization-table.component';
           @if (ownedOrgs().length > 0) {
             <p class="text-sm text-red-200">Owned organizations that will be deleted: {{ ownedNames() }}</p>
           }
-          <mat-form-field appearance="outline">
-            <mat-label>Type your email to confirm</mat-label>
-            <input matInput [formControl]="confirmEmail" />
-          </mat-form-field>
-          <button
-            mat-flat-button
-            color="warn"
-            type="button"
-            [disabled]="confirmEmail.value !== auth.user()?.email || deleting()"
-            (click)="deleteAccount()"
-          >
+          <button mat-flat-button color="warn" type="button" [disabled]="deleting()" (click)="askDeleteAccount()">
             {{ deleting() ? 'Deleting…' : 'Delete my account' }}
           </button>
         </mat-card-content>
@@ -135,6 +142,7 @@ export class SettingsPage {
   private readonly toast = inject(ToastService);
   private readonly fb = inject(FormBuilder);
   private readonly router = inject(Router);
+  private readonly dialog = inject(MatDialog);
 
   readonly organizations = signal<Organization[]>([]);
   readonly saving = signal(false);
@@ -153,7 +161,6 @@ export class SettingsPage {
     },
     { validators: passwordsMatch },
   );
-  readonly confirmEmail = this.fb.nonNullable.control('');
 
   readonly ownedOrgs = () => this.organizations().filter((item) => item.role === 'OWNER');
   readonly ownedNames = () => this.ownedOrgs().map((item) => item.name).join(', ');
@@ -179,8 +186,13 @@ export class SettingsPage {
     }
   }
 
-  passwordStrengthLabel(): string {
-    return passwordStrength(this.passwordForm.controls.password.value).label;
+  passwordValid(): boolean {
+    return meetsPasswordPolicy(this.passwordForm.controls.password.value);
+  }
+
+  passwordsEqual(): boolean {
+    const { password, confirmPassword } = this.passwordForm.getRawValue();
+    return password.length > 0 && password === confirmPassword;
   }
 
   cancelPasswordChange(): void {
@@ -205,13 +217,33 @@ export class SettingsPage {
     }
   }
 
-  async deleteAccount(): Promise<void> {
-    if (this.confirmEmail.value !== this.auth.user()?.email) return;
+  async askDeleteAccount(): Promise<void> {
+    const email = this.auth.user()?.email;
+    if (!email) return;
+    const owned = this.ownedNames();
+    const confirmed = await firstValueFrom(
+      this.dialog
+        .open(ConfirmDialogComponent, {
+          data: {
+            title: 'Delete my account',
+            body:
+              `This permanently deletes your RepoDoctor account and signs you out.` +
+              (owned
+                ? ` Owned organizations that will also be deleted: ${owned}.`
+                : ' Organizations you do not own stay; you are removed from them.') +
+              ' Type your email to confirm. This cannot be undone.',
+            confirm: 'Delete my account',
+            typedValueLabel: 'Type your email to confirm',
+            typedValueToMatch: email,
+          },
+        })
+        .afterClosed(),
+    );
+    if (!confirmed) return;
     this.deleting.set(true);
     try {
       await this.auth.deleteAccount();
     } catch {
-      // HTTP errors are toasted by the interceptor.
       this.deleting.set(false);
     }
   }
