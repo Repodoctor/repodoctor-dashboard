@@ -46,5 +46,5 @@ body {
 }
 
 .rd-menu-item {
-  @apply flex w-full flex-col items-start gap-0.5 px-3 py-2 text-left text-sm text-moss-100 transition hover:bg-ink-700;
+  @apply flex w-full flex-col items-start gap-0.5 px-3 py-2 text-left text-sm text-moss-100 transition hover:bg-ink-700 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent;
 }

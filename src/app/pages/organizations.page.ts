@@ -3,7 +3,6 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../core/auth.service';
 import { ToastService } from '../core/toast.service';
-import { errorMessage } from '../core/error-message';
 import type { Organization } from '../core/models';
 
 @Component({
@@ -26,9 +25,6 @@ import type { Organization } from '../core/models';
         </label>
         <button class="rd-btn self-end" [disabled]="form.invalid || saving()">Create</button>
       </form>
-      @if (error()) {
-        <p class="text-sm text-red-200">{{ error() }}</p>
-      }
       @if (loading()) {
         <p class="text-ink-200">Loading…</p>
       } @else if (items().length === 0) {
@@ -109,7 +105,6 @@ export class OrganizationsPage {
   readonly items = signal<Organization[]>([]);
   readonly loading = signal(true);
   readonly saving = signal(false);
-  readonly error = signal<string | null>(null);
   readonly menuId = signal<string | null>(null);
   readonly pendingDelete = signal<Organization | null>(null);
   readonly form = this.fb.nonNullable.group({
@@ -149,15 +144,14 @@ export class OrganizationsPage {
   }
 
   async create(): Promise<void> {
-    this.error.set(null);
     this.saving.set(true);
     try {
       const { name, slug } = this.form.getRawValue();
       await this.auth.createOrganization({ name, slug: slug || undefined });
       this.form.reset({ name: '', slug: '' });
       await this.refresh();
-    } catch (error) {
-      this.error.set(errorMessage(error));
+    } catch {
+      // HTTP errors are toasted by the interceptor.
     } finally {
       this.saving.set(false);
     }
@@ -167,14 +161,13 @@ export class OrganizationsPage {
     const org = this.pendingDelete();
     if (!org) return;
     this.saving.set(true);
-    this.error.set(null);
     try {
       await this.auth.deleteOrganization(org.id);
       this.pendingDelete.set(null);
       this.toast.show(`${org.name} was deleted.`, 'success');
       await this.refresh();
-    } catch (error) {
-      this.error.set(errorMessage(error));
+    } catch {
+      // HTTP errors are toasted by the interceptor.
     } finally {
       this.saving.set(false);
     }
@@ -184,8 +177,8 @@ export class OrganizationsPage {
     this.loading.set(true);
     try {
       this.items.set(await this.auth.listOrganizations());
-    } catch (error) {
-      this.error.set(errorMessage(error));
+    } catch {
+      // HTTP errors are toasted by the interceptor.
     } finally {
       this.loading.set(false);
     }

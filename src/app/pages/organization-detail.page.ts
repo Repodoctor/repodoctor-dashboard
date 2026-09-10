@@ -3,7 +3,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { AuthService } from '../core/auth.service';
 import { ScmService } from '../core/scm.service';
 import { CatalogService } from '../core/catalog.service';
-import { errorMessage } from '../core/error-message';
+import { ToastService } from '../core/toast.service';
 import { scmProviderLabel, type ScmProviderName } from '../core/scm-providers';
 import type { Finding, Organization, Repository, ScmInstallation } from '../core/models';
 
@@ -14,8 +14,6 @@ import type { Finding, Organization, Repository, ScmInstallation } from '../core
     <div class="space-y-6">
       @if (loading()) {
         <div class="rd-card">Loading organization…</div>
-      } @else if (error()) {
-        <div class="rd-card border-red-500/40 text-red-200">{{ error() }}</div>
       } @else {
         @if (org(); as current) {
         <div class="flex flex-wrap items-start justify-between gap-3">
@@ -73,9 +71,7 @@ import type { Finding, Organization, Repository, ScmInstallation } from '../core
         </div>
         <div class="rd-card space-y-4">
           <h2 class="font-medium">Findings</h2>
-          @if (findingsError()) {
-            <p class="text-sm text-red-200">{{ findingsError() }}</p>
-          } @else if (findings().length === 0) {
+          @if (findings().length === 0) {
             <p class="text-sm text-ink-200">No findings yet for this organization.</p>
           } @else {
             <div class="space-y-2">
@@ -104,15 +100,14 @@ export class OrganizationDetailPage {
   private readonly auth = inject(AuthService);
   private readonly scm = inject(ScmService);
   private readonly catalog = inject(CatalogService);
+  private readonly toast = inject(ToastService);
   private readonly route = inject(ActivatedRoute);
 
   readonly org = signal<Organization | null>(null);
   readonly installations = signal<ScmInstallation[]>([]);
   readonly repositories = signal<Repository[]>([]);
   readonly findings = signal<Finding[]>([]);
-  readonly findingsError = signal<string | null>(null);
   readonly loading = signal(true);
-  readonly error = signal<string | null>(null);
 
   providerLabel(provider: ScmProviderName): string {
     return scmProviderLabel(provider);
@@ -121,7 +116,7 @@ export class OrganizationDetailPage {
   constructor() {
     const id = this.route.snapshot.paramMap.get('organizationId');
     if (!id) {
-      this.error.set('Missing organization id');
+      this.toast.show('Missing organization id', 'error');
       this.loading.set(false);
       return;
     }
@@ -134,17 +129,14 @@ export class OrganizationDetailPage {
         this.auth.getOrganization(id),
         this.scm.listInstallations(id).catch(() => [] as ScmInstallation[]),
         this.scm.listRepositories(id).catch(() => [] as Repository[]),
-        this.catalog.listFindings(id).catch((error) => {
-          this.findingsError.set(errorMessage(error, 'Unable to load findings.'));
-          return [] as Finding[];
-        }),
+        this.catalog.listFindings(id).catch(() => [] as Finding[]),
       ]);
       this.org.set(org);
       this.installations.set(installations);
       this.repositories.set(repositories);
       this.findings.set(findings);
-    } catch (error) {
-      this.error.set(errorMessage(error));
+    } catch {
+      // HTTP errors are toasted by the interceptor.
     } finally {
       this.loading.set(false);
     }

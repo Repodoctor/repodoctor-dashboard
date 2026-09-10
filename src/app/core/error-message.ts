@@ -1,6 +1,10 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import type { ApiError } from '../core/models';
 
+export function isHttpError(error: unknown): error is HttpErrorResponse {
+  return error instanceof HttpErrorResponse;
+}
+
 export function errorMessage(error: unknown, fallback = 'Something went wrong'): string {
   if (error instanceof HttpErrorResponse) {
     const body = error.error as ApiError | undefined;

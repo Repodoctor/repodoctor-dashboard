@@ -3,7 +3,6 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../core/auth.service';
 import { ToastService } from '../core/toast.service';
-import { errorMessage } from '../core/error-message';
 import { OrgSettingsNavComponent } from '../layout/org-settings-nav.component';
 import type { Organization } from '../core/models';
 
@@ -25,8 +24,6 @@ import type { Organization } from '../core/models';
           <div class="rd-spinner-sm" role="status" aria-label="Loading"></div>
           Loading settings…
         </div>
-      } @else if (error()) {
-        <div class="rd-card border-red-500/40 text-red-200">{{ error() }}</div>
       } @else {
         @if (org(); as current) {
         <div>
@@ -34,9 +31,6 @@ import type { Organization } from '../core/models';
           <h1 class="text-3xl font-semibold">{{ current.name }}</h1>
         </div>
         <app-org-settings-nav [organizationId]="current.id" />
-        @if (actionError()) {
-          <div class="rd-card border-red-500/40 text-red-200">{{ actionError() }}</div>
-        }
         <div class="rd-card space-y-4">
           <h2 class="font-medium">Details</h2>
           @if (canAdmin()) {
@@ -87,8 +81,6 @@ export class OrganizationSettingsPage {
   readonly loading = signal(true);
   readonly saving = signal(false);
   readonly pendingDelete = signal(false);
-  readonly error = signal<string | null>(null);
-  readonly actionError = signal<string | null>(null);
   readonly nameForm = this.fb.nonNullable.group({
     name: ['', [Validators.required, Validators.minLength(2)]],
   });
@@ -101,7 +93,7 @@ export class OrganizationSettingsPage {
   constructor() {
     const id = this.route.snapshot.paramMap.get('organizationId');
     if (!id) {
-      this.error.set('Missing organization id');
+      this.toast.show('Missing organization id', 'error');
       this.loading.set(false);
       return;
     }
@@ -112,13 +104,12 @@ export class OrganizationSettingsPage {
     const org = this.org();
     if (!org || this.nameForm.invalid) return;
     this.saving.set(true);
-    this.actionError.set(null);
     try {
       const updated = await this.auth.updateOrganization(org.id, this.nameForm.getRawValue().name);
       this.org.set({ ...updated, role: org.role });
       this.toast.show('Organization updated.', 'success');
-    } catch (error) {
-      this.actionError.set(errorMessage(error, 'Unable to update the organization.'));
+    } catch {
+      // HTTP errors are toasted by the interceptor.
     } finally {
       this.saving.set(false);
     }
@@ -128,13 +119,11 @@ export class OrganizationSettingsPage {
     const org = this.org();
     if (!org) return;
     this.saving.set(true);
-    this.actionError.set(null);
     try {
       await this.auth.deleteOrganization(org.id);
       this.toast.show(`${org.name} was deleted.`, 'success');
       await this.router.navigateByUrl('/organizations');
-    } catch (error) {
-      this.actionError.set(errorMessage(error, 'Unable to delete the organization.'));
+    } catch {
       this.saving.set(false);
     }
   }
@@ -144,8 +133,8 @@ export class OrganizationSettingsPage {
       const org = await this.auth.getOrganization(id);
       this.org.set(org);
       this.nameForm.patchValue({ name: org.name });
-    } catch (error) {
-      this.error.set(errorMessage(error));
+    } catch {
+      // HTTP errors are toasted by the interceptor.
     } finally {
       this.loading.set(false);
     }

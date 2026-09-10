@@ -3,7 +3,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { map } from 'rxjs';
 import { CatalogService } from '../core/catalog.service';
-import { errorMessage } from '../core/error-message';
+import { ToastService } from '../core/toast.service';
 import type { AnalysisRun, Finding, Repository, RepositoryAccessGrant } from '../core/models';
 
 const NAV = [
@@ -60,8 +60,6 @@ const PERMISSION_RANK: Record<(typeof PERMISSIONS)[number], number> = {
 
       @if (loading()) {
         <div class="rd-card">Loading repository…</div>
-      } @else if (error()) {
-        <div class="rd-card border-red-500/40 text-red-200">{{ error() }}</div>
       } @else {
         @if (repository(); as repo) {
         <div>
@@ -102,9 +100,7 @@ const PERMISSION_RANK: Record<(typeof PERMISSIONS)[number], number> = {
         } @else if (section() === 'findings') {
           <div class="rd-card space-y-4">
             <h2 class="font-medium">Findings</h2>
-            @if (findingsError()) {
-              <p class="text-sm text-red-200">{{ findingsError() }}</p>
-            } @else if (findings().length === 0) {
+            @if (findings().length === 0) {
               <p class="text-sm text-ink-200">No findings yet. Analyzers persist them through the findings API after RepoGraph and Repo Doctor run.</p>
             } @else {
               <div class="space-y-2">
@@ -136,9 +132,6 @@ const PERMISSION_RANK: Record<(typeof PERMISSIONS)[number], number> = {
                 </button>
               }
             </div>
-            @if (actionError()) {
-              <p class="text-sm text-red-200">{{ actionError() }}</p>
-            }
             @if (analyses().length === 0) {
               <p class="text-sm text-ink-200">No analysis runs yet.</p>
             } @else {
@@ -164,9 +157,6 @@ const PERMISSION_RANK: Record<(typeof PERMISSIONS)[number], number> = {
             </p>
             @if (!canAdminRepo()) {
               <p class="text-sm text-ink-200">You can view this repository as {{ repository()?.permission }}. Only repo ADMIN can change grants.</p>
-            }
-            @if (accessError()) {
-              <p class="text-sm text-red-200">{{ accessError() }}</p>
             }
             @if (access().length === 0) {
               <p class="text-sm text-ink-200">{{ canAdminRepo() ? 'No members to show yet.' : 'Access grants are hidden unless you have ADMIN on this repository.' }}</p>
@@ -210,6 +200,7 @@ const PERMISSION_RANK: Record<(typeof PERMISSIONS)[number], number> = {
 export class RepositoryPage {
   private readonly route = inject(ActivatedRoute);
   private readonly catalog = inject(CatalogService);
+  private readonly toast = inject(ToastService);
 
   readonly nav = NAV;
   readonly repositoryId = this.route.snapshot.paramMap.get('repositoryId') ?? '';
@@ -223,10 +214,6 @@ export class RepositoryPage {
   readonly access = signal<RepositoryAccessGrant[]>([]);
   readonly loading = signal(true);
   readonly requesting = signal(false);
-  readonly error = signal<string | null>(null);
-  readonly findingsError = signal<string | null>(null);
-  readonly accessError = signal<string | null>(null);
-  readonly actionError = signal<string | null>(null);
   readonly permissions = PERMISSIONS;
 
   readonly openFindings = computed(() => this.findings().filter((item) => item.status === 'OPEN'));
@@ -252,12 +239,11 @@ export class RepositoryPage {
   async changeAccess(grant: RepositoryAccessGrant, permission: RepositoryAccessGrant['permission']): Promise<void> {
     const repo = this.repository();
     if (!repo) return;
-    this.accessError.set(null);
     try {
       const updated = await this.catalog.updateRepositoryAccess(repo.id, grant.userId, permission, repo.organizationId);
       this.access.set(this.access().map((item) => (item.userId === updated.userId ? updated : item)));
-    } catch (error) {
-      this.accessError.set(errorMessage(error, 'Unable to update repository access.'));
+    } catch {
+      // HTTP errors are toasted by the interceptor.
     }
   }
 
@@ -265,7 +251,6 @@ export class RepositoryPage {
     const repo = this.repository();
     if (!repo) return;
     this.requesting.set(true);
-    this.actionError.set(null);
     try {
       const latest = this.latestAnalysis();
       const run = await this.catalog.requestAnalysis(repo.id, repo.organizationId, {
@@ -273,8 +258,8 @@ export class RepositoryPage {
         branch: repo.defaultBranch,
       });
       this.analyses.set([run, ...this.analyses().filter((item) => item.id !== run.id)]);
-    } catch (error) {
-      this.actionError.set(errorMessage(error, 'Unable to queue analysis.'));
+    } catch {
+      // HTTP errors are toasted by the interceptor.
     } finally {
       this.requesting.set(false);
     }
@@ -282,7 +267,7 @@ export class RepositoryPage {
 
   private async load(): Promise<void> {
     if (!this.repositoryId) {
-      this.error.set('Missing repository id');
+      this.toast.show('Missing repository id', 'error');
       this.loading.set(false);
       return;
     }
@@ -292,22 +277,16 @@ export class RepositoryPage {
       this.repository.set(repo);
       const [analyses, findings, access] = await Promise.all([
         this.catalog.listAnalysis(repo.organizationId, repo.id),
-        this.catalog.listFindings(repo.organizationId, repo.id).catch((error) => {
-          this.findingsError.set(errorMessage(error, 'Unable to load findings.'));
-          return [] as Finding[];
-        }),
+        this.catalog.listFindings(repo.organizationId, repo.id).catch(() => [] as Finding[]),
         repo.permission === 'ADMIN'
-          ? this.catalog.listRepositoryAccess(repo.id, repo.organizationId).catch((error) => {
-              this.accessError.set(errorMessage(error, 'Unable to load repository access.'));
-              return [] as RepositoryAccessGrant[];
-            })
+          ? this.catalog.listRepositoryAccess(repo.id, repo.organizationId).catch(() => [] as RepositoryAccessGrant[])
           : Promise.resolve([] as RepositoryAccessGrant[]),
       ]);
       this.analyses.set(analyses);
       this.findings.set(findings);
       this.access.set(access);
-    } catch (error) {
-      this.error.set(errorMessage(error, 'Unable to load this repository.'));
+    } catch {
+      // HTTP errors are toasted by the interceptor.
     } finally {
       this.loading.set(false);
     }

@@ -2,7 +2,8 @@ import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../core/auth.service';
-import { errorMessage } from '../core/error-message';
+import { ToastService } from '../core/toast.service';
+import { errorMessage, isHttpError } from '../core/error-message';
 
 @Component({
   selector: 'app-login-page',
@@ -37,9 +38,6 @@ import { errorMessage } from '../core/error-message';
             Password
             <input class="rd-input mt-1" type="password" formControlName="password" autocomplete="current-password" />
           </label>
-          @if (error()) {
-            <p class="rounded-md border border-red-500/40 bg-red-950/40 px-3 py-2 text-sm text-red-200">{{ error() }}</p>
-          }
           <button class="rd-btn w-full" type="submit" [disabled]="form.invalid || loading()">
             @if (loading()) {
               <span class="rd-spinner-sm mr-2"></span>
@@ -60,8 +58,8 @@ export class LoginPage {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
+  private readonly toast = inject(ToastService);
   readonly loading = signal(false);
-  readonly error = signal<string | null>(null);
   readonly inviteHint = signal<string | null>(null);
   inviteToken = '';
   readonly form = this.fb.nonNullable.group({
@@ -84,7 +82,6 @@ export class LoginPage {
   }
 
   async submit(): Promise<void> {
-    this.error.set(null);
     this.loading.set(true);
     try {
       await this.auth.login(this.form.getRawValue());
@@ -97,7 +94,9 @@ export class LoginPage {
       }
       await this.router.navigateByUrl(safeNext(this.route.snapshot.queryParamMap.get('next')));
     } catch (error) {
-      this.error.set(errorMessage(error, 'Unable to sign in'));
+      if (!isHttpError(error)) {
+        this.toast.show(errorMessage(error, 'Unable to sign in'), 'error');
+      }
     } finally {
       this.loading.set(false);
     }

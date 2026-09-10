@@ -1,7 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ScmService } from '../core/scm.service';
-import { errorMessage } from '../core/error-message';
+import { ToastService } from '../core/toast.service';
 import type { Repository } from '../core/models';
 
 @Component({
@@ -13,9 +13,7 @@ import type { Repository } from '../core/models';
         <p class="text-xs uppercase tracking-[0.2em] text-moss-400">Organization</p>
         <h1 class="text-3xl font-semibold">Repositories</h1>
       </div>
-      @if (error()) {
-        <div class="rd-card border-red-500/40 text-red-200">{{ error() }}</div>
-      } @else if (loading()) {
+      @if (loading()) {
         <div class="rd-card">Loading repositories…</div>
       } @else if (items().length === 0) {
         <div class="rd-card">
@@ -40,21 +38,23 @@ import type { Repository } from '../core/models';
 export class RepositoriesPage {
   private readonly route = inject(ActivatedRoute);
   private readonly scm = inject(ScmService);
+  private readonly toast = inject(ToastService);
   readonly organizationId = this.route.snapshot.paramMap.get('organizationId') ?? '';
   readonly items = signal<Repository[]>([]);
   readonly loading = signal(true);
-  readonly error = signal<string | null>(null);
 
   constructor() {
     if (!this.organizationId) {
-      this.error.set('Missing organization id');
+      this.toast.show('Missing organization id', 'error');
       this.loading.set(false);
       return;
     }
     void this.scm
       .listRepositories(this.organizationId)
       .then((items) => this.items.set(items))
-      .catch((error) => this.error.set(errorMessage(error)))
+      .catch(() => {
+        // HTTP errors are toasted by the interceptor.
+      })
       .finally(() => this.loading.set(false));
   }
 }

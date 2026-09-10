@@ -2,7 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { AuthService } from '../core/auth.service';
 import { ScmService } from '../core/scm.service';
-import { errorMessage } from '../core/error-message';
+import { ToastService } from '../core/toast.service';
 import { OrgSettingsNavComponent } from '../layout/org-settings-nav.component';
 import type { Organization, Repository } from '../core/models';
 
@@ -13,8 +13,6 @@ import type { Organization, Repository } from '../core/models';
     <div class="space-y-6">
       @if (loading()) {
         <div class="rd-card">Loading permissions…</div>
-      } @else if (error()) {
-        <div class="rd-card border-red-500/40 text-red-200">{{ error() }}</div>
       } @else {
         @if (org(); as current) {
         <div>
@@ -54,17 +52,17 @@ import type { Organization, Repository } from '../core/models';
 export class OrganizationPermissionsPage {
   private readonly auth = inject(AuthService);
   private readonly scm = inject(ScmService);
+  private readonly toast = inject(ToastService);
   private readonly route = inject(ActivatedRoute);
 
   readonly org = signal<Organization | null>(null);
   readonly repositories = signal<Repository[]>([]);
   readonly loading = signal(true);
-  readonly error = signal<string | null>(null);
 
   constructor() {
     const id = this.route.snapshot.paramMap.get('organizationId');
     if (!id) {
-      this.error.set('Missing organization id');
+      this.toast.show('Missing organization id', 'error');
       this.loading.set(false);
       return;
     }
@@ -83,8 +81,8 @@ export class OrganizationPermissionsPage {
       ]);
       this.org.set(org);
       this.repositories.set(repositories);
-    } catch (error) {
-      this.error.set(errorMessage(error));
+    } catch {
+      // HTTP errors are toasted by the interceptor.
     } finally {
       this.loading.set(false);
     }

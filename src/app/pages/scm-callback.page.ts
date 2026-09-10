@@ -3,7 +3,6 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../core/auth.service';
 import { ScmService } from '../core/scm.service';
 import { ToastService } from '../core/toast.service';
-import { errorMessage } from '../core/error-message';
 import { scmProviderLabel, type ScmProviderName } from '../core/scm-providers';
 import type { Organization } from '../core/models';
 
@@ -12,12 +11,11 @@ import type { Organization } from '../core/models';
   imports: [RouterLink],
   template: `
     <div class="space-y-6">
-      @if (error()) {
+      @if (failed()) {
         <div>
           <p class="text-xs uppercase tracking-[0.2em] text-moss-400">Source control</p>
           <h1 class="text-3xl font-semibold">{{ label() }}</h1>
         </div>
-        <div class="rd-card border-red-500/40 text-red-200">{{ error() }}</div>
         <a routerLink="/organizations" class="rd-btn-ghost">Back to organizations</a>
       } @else if (needsOrg()) {
         <div>
@@ -55,7 +53,7 @@ export class ScmCallbackPage {
   readonly organizations = signal<Organization[]>([]);
   readonly needsOrg = signal(false);
   readonly saving = signal(false);
-  readonly error = signal<string | null>(null);
+  readonly failed = signal(false);
 
   constructor() {
     void this.start();
@@ -84,7 +82,6 @@ export class ScmCallbackPage {
   async complete(organizationId: string): Promise<void> {
     this.needsOrg.set(false);
     this.saving.set(true);
-    this.error.set(null);
     try {
       const result = await this.scm.connect(organizationId, this.provider(), { callback: this.callbackQuery() });
       this.scm.clearPendingOrganization();
@@ -96,8 +93,8 @@ export class ScmCallbackPage {
         'success',
       );
       await this.finishConnect(organizationId);
-    } catch (error) {
-      this.error.set(errorMessage(error, `Unable to connect ${this.label()}.`));
+    } catch {
+      this.failed.set(true);
     } finally {
       this.saving.set(false);
     }
@@ -132,12 +129,13 @@ export class ScmCallbackPage {
         return;
       }
       if (items.length === 0) {
-        this.error.set('Create an organization before connecting source control.');
+        this.failed.set(true);
+        this.toast.show('Create an organization before connecting source control.', 'error');
         return;
       }
       this.needsOrg.set(true);
-    } catch (error) {
-      this.error.set(errorMessage(error));
+    } catch {
+      this.failed.set(true);
     }
   }
 }

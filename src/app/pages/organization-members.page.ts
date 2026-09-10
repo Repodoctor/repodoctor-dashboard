@@ -3,7 +3,6 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { AuthService } from '../core/auth.service';
 import { ToastService } from '../core/toast.service';
-import { errorMessage } from '../core/error-message';
 import { OrgSettingsNavComponent } from '../layout/org-settings-nav.component';
 import type { Organization, OrganizationInvite, OrganizationMember } from '../core/models';
 
@@ -16,8 +15,6 @@ const ASSIGNABLE_ROLES = ['ADMIN', 'MEMBER', 'VIEWER'] as const;
     <div class="space-y-6">
       @if (loading()) {
         <div class="rd-card">Loading members…</div>
-      } @else if (error()) {
-        <div class="rd-card border-red-500/40 text-red-200">{{ error() }}</div>
       } @else {
         @if (org(); as current) {
         <div>
@@ -26,9 +23,6 @@ const ASSIGNABLE_ROLES = ['ADMIN', 'MEMBER', 'VIEWER'] as const;
           <p class="text-sm text-ink-200">Organization roles control who can invite, connect GitHub, and delete.</p>
         </div>
         <app-org-settings-nav [organizationId]="current.id" />
-        @if (actionError()) {
-          <div class="rd-card border-red-500/40 text-red-200">{{ actionError() }}</div>
-        }
         <div class="rd-card space-y-4">
           <h2 class="font-medium">Members</h2>
           @if (canAdmin()) {
@@ -103,8 +97,6 @@ export class OrganizationMembersPage {
   readonly invites = signal<OrganizationInvite[]>([]);
   readonly loading = signal(true);
   readonly inviting = signal(false);
-  readonly error = signal<string | null>(null);
-  readonly actionError = signal<string | null>(null);
   readonly assignableRoles = ASSIGNABLE_ROLES;
   readonly inviteForm = this.fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
@@ -119,7 +111,7 @@ export class OrganizationMembersPage {
   constructor() {
     const id = this.route.snapshot.paramMap.get('organizationId');
     if (!id) {
-      this.error.set('Missing organization id');
+      this.toast.show('Missing organization id', 'error');
       this.loading.set(false);
       return;
     }
@@ -130,7 +122,6 @@ export class OrganizationMembersPage {
     const org = this.org();
     if (!org || this.inviteForm.invalid) return;
     this.inviting.set(true);
-    this.actionError.set(null);
     try {
       const { email, role } = this.inviteForm.getRawValue();
       const result = await this.auth.addMember(org.id, { email, role });
@@ -144,8 +135,8 @@ export class OrganizationMembersPage {
         await this.copyInvite(result.invite);
       }
       this.inviteForm.reset({ email: '', role: 'MEMBER' });
-    } catch (error) {
-      this.actionError.set(errorMessage(error, 'Unable to invite that member.'));
+    } catch {
+      // HTTP errors are toasted by the interceptor.
     } finally {
       this.inviting.set(false);
     }
@@ -157,7 +148,7 @@ export class OrganizationMembersPage {
       await navigator.clipboard.writeText(invite.signupUrl);
       this.toast.show('Signup link copied.', 'success');
     } catch {
-      this.actionError.set(invite.signupUrl);
+      this.toast.show(invite.signupUrl, 'info');
     }
   }
 
@@ -167,8 +158,8 @@ export class OrganizationMembersPage {
     try {
       await this.auth.revokeInvite(org.id, invite.id);
       this.invites.set(this.invites().filter((item) => item.id !== invite.id));
-    } catch (error) {
-      this.actionError.set(errorMessage(error, 'Unable to revoke that invite.'));
+    } catch {
+      // HTTP errors are toasted by the interceptor.
     }
   }
 
@@ -182,8 +173,8 @@ export class OrganizationMembersPage {
     try {
       const updated = await this.auth.updateMember(org.id, member.userId, role);
       this.members.set(this.members().map((item) => (item.userId === updated.userId ? updated : item)));
-    } catch (error) {
-      this.actionError.set(errorMessage(error, 'Unable to update member role.'));
+    } catch {
+      // HTTP errors are toasted by the interceptor.
     }
   }
 
@@ -193,8 +184,8 @@ export class OrganizationMembersPage {
     try {
       await this.auth.removeMember(org.id, member.userId);
       this.members.set(this.members().filter((item) => item.userId !== member.userId));
-    } catch (error) {
-      this.actionError.set(errorMessage(error, 'Unable to remove that member.'));
+    } catch {
+      // HTTP errors are toasted by the interceptor.
     }
   }
 
@@ -208,8 +199,8 @@ export class OrganizationMembersPage {
       this.org.set(org);
       this.members.set(members);
       this.invites.set(invites);
-    } catch (error) {
-      this.error.set(errorMessage(error));
+    } catch {
+      // HTTP errors are toasted by the interceptor.
     } finally {
       this.loading.set(false);
     }

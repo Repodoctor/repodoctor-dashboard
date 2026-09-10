@@ -3,7 +3,6 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../core/auth.service';
 import { ToastService } from '../core/toast.service';
-import { errorMessage } from '../core/error-message';
 import type { Organization } from '../core/models';
 
 @Component({
@@ -16,9 +15,6 @@ import type { Organization } from '../core/models';
         <h1 class="text-3xl font-semibold">Settings</h1>
         <p class="mt-1 text-sm text-ink-200">Personal profile and account deletion. Organization settings live on each organization.</p>
       </div>
-      @if (error()) {
-        <div class="rd-card border-red-500/40 text-red-200">{{ error() }}</div>
-      }
       <div class="rd-card space-y-4">
         <h2 class="font-medium">Profile</h2>
         <p class="font-mono text-sm text-ink-200">{{ auth.user()?.email }}</p>
@@ -81,7 +77,6 @@ export class SettingsPage {
   readonly organizations = signal<Organization[]>([]);
   readonly saving = signal(false);
   readonly deleting = signal(false);
-  readonly error = signal<string | null>(null);
   readonly profileForm = this.fb.nonNullable.group({
     displayName: [this.auth.user()?.displayName ?? '', [Validators.required, Validators.minLength(1)]],
   });
@@ -97,12 +92,11 @@ export class SettingsPage {
   async saveProfile(): Promise<void> {
     if (this.profileForm.invalid) return;
     this.saving.set(true);
-    this.error.set(null);
     try {
       await this.auth.updateProfile(this.profileForm.getRawValue().displayName);
       this.toast.show('Profile updated.', 'success');
-    } catch (error) {
-      this.error.set(errorMessage(error, 'Unable to update profile.'));
+    } catch {
+      // HTTP errors are toasted by the interceptor.
     } finally {
       this.saving.set(false);
     }
@@ -111,11 +105,10 @@ export class SettingsPage {
   async deleteAccount(): Promise<void> {
     if (this.confirmEmail.value !== this.auth.user()?.email) return;
     this.deleting.set(true);
-    this.error.set(null);
     try {
       await this.auth.deleteAccount();
-    } catch (error) {
-      this.error.set(errorMessage(error, 'Unable to delete this account.'));
+    } catch {
+      // HTTP errors are toasted by the interceptor.
       this.deleting.set(false);
     }
   }
@@ -123,8 +116,8 @@ export class SettingsPage {
   private async load(): Promise<void> {
     try {
       this.organizations.set(await this.auth.listOrganizations());
-    } catch (error) {
-      this.error.set(errorMessage(error, 'Unable to load organizations.'));
+    } catch {
+      // HTTP errors are toasted by the interceptor.
     }
   }
 }

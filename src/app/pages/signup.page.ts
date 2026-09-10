@@ -3,7 +3,7 @@ import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Va
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../core/auth.service';
 import { ToastService } from '../core/toast.service';
-import { errorMessage } from '../core/error-message';
+import { errorMessage, isHttpError } from '../core/error-message';
 import { passwordStrength } from '../core/password-strength';
 
 function passwordsMatch(group: AbstractControl): ValidationErrors | null {
@@ -99,9 +99,6 @@ function passwordsMatch(group: AbstractControl): ValidationErrors | null {
         @if (form.hasError('mismatch') && form.touched) {
           <p class="text-sm text-red-200">Passwords do not match.</p>
         }
-        @if (error()) {
-          <p class="rounded-md border border-red-500/40 bg-red-950/40 px-3 py-2 text-sm text-red-200">{{ error() }}</p>
-        }
         <button class="rd-btn w-full" [disabled]="form.invalid || loading()">
           @if (loading()) {
             <span class="rd-spinner-sm mr-2"></span>
@@ -120,7 +117,6 @@ export class SignupPage {
   private readonly route = inject(ActivatedRoute);
   private readonly toast = inject(ToastService);
   readonly loading = signal(false);
-  readonly error = signal<string | null>(null);
   readonly inviteOrg = signal<string | null>(null);
   readonly inviteRole = signal<string | null>(null);
   readonly inviteToken = signal('');
@@ -153,7 +149,7 @@ export class SignupPage {
           this.unlock('email');
         })
         .catch(() => {
-          this.error.set('That invite link is invalid or expired.');
+          // HTTP errors are toasted by the interceptor.
         });
     }
   }
@@ -167,7 +163,6 @@ export class SignupPage {
   }
 
   async submit(): Promise<void> {
-    this.error.set(null);
     this.loading.set(true);
     try {
       const { displayName, email, password } = this.form.getRawValue();
@@ -177,7 +172,9 @@ export class SignupPage {
         queryParams: this.inviteToken() ? { invite: this.inviteToken() } : undefined,
       });
     } catch (error) {
-      this.error.set(errorMessage(error, 'Unable to create account'));
+      if (!isHttpError(error)) {
+        this.toast.show(errorMessage(error, 'Unable to create account'), 'error');
+      }
     } finally {
       this.loading.set(false);
     }

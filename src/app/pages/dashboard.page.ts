@@ -2,7 +2,6 @@ import { Component, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../core/auth.service';
 import { CatalogService } from '../core/catalog.service';
-import { errorMessage } from '../core/error-message';
 import type { Finding, Organization } from '../core/models';
 
 @Component({
@@ -16,8 +15,6 @@ import type { Finding, Organization } from '../core/models';
       </div>
       @if (loading()) {
         <div class="rd-card text-ink-200">Loading organizations…</div>
-      } @else if (error()) {
-        <div class="rd-card border-red-500/40 text-red-200">{{ error() }}</div>
       } @else if (organizations().length === 0) {
         <div class="rd-card">
           <h2 class="text-lg font-medium">No organizations yet</h2>
@@ -87,7 +84,6 @@ export class DashboardPage {
   readonly repositoryCount = signal(0);
   readonly findings = signal<Finding[]>([]);
   readonly loading = signal(true);
-  readonly error = signal<string | null>(null);
   readonly openFindings = () => this.findings().filter((item) => item.status === 'OPEN');
 
   constructor() {
@@ -105,8 +101,8 @@ export class DashboardPage {
       this.organizations.set(organizations);
       this.repositoryCount.set(repositories.length);
       this.findings.set(findings);
-    } catch (error) {
-      this.error.set(errorMessage(error));
+    } catch {
+      // HTTP errors are toasted by the interceptor.
     } finally {
       this.loading.set(false);
     }

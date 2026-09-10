@@ -13,6 +13,9 @@ export class ToastService {
   readonly toasts = this.toastsSignal.asReadonly();
 
   show(message: string, kind: ToastMessage['kind'] = 'info', ttlMs = 6000): void {
+    if (this.toastsSignal().some((item) => item.message === message && item.kind === kind)) {
+      return;
+    }
     const toast: ToastMessage = { id: this.nextId++, message, kind };
     this.toastsSignal.update((items) => [...items, toast]);
     window.setTimeout(() => this.dismiss(toast.id), ttlMs);
