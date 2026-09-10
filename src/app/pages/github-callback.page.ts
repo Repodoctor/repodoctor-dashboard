@@ -11,15 +11,18 @@ import type { Organization } from '../core/models';
   imports: [RouterLink],
   template: `
     <div class="space-y-6">
-      <div>
-        <p class="text-xs uppercase tracking-[0.2em] text-moss-400">Source control</p>
-        <h1 class="text-3xl font-semibold">GitHub App</h1>
-      </div>
-
       @if (error()) {
+        <div>
+          <p class="text-xs uppercase tracking-[0.2em] text-moss-400">Source control</p>
+          <h1 class="text-3xl font-semibold">GitHub App</h1>
+        </div>
         <div class="rd-card border-red-500/40 text-red-200">{{ error() }}</div>
         <a routerLink="/organizations" class="rd-btn-ghost">Back to organizations</a>
       } @else if (needsOrg()) {
+        <div>
+          <p class="text-xs uppercase tracking-[0.2em] text-moss-400">Source control</p>
+          <h1 class="text-3xl font-semibold">GitHub App</h1>
+        </div>
         <div class="rd-card space-y-3">
           <p>Choose the organization that should own this GitHub installation.</p>
           @for (org of organizations(); track org.id) {
@@ -30,7 +33,13 @@ import type { Organization } from '../core/models';
           }
         </div>
       } @else {
-        <div class="rd-card">Connecting repositories from GitHub…</div>
+        <div class="flex min-h-[70vh] flex-col items-center justify-center gap-4 text-center">
+          <div class="rd-spinner" role="status" aria-label="Connecting GitHub"></div>
+          <h1 class="text-2xl font-semibold">Connecting GitHub</h1>
+          <p class="max-w-sm text-sm text-ink-200">
+            Fetching repositories from GitHub. Keep this window open until it closes.
+          </p>
+        </div>
       }
     </div>
   `,
@@ -57,6 +66,7 @@ export class GithubCallbackPage {
       this.error.set('GitHub did not return an installation id.');
       return;
     }
+    this.needsOrg.set(false);
     this.saving.set(true);
     this.error.set(null);
     try {

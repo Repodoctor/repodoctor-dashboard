@@ -13,8 +13,30 @@ import type { Organization, ScmInstallation } from '../core/models';
   imports: [ReactiveFormsModule, OrgSettingsNavComponent],
   template: `
     <div class="space-y-6">
+      @if (connecting() || disconnecting() || saving()) {
+        <div class="fixed inset-0 z-50 flex items-center justify-center bg-ink/80">
+          <div class="rd-card flex flex-col items-center gap-4 text-center">
+            <div class="rd-spinner" role="status" aria-label="Processing"></div>
+            <p class="font-medium">
+              @if (connecting()) {
+                Waiting for GitHub…
+              } @else if (disconnecting()) {
+                Disconnecting GitHub…
+              } @else {
+                Processing…
+              }
+            </p>
+            @if (connecting()) {
+              <p class="max-w-xs text-sm text-ink-200">Finish the GitHub window. This page will update when it closes.</p>
+            }
+          </div>
+        </div>
+      }
       @if (loading()) {
-        <div class="rd-card">Loading settings…</div>
+        <div class="rd-card flex items-center gap-3">
+          <div class="rd-spinner-sm" role="status" aria-label="Loading"></div>
+          Loading settings…
+        </div>
       } @else if (error()) {
         <div class="rd-card border-red-500/40 text-red-200">{{ error() }}</div>
       } @else {
@@ -53,7 +75,10 @@ import type { Organization, ScmInstallation } from '../core/models';
           <div class="flex flex-wrap gap-2">
             @if (canManage()) {
               <button class="rd-btn" type="button" [disabled]="connecting()" (click)="connectGithub()">
-                {{ connecting() ? 'Opening GitHub…' : githubInstall() ? 'Manage repos' : 'Connect GitHub' }}
+                @if (connecting()) {
+                  <span class="rd-spinner-sm mr-2"></span>
+                }
+                {{ connecting() ? 'Waiting for GitHub…' : githubInstall() ? 'Manage repos' : 'Connect GitHub' }}
               </button>
             }
             @if (canAdmin() && githubInstall()) {
@@ -69,6 +94,9 @@ import type { Organization, ScmInstallation } from '../core/models';
               </p>
               <div class="flex gap-2">
                 <button class="rd-btn" type="button" [disabled]="disconnecting()" (click)="disconnectGithub()">
+                  @if (disconnecting()) {
+                    <span class="rd-spinner-sm mr-2"></span>
+                  }
                   {{ disconnecting() ? 'Disconnecting…' : 'Disconnect GitHub' }}
                 </button>
                 <button class="rd-btn-ghost" type="button" (click)="confirmDisconnect.set(false)">Cancel</button>
@@ -172,11 +200,24 @@ export class OrganizationSettingsPage {
         window.location.assign(url);
         return;
       }
+      await this.waitForPopup(popup);
+      await this.load(org.id);
     } catch (error) {
       this.actionError.set(errorMessage(error, 'Unable to start GitHub App installation.'));
     } finally {
       this.connecting.set(false);
     }
+  }
+
+  private waitForPopup(popup: Window): Promise<void> {
+    return new Promise((resolve) => {
+      const timer = window.setInterval(() => {
+        if (popup.closed) {
+          window.clearInterval(timer);
+          resolve();
+        }
+      }, 400);
+    });
   }
 
   askDisconnect(): void {

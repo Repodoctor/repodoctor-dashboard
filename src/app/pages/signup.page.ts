@@ -103,6 +103,9 @@ function passwordsMatch(group: AbstractControl): ValidationErrors | null {
           <p class="rounded-md border border-red-500/40 bg-red-950/40 px-3 py-2 text-sm text-red-200">{{ error() }}</p>
         }
         <button class="rd-btn w-full" [disabled]="form.invalid || loading()">
+          @if (loading()) {
+            <span class="rd-spinner-sm mr-2"></span>
+          }
           {{ loading() ? 'Creating account…' : 'Sign up' }}
         </button>
         <a routerLink="/login" [queryParams]="inviteToken() ? { invite: inviteToken() } : {}" class="block text-sm text-ink-200 hover:text-moss-300">Already have an account</a>
