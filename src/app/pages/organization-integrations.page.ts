@@ -31,7 +31,8 @@ import type { Organization, Repository, ScmInstallation } from '../core/models';
         </div>
       } @else if (error()) {
         <div class="rd-card border-red-500/40 text-red-200">{{ error() }}</div>
-      } @else if (org(); as current) {
+      } @else {
+        @if (org(); as current) {
         <div>
           <p class="text-xs uppercase tracking-[0.2em] text-moss-400">Organization settings</p>
           <h1 class="text-3xl font-semibold">Integrations</h1>
@@ -117,6 +118,7 @@ import type { Organization, Repository, ScmInstallation } from '../core/models';
             }
           </div>
         </section>
+        }
       }
     </div>
   `,
