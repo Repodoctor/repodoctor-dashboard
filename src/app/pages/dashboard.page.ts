@@ -1,12 +1,24 @@
 import { Component, inject, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
 import { AuthService } from '../core/auth.service';
 import { CatalogService } from '../core/catalog.service';
 import type { Finding, Organization } from '../core/models';
+import { FindingTableComponent } from '../ui/finding-table.component';
+import { LoadingStateComponent } from '../ui/loading-state.component';
+import { OrganizationTableComponent } from '../ui/organization-table.component';
 
 @Component({
   selector: 'app-dashboard-page',
-  imports: [RouterLink],
+  imports: [
+    RouterLink,
+    MatButtonModule,
+    MatCardModule,
+    FindingTableComponent,
+    LoadingStateComponent,
+    OrganizationTableComponent,
+  ],
   template: `
     <div class="space-y-6">
       <div>
@@ -14,65 +26,60 @@ import type { Finding, Organization } from '../core/models';
         <h1 class="mt-1 text-3xl font-semibold">Welcome back{{ auth.user() ? ', ' + auth.user()!.displayName : '' }}</h1>
       </div>
       @if (loading()) {
-        <div class="rd-card text-ink-200">Loading organizations…</div>
+        <mat-card appearance="outlined">
+          <mat-card-content>
+            <app-loading-state label="Loading organizations…" />
+          </mat-card-content>
+        </mat-card>
       } @else if (organizations().length === 0) {
-        <div class="rd-card">
-          <h2 class="text-lg font-medium">No organizations yet</h2>
-          <p class="mt-2 text-sm text-ink-200">Create an organization to start connecting repositories.</p>
-          <a routerLink="/organizations" class="rd-btn mt-4">Create organization</a>
-        </div>
+        <mat-card appearance="outlined">
+          <mat-card-content>
+            <h2 class="text-lg font-medium">No organizations yet</h2>
+            <p class="mt-2 text-sm text-ink-200">Create an organization to start connecting repositories.</p>
+            <a mat-flat-button class="mt-4" routerLink="/organizations">Create organization</a>
+          </mat-card-content>
+        </mat-card>
       } @else {
         <div class="grid gap-4 md:grid-cols-3">
-          <div class="rd-card">
-            <p class="text-xs uppercase text-ink-200">Organizations</p>
-            <p class="mt-2 font-mono text-3xl text-moss-300">{{ organizations().length }}</p>
-          </div>
-          <div class="rd-card">
-            <p class="text-xs uppercase text-ink-200">Repositories</p>
-            <p class="mt-2 font-mono text-3xl text-moss-300">{{ repositoryCount() }}</p>
-            <p class="mt-2 text-xs text-ink-300">Connected through GitHub App ingestion.</p>
-          </div>
-          <div class="rd-card">
-            <p class="text-xs uppercase text-ink-200">Open findings</p>
-            <p class="mt-2 font-mono text-3xl text-moss-300">{{ openFindings().length }}</p>
-            <p class="mt-2 text-xs text-ink-300">Across every organization you can access.</p>
-          </div>
+          <mat-card appearance="outlined">
+            <mat-card-content>
+              <p class="text-xs uppercase text-ink-200">Organizations</p>
+              <p class="mt-2 font-mono text-3xl text-moss-300">{{ organizations().length }}</p>
+            </mat-card-content>
+          </mat-card>
+          <mat-card appearance="outlined">
+            <mat-card-content>
+              <p class="text-xs uppercase text-ink-200">Repositories</p>
+              <p class="mt-2 font-mono text-3xl text-moss-300">{{ repositoryCount() }}</p>
+              <p class="mt-2 text-xs text-ink-300">Connected through GitHub App ingestion.</p>
+            </mat-card-content>
+          </mat-card>
+          <mat-card appearance="outlined">
+            <mat-card-content>
+              <p class="text-xs uppercase text-ink-200">Open findings</p>
+              <p class="mt-2 font-mono text-3xl text-moss-300">{{ openFindings().length }}</p>
+              <p class="mt-2 text-xs text-ink-300">Across every organization you can access.</p>
+            </mat-card-content>
+          </mat-card>
         </div>
         @if (findings().length > 0) {
-          <div class="rd-card space-y-3">
-            <h2 class="text-lg font-medium">Organization findings</h2>
-            <ul class="divide-y divide-ink-400">
-              @for (finding of findings().slice(0, 8); track finding.id) {
-                <li class="py-3">
-                  <a
-                    class="flex items-start justify-between gap-3 hover:text-moss-300"
-                    [routerLink]="['/repositories', finding.repositoryId, 'findings']"
-                    [queryParams]="{ organizationId: finding.organizationId }"
-                  >
-                    <div>
-                      <p class="font-medium">{{ finding.title }}</p>
-                      <p class="mt-1 font-mono text-xs text-ink-200">{{ finding.severity }} · {{ finding.source }} · {{ finding.status }}</p>
-                    </div>
-                  </a>
-                </li>
-              }
-            </ul>
-          </div>
+          <mat-card appearance="outlined">
+            <mat-card-header>
+              <mat-card-title>Organization findings</mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <app-finding-table [findings]="findings()" (rowClick)="openFinding($event)" />
+            </mat-card-content>
+          </mat-card>
         }
-        <div class="rd-card">
-          <h2 class="text-lg font-medium">Your organizations</h2>
-          <ul class="mt-4 divide-y divide-ink-400">
-            @for (org of organizations(); track org.id) {
-              <li class="flex items-center justify-between py-3">
-                <div>
-                  <p class="font-medium">{{ org.name }}</p>
-                  <p class="font-mono text-xs text-ink-200">{{ org.slug }} · {{ org.role }}</p>
-                </div>
-                <a class="rd-btn-ghost" [routerLink]="['/organizations', org.id]">Open</a>
-              </li>
-            }
-          </ul>
-        </div>
+        <mat-card appearance="outlined">
+          <mat-card-header>
+            <mat-card-title>Your organizations</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <app-organization-table [organizations]="organizations()" (rowClick)="openOrganization($event)" />
+          </mat-card-content>
+        </mat-card>
       }
     </div>
   `,
@@ -80,6 +87,7 @@ import type { Finding, Organization } from '../core/models';
 export class DashboardPage {
   readonly auth = inject(AuthService);
   private readonly catalog = inject(CatalogService);
+  private readonly router = inject(Router);
   readonly organizations = signal<Organization[]>([]);
   readonly repositoryCount = signal(0);
   readonly findings = signal<Finding[]>([]);
@@ -88,6 +96,16 @@ export class DashboardPage {
 
   constructor() {
     void this.refresh();
+  }
+
+  openOrganization(org: Organization): void {
+    void this.router.navigate(['/organizations', org.id]);
+  }
+
+  openFinding(finding: Finding): void {
+    void this.router.navigate(['/repositories', finding.repositoryId, 'findings'], {
+      queryParams: { organizationId: finding.organizationId },
+    });
   }
 
   private async refresh(): Promise<void> {

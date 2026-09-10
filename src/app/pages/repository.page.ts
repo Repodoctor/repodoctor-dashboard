@@ -1,10 +1,19 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink, RouterLinkActive } from '@angular/router';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
+import { MatSelectModule } from '@angular/material/select';
+import { MatTableDataSource, MatTableModule } from '@angular/material/table';
+import { MatTabsModule } from '@angular/material/tabs';
 import { map } from 'rxjs';
 import { CatalogService } from '../core/catalog.service';
 import { ToastService } from '../core/toast.service';
 import type { AnalysisRun, Finding, Repository, RepositoryAccessGrant } from '../core/models';
+import { FindingTableComponent } from '../ui/finding-table.component';
+import { LoadingStateComponent } from '../ui/loading-state.component';
 
 const NAV = [
   'overview',
@@ -40,26 +49,43 @@ const PERMISSION_RANK: Record<(typeof PERMISSIONS)[number], number> = {
 
 @Component({
   selector: 'app-repository-page',
-  imports: [RouterLink],
+  imports: [
+    RouterLink,
+    RouterLinkActive,
+    MatButtonModule,
+    MatCardModule,
+    MatFormFieldModule,
+    MatSelectModule,
+    MatTableModule,
+    MatPaginatorModule,
+    MatTabsModule,
+    FindingTableComponent,
+    LoadingStateComponent,
+  ],
   template: `
     <div class="space-y-4">
-      <div class="flex flex-wrap gap-2">
+      <nav mat-tab-nav-bar [tabPanel]="panel" mat-stretch-tabs="false">
         @for (item of nav; track item) {
           <a
-            class="rounded-full border px-3 py-1 text-xs"
-            [class.border-moss-400]="section() === item"
-            [class.text-moss-200]="section() === item"
-            [class.border-ink-400]="section() !== item"
+            mat-tab-link
             [routerLink]="['/repositories', repositoryId, item]"
             [queryParams]="{ organizationId: repository()?.organizationId }"
+            routerLinkActive
+            #rla="routerLinkActive"
+            [active]="rla.isActive || section() === item"
           >
             {{ item }}
           </a>
         }
-      </div>
+      </nav>
+      <mat-tab-nav-panel #panel />
 
       @if (loading()) {
-        <div class="rd-card">Loading repository…</div>
+        <mat-card appearance="outlined">
+          <mat-card-content>
+            <app-loading-state label="Loading repository…" />
+          </mat-card-content>
+        </mat-card>
       } @else {
         @if (repository(); as repo) {
         <div>
@@ -75,122 +101,154 @@ const PERMISSION_RANK: Record<(typeof PERMISSIONS)[number], number> = {
 
         @if (section() === 'overview') {
           <div class="grid gap-4 md:grid-cols-3">
-            <div class="rd-card">
-              <p class="text-xs uppercase text-ink-200">Analyses</p>
-              <p class="mt-2 font-mono text-3xl text-moss-300">{{ analyses().length }}</p>
-            </div>
-            <div class="rd-card">
-              <p class="text-xs uppercase text-ink-200">Open findings</p>
-              <p class="mt-2 font-mono text-3xl text-moss-300">{{ openFindings().length }}</p>
-            </div>
-            <div class="rd-card">
-              <p class="text-xs uppercase text-ink-200">Critical / high</p>
-              <p class="mt-2 font-mono text-3xl text-moss-300">{{ seriousFindings().length }}</p>
-            </div>
+            <mat-card appearance="outlined">
+              <mat-card-content>
+                <p class="text-xs uppercase text-ink-200">Analyses</p>
+                <p class="mt-2 font-mono text-3xl text-moss-300">{{ analyses().length }}</p>
+              </mat-card-content>
+            </mat-card>
+            <mat-card appearance="outlined">
+              <mat-card-content>
+                <p class="text-xs uppercase text-ink-200">Open findings</p>
+                <p class="mt-2 font-mono text-3xl text-moss-300">{{ openFindings().length }}</p>
+              </mat-card-content>
+            </mat-card>
+            <mat-card appearance="outlined">
+              <mat-card-content>
+                <p class="text-xs uppercase text-ink-200">Critical / high</p>
+                <p class="mt-2 font-mono text-3xl text-moss-300">{{ seriousFindings().length }}</p>
+              </mat-card-content>
+            </mat-card>
           </div>
-          <div class="rd-card space-y-2">
-            <h2 class="font-medium">Latest analysis</h2>
-            @if (latestAnalysis(); as run) {
-              <p class="font-mono text-sm text-moss-200">{{ run.status }} · {{ run.type }} · {{ run.trigger }}</p>
-              <p class="text-xs text-ink-200">{{ run.commitSha.slice(0, 7) }} on {{ run.branch }}</p>
-            } @else {
-              <p class="text-sm text-ink-200">No analysis has been requested yet. A FULL run is queued when GitHub connects or a push webhook arrives.</p>
-            }
-          </div>
+          <mat-card appearance="outlined">
+            <mat-card-header>
+              <mat-card-title>Latest analysis</mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              @if (latestAnalysis(); as run) {
+                <p class="font-mono text-sm text-moss-200">{{ run.status }} · {{ run.type }} · {{ run.trigger }}</p>
+                <p class="text-xs text-ink-200">{{ run.commitSha.slice(0, 7) }} on {{ run.branch }}</p>
+              } @else {
+                <p class="text-sm text-ink-200">No analysis has been requested yet. A FULL run is queued when GitHub connects or a push webhook arrives.</p>
+              }
+            </mat-card-content>
+          </mat-card>
         } @else if (section() === 'findings') {
-          <div class="rd-card space-y-4">
-            <h2 class="font-medium">Findings</h2>
-            @if (findings().length === 0) {
-              <p class="text-sm text-ink-200">No findings yet. Analyzers persist them through the findings API after RepoGraph and Repo Doctor run.</p>
-            } @else {
-              <div class="space-y-2">
-                @for (finding of findings(); track finding.id) {
-                  <div class="rounded-md border border-ink-400 px-3 py-2">
-                    <div class="flex items-center justify-between gap-3">
-                      <p class="font-medium">{{ finding.title }}</p>
-                      <span class="font-mono text-xs text-moss-200">{{ finding.severity }}</span>
-                    </div>
-                    <p class="mt-1 text-sm text-ink-200">{{ finding.description }}</p>
-                    <p class="mt-1 font-mono text-xs text-ink-300">
-                      {{ finding.source }} · {{ finding.status }}
-                      @if (finding.filePath) {
-                        · {{ finding.filePath }}{{ finding.lineNumber ? ':' + finding.lineNumber : '' }}
-                      }
-                    </p>
-                  </div>
-                }
-              </div>
-            }
-          </div>
+          <mat-card appearance="outlined">
+            <mat-card-header>
+              <mat-card-title>Findings</mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              @if (findings().length === 0) {
+                <p class="text-sm text-ink-200">No findings yet. Analyzers persist them through the findings API after RepoGraph and Repo Doctor run.</p>
+              } @else {
+                <app-finding-table [findings]="findings()" [clickable]="false" />
+              }
+            </mat-card-content>
+          </mat-card>
         } @else if (section() === 'analysis') {
-          <div class="rd-card space-y-4">
-            <div class="flex items-center justify-between gap-3">
-              <h2 class="font-medium">Analysis runs</h2>
+          <mat-card appearance="outlined">
+            <mat-card-header>
+              <mat-card-title>Analysis runs</mat-card-title>
               @if (canAnalyze()) {
-                <button class="rd-btn" type="button" [disabled]="requesting()" (click)="requestAnalysis()">
+                <button mat-flat-button class="!ml-auto" type="button" [disabled]="requesting()" (click)="requestAnalysis()">
                   {{ requesting() ? 'Queuing…' : 'Request FULL analysis' }}
                 </button>
               }
-            </div>
-            @if (analyses().length === 0) {
-              <p class="text-sm text-ink-200">No analysis runs yet.</p>
-            } @else {
-              <div class="space-y-2">
-                @for (run of analyses(); track run.id) {
-                  <div class="flex items-center justify-between rounded-md border border-ink-400 px-3 py-2">
-                    <div>
-                      <p class="font-mono text-sm">{{ run.type }} · {{ run.status }}</p>
-                      <p class="text-xs text-ink-200">{{ run.trigger }} · {{ run.commitSha.slice(0, 7) }} · {{ run.branch }}</p>
-                    </div>
-                    <p class="font-mono text-xs text-ink-300">{{ run.createdAt }}</p>
-                  </div>
-                }
-              </div>
-            }
-          </div>
+            </mat-card-header>
+            <mat-card-content>
+              @if (analyses().length === 0) {
+                <p class="text-sm text-ink-200">No analysis runs yet.</p>
+              } @else {
+                <div class="rd-table-wrap rd-table-static">
+                  <table mat-table [dataSource]="analysisData">
+                    <ng-container matColumnDef="type">
+                      <th mat-header-cell *matHeaderCellDef>Type</th>
+                      <td mat-cell *matCellDef="let run">{{ run.type }}</td>
+                    </ng-container>
+                    <ng-container matColumnDef="status">
+                      <th mat-header-cell *matHeaderCellDef>Status</th>
+                      <td mat-cell *matCellDef="let run">{{ run.status }}</td>
+                    </ng-container>
+                    <ng-container matColumnDef="detail">
+                      <th mat-header-cell *matHeaderCellDef>Detail</th>
+                      <td mat-cell *matCellDef="let run">
+                        <span class="font-mono text-xs text-ink-200">{{ run.trigger }} · {{ run.commitSha.slice(0, 7) }} · {{ run.branch }}</span>
+                      </td>
+                    </ng-container>
+                    <ng-container matColumnDef="created">
+                      <th mat-header-cell *matHeaderCellDef>Created</th>
+                      <td mat-cell *matCellDef="let run">
+                        <span class="font-mono text-xs text-ink-300">{{ run.createdAt }}</span>
+                      </td>
+                    </ng-container>
+                    <tr mat-header-row *matHeaderRowDef="analysisColumns"></tr>
+                    <tr mat-row *matRowDef="let row; columns: analysisColumns"></tr>
+                  </table>
+                  <mat-paginator #analysisPaginator [pageSize]="10" [pageSizeOptions]="[5, 10, 25]" showFirstLastButtons />
+                </div>
+              }
+            </mat-card-content>
+          </mat-card>
         } @else if (section() === 'settings') {
-          <div class="rd-card space-y-4">
-            <h2 class="font-medium">Repository access</h2>
-            <p class="text-sm text-ink-200">
-              VIEW reads findings. ANALYZE can request runs. MANAGE is reserved. ADMIN sets grants.
-              Organization owners and admins always have ADMIN.
-            </p>
-            @if (!canAdminRepo()) {
-              <p class="text-sm text-ink-200">You can view this repository as {{ repository()?.permission }}. Only repo ADMIN can change grants.</p>
-            }
-            @if (access().length === 0) {
-              <p class="text-sm text-ink-200">{{ canAdminRepo() ? 'No members to show yet.' : 'Access grants are hidden unless you have ADMIN on this repository.' }}</p>
-            } @else {
-              <div class="space-y-2">
-                @for (grant of access(); track grant.userId) {
-                  <div class="flex items-center justify-between gap-3 rounded-md border border-ink-400 px-3 py-2">
-                    <div class="min-w-0">
-                      <p class="truncate font-medium">{{ grant.displayName }}</p>
-                      <p class="truncate font-mono text-xs text-ink-200">{{ grant.email }} · {{ grant.role }}</p>
-                    </div>
-                    @if (canAdminRepo() && grant.role !== 'OWNER' && grant.role !== 'ADMIN') {
-                      <select
-                        class="rd-input py-1"
-                        [value]="grant.permission"
-                        (change)="changeAccess(grant, selectPermission($event))"
-                      >
-                        @for (permission of permissions; track permission) {
-                          <option [value]="permission">{{ permission }}</option>
+          <mat-card appearance="outlined">
+            <mat-card-header>
+              <mat-card-title>Repository access</mat-card-title>
+            </mat-card-header>
+            <mat-card-content class="space-y-4">
+              <p class="text-sm text-ink-200">
+                VIEW reads findings. ANALYZE can request runs. MANAGE is reserved. ADMIN sets grants.
+                Organization owners and admins always have ADMIN.
+              </p>
+              @if (!canAdminRepo()) {
+                <p class="text-sm text-ink-200">You can view this repository as {{ repository()?.permission }}. Only repo ADMIN can change grants.</p>
+              }
+              @if (access().length === 0) {
+                <p class="text-sm text-ink-200">{{ canAdminRepo() ? 'No members to show yet.' : 'Access grants are hidden unless you have ADMIN on this repository.' }}</p>
+              } @else {
+                <div class="rd-table-wrap rd-table-static">
+                  <table mat-table [dataSource]="accessData">
+                    <ng-container matColumnDef="name">
+                      <th mat-header-cell *matHeaderCellDef>Name</th>
+                      <td mat-cell *matCellDef="let grant">{{ grant.displayName }}</td>
+                    </ng-container>
+                    <ng-container matColumnDef="email">
+                      <th mat-header-cell *matHeaderCellDef>Email</th>
+                      <td mat-cell *matCellDef="let grant">
+                        <span class="font-mono text-xs text-ink-200">{{ grant.email }} · {{ grant.role }}</span>
+                      </td>
+                    </ng-container>
+                    <ng-container matColumnDef="permission">
+                      <th mat-header-cell *matHeaderCellDef>Permission</th>
+                      <td mat-cell *matCellDef="let grant">
+                        @if (canAdminRepo() && grant.role !== 'OWNER' && grant.role !== 'ADMIN') {
+                          <mat-form-field appearance="outline" subscriptSizing="dynamic" class="!w-36">
+                            <mat-select [value]="grant.permission" (selectionChange)="changeAccess(grant, $event.value)">
+                              @for (permission of permissions; track permission) {
+                                <mat-option [value]="permission">{{ permission }}</mat-option>
+                              }
+                            </mat-select>
+                          </mat-form-field>
+                        } @else {
+                          <span class="font-mono text-xs text-moss-200">{{ grant.permission }}</span>
                         }
-                      </select>
-                    } @else {
-                      <span class="font-mono text-xs text-moss-200">{{ grant.permission }}</span>
-                    }
-                  </div>
-                }
-              </div>
-            }
-          </div>
+                      </td>
+                    </ng-container>
+                    <tr mat-header-row *matHeaderRowDef="accessColumns"></tr>
+                    <tr mat-row *matRowDef="let row; columns: accessColumns"></tr>
+                  </table>
+                  <mat-paginator #accessPaginator [pageSize]="10" [pageSizeOptions]="[5, 10, 25]" showFirstLastButtons />
+                </div>
+              }
+            </mat-card-content>
+          </mat-card>
         } @else {
-          <div class="rd-card">
-            <h2 class="text-2xl font-semibold">{{ later().title }}</h2>
-            <p class="mt-2 text-sm text-ink-200">{{ later().body }}</p>
-          </div>
+          <mat-card appearance="outlined">
+            <mat-card-content>
+              <h2 class="text-2xl font-semibold">{{ later().title }}</h2>
+              <p class="mt-2 text-sm text-ink-200">{{ later().body }}</p>
+            </mat-card-content>
+          </mat-card>
         }
         }
       }
@@ -215,6 +273,12 @@ export class RepositoryPage {
   readonly loading = signal(true);
   readonly requesting = signal(false);
   readonly permissions = PERMISSIONS;
+  readonly analysisColumns = ['type', 'status', 'detail', 'created'];
+  readonly accessColumns = ['name', 'email', 'permission'];
+  readonly analysisData = new MatTableDataSource<AnalysisRun>([]);
+  readonly accessData = new MatTableDataSource<RepositoryAccessGrant>([]);
+  private readonly analysisPaginator = viewChild<MatPaginator>('analysisPaginator');
+  private readonly accessPaginator = viewChild<MatPaginator>('accessPaginator');
 
   readonly openFindings = computed(() => this.findings().filter((item) => item.status === 'OPEN'));
   readonly seriousFindings = computed(() =>
@@ -229,11 +293,21 @@ export class RepositoryPage {
   readonly canAdminRepo = () => this.repository()?.permission === 'ADMIN';
 
   constructor() {
+    effect(() => {
+      this.analysisData.data = this.analyses();
+    });
+    effect(() => {
+      this.accessData.data = this.access();
+    });
+    effect(() => {
+      const paginator = this.analysisPaginator();
+      if (paginator) this.analysisData.paginator = paginator;
+    });
+    effect(() => {
+      const paginator = this.accessPaginator();
+      if (paginator) this.accessData.paginator = paginator;
+    });
     void this.load();
-  }
-
-  selectPermission(event: Event): RepositoryAccessGrant['permission'] {
-    return (event.target as HTMLSelectElement).value as RepositoryAccessGrant['permission'];
   }
 
   async changeAccess(grant: RepositoryAccessGrant, permission: RepositoryAccessGrant['permission']): Promise<void> {

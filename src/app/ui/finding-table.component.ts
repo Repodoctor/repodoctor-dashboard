@@ -1,0 +1,70 @@
+import { Component, effect, input, output, viewChild } from '@angular/core';
+import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
+import { MatTableDataSource, MatTableModule } from '@angular/material/table';
+import type { Finding } from '../core/models';
+
+@Component({
+  selector: 'app-finding-table',
+  imports: [MatTableModule, MatPaginatorModule],
+  template: `
+    <div class="rd-table-wrap" [class.rd-table-static]="!clickable()">
+      <table mat-table [dataSource]="dataSource">
+        <ng-container matColumnDef="title">
+          <th mat-header-cell *matHeaderCellDef>Finding</th>
+          <td mat-cell *matCellDef="let finding">
+            <p class="font-medium">{{ finding.title }}</p>
+            @if (finding.description) {
+              <p class="mt-0.5 line-clamp-1 text-xs text-ink-200">{{ finding.description }}</p>
+            }
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="severity">
+          <th mat-header-cell *matHeaderCellDef>Severity</th>
+          <td mat-cell *matCellDef="let finding">
+            <span class="font-mono text-xs text-moss-200">{{ finding.severity }}</span>
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="source">
+          <th mat-header-cell *matHeaderCellDef>Source</th>
+          <td mat-cell *matCellDef="let finding">
+            <span class="font-mono text-xs text-ink-200">{{ finding.source }}</span>
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef>Status</th>
+          <td mat-cell *matCellDef="let finding">
+            <span class="font-mono text-xs text-ink-200">{{ finding.status }}</span>
+          </td>
+        </ng-container>
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr
+          mat-row
+          *matRowDef="let row; columns: displayedColumns"
+          [class.cursor-default]="!clickable()"
+          (click)="clickable() && rowClick.emit(row)"
+        ></tr>
+      </table>
+      <mat-paginator [pageSize]="10" [pageSizeOptions]="[5, 10, 25]" showFirstLastButtons />
+    </div>
+  `,
+})
+export class FindingTableComponent {
+  readonly findings = input.required<Finding[]>();
+  readonly clickable = input(true);
+  readonly rowClick = output<Finding>();
+  readonly displayedColumns = ['title', 'severity', 'source', 'status'];
+  readonly dataSource = new MatTableDataSource<Finding>([]);
+  private readonly paginator = viewChild(MatPaginator);
+
+  constructor() {
+    effect(() => {
+      this.dataSource.data = this.findings();
+    });
+    effect(() => {
+      const paginator = this.paginator();
+      if (paginator) {
+        this.dataSource.paginator = paginator;
+      }
+    });
+  }
+}

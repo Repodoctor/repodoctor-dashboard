@@ -1,11 +1,20 @@
-import { Component, HostListener, inject, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
+import { MatDialog } from '@angular/material/dialog';
+import { MatIconModule } from '@angular/material/icon';
+import { MatMenuModule } from '@angular/material/menu';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../core/auth.service';
 import { ScmService } from '../core/scm.service';
 import { ToastService } from '../core/toast.service';
 import { OrgSettingsNavComponent } from '../layout/org-settings-nav.component';
 import { SCM_PROVIDERS, scmProviderLabel, type ScmProviderName } from '../core/scm-providers';
 import type { Organization, Repository, ScmInstallation } from '../core/models';
+import { ConfirmDialogComponent } from '../ui/confirm-dialog.component';
+import { LoadingStateComponent } from '../ui/loading-state.component';
 
 interface ProviderRow {
   provider: ScmProviderName;
@@ -14,25 +23,36 @@ interface ProviderRow {
 
 @Component({
   selector: 'app-organization-integrations-page',
-  imports: [OrgSettingsNavComponent],
+  imports: [
+    OrgSettingsNavComponent,
+    MatButtonModule,
+    MatCardModule,
+    MatIconModule,
+    MatMenuModule,
+    MatProgressSpinnerModule,
+    LoadingStateComponent,
+  ],
   template: `
     <div class="space-y-6">
       @if (busy()) {
         <div class="fixed inset-0 z-50 flex items-center justify-center bg-ink/80">
-          <div class="rd-card flex flex-col items-center gap-4 text-center">
-            <div class="rd-spinner" role="status" aria-label="Processing"></div>
-            <p class="font-medium">{{ busy() }}</p>
-            @if (waitingPopup()) {
-              <p class="max-w-xs text-sm text-ink-200">Finish the provider window. This page will update when it closes.</p>
-            }
-          </div>
+          <mat-card appearance="outlined">
+            <mat-card-content class="flex flex-col items-center gap-4 text-center">
+              <mat-progress-spinner diameter="40" mode="indeterminate" />
+              <p class="font-medium">{{ busy() }}</p>
+              @if (waitingPopup()) {
+                <p class="max-w-xs text-sm text-ink-200">Finish the provider window. This page will update when it closes.</p>
+              }
+            </mat-card-content>
+          </mat-card>
         </div>
       }
       @if (loading()) {
-        <div class="rd-card flex items-center gap-3">
-          <div class="rd-spinner-sm" role="status" aria-label="Loading"></div>
-          Loading integrations…
-        </div>
+        <mat-card appearance="outlined">
+          <mat-card-content>
+            <app-loading-state label="Loading integrations…" />
+          </mat-card-content>
+        </mat-card>
       } @else {
         @if (org(); as current) {
         <div>
@@ -45,29 +65,23 @@ interface ProviderRow {
           <div class="flex items-center justify-between gap-3">
             <h2 class="text-sm font-medium text-ink-200">Source Control</h2>
             @if (canManage()) {
-              <div class="relative z-[70]">
-                <button class="rd-btn-ghost" type="button" (click)="toggleAdd($event)">
-                  Add Provider
-                  <span class="ml-2 text-xs text-ink-300">▾</span>
-                </button>
-                @if (openMenu() === 'add') {
-                  <div class="rd-menu left-auto right-0 w-72" (click)="$event.stopPropagation()">
-                    @for (provider of addableProviders(); track provider.id) {
-                      <button
-                        class="rd-menu-item"
-                        type="button"
-                        [disabled]="!provider.available"
-                        (click)="addProvider(provider.id, provider.available)"
-                      >
-                        <span class="flex items-center gap-2 font-medium" [class.text-ink-300]="!provider.available">
-                          {{ provider.label }}
-                        </span>
-                        <span class="text-xs text-ink-300">{{ provider.description }}</span>
-                      </button>
-                    }
-                  </div>
+              <button mat-stroked-button type="button" [matMenuTriggerFor]="addMenu">
+                Add Provider
+                <mat-icon iconPositionEnd>arrow_drop_down</mat-icon>
+              </button>
+              <mat-menu #addMenu="matMenu">
+                @for (provider of addableProviders(); track provider.id) {
+                  <button
+                    mat-menu-item
+                    type="button"
+                    [disabled]="!provider.available"
+                    (click)="addProvider(provider.id, provider.available)"
+                  >
+                    <span>{{ provider.label }}</span>
+                    <span class="ml-2 text-xs text-ink-300">{{ provider.description }}</span>
+                  </button>
                 }
-              </div>
+              </mat-menu>
             }
           </div>
           <div class="divide-y divide-line overflow-visible rounded-xl border border-line bg-panel">
@@ -112,38 +126,21 @@ interface ProviderRow {
                   </p>
                 </div>
                 @if (canManage()) {
-                  <div class="relative z-50">
-                    <button class="rd-btn-ghost" type="button" (click)="toggleManage($event, row.provider)">
-                      Manage
-                      <span class="ml-2 text-xs text-ink-300">▾</span>
+                  <button mat-stroked-button type="button" [matMenuTriggerFor]="manageMenu">
+                    Manage
+                    <mat-icon iconPositionEnd>arrow_drop_down</mat-icon>
+                  </button>
+                  <mat-menu #manageMenu="matMenu">
+                    <button mat-menu-item type="button" (click)="manage(row.provider)">
+                      Manage in {{ providerLabel(row.provider) }}
                     </button>
-                    @if (openMenu() === row.provider) {
-                      <div class="rd-menu" (click)="$event.stopPropagation()">
-                        <button class="rd-menu-item" type="button" (click)="manage(row.provider)">
-                          Manage in {{ providerLabel(row.provider) }}
-                        </button>
-                        <button class="rd-menu-item" type="button" (click)="reconnect(row)">Reconnect</button>
-                        @if (canAdmin()) {
-                          <button class="rd-menu-item text-red-200" type="button" (click)="askDisconnect(row.provider)">
-                            Disconnect
-                          </button>
-                        }
-                      </div>
+                    <button mat-menu-item type="button" (click)="reconnect(row)">Reconnect</button>
+                    @if (canAdmin()) {
+                      <button mat-menu-item type="button" (click)="askDisconnect(row)">Disconnect</button>
                     }
-                  </div>
+                  </mat-menu>
                 }
               </div>
-              @if (confirmId() === row.provider) {
-                <div class="space-y-3 border-t border-ink-400 px-5 py-4">
-                  <p class="text-sm text-ink-200">
-                    Uninstalls every {{ providerLabel(row.provider) }} account and removes its imported repositories.
-                  </p>
-                  <div class="flex gap-2">
-                    <button class="rd-btn" type="button" (click)="disconnect(row)">Disconnect</button>
-                    <button class="rd-btn-ghost" type="button" (click)="confirmId.set(null)">Cancel</button>
-                  </div>
-                </div>
-              }
             }
           </div>
         </section>
@@ -157,6 +154,7 @@ export class OrganizationIntegrationsPage {
   private readonly scm = inject(ScmService);
   private readonly toast = inject(ToastService);
   private readonly route = inject(ActivatedRoute);
+  private readonly dialog = inject(MatDialog);
 
   readonly providers = SCM_PROVIDERS;
   readonly org = signal<Organization | null>(null);
@@ -165,8 +163,6 @@ export class OrganizationIntegrationsPage {
   readonly loading = signal(true);
   readonly busy = signal<string | null>(null);
   readonly waitingPopup = signal(false);
-  readonly openMenu = signal<string | null>(null);
-  readonly confirmId = signal<string | null>(null);
 
   readonly canManage = () => {
     const role = this.org()?.role;
@@ -185,11 +181,6 @@ export class OrganizationIntegrationsPage {
       return;
     }
     void this.load(id);
-  }
-
-  @HostListener('document:click')
-  closeMenus(): void {
-    this.openMenu.set(null);
   }
 
   providerLabel(provider: ScmProviderName): string {
@@ -234,31 +225,18 @@ export class OrganizationIntegrationsPage {
     return Math.max(0, this.connectionAccounts(row).length - 3);
   }
 
-  toggleAdd(event: Event): void {
-    event.stopPropagation();
-    this.openMenu.set(this.openMenu() === 'add' ? null : 'add');
-  }
-
-  toggleManage(event: Event, provider: ScmProviderName): void {
-    event.stopPropagation();
-    this.openMenu.set(this.openMenu() === provider ? null : provider);
-  }
-
   async addProvider(provider: ScmProviderName, available: boolean): Promise<void> {
     if (!available) return;
-    this.openMenu.set(null);
     await this.openInstallPopup(provider);
   }
 
   async manage(provider: ScmProviderName): Promise<void> {
-    this.openMenu.set(null);
     await this.openInstallPopup(provider);
   }
 
   async reconnect(row: ProviderRow): Promise<void> {
     const org = this.org();
     if (!org) return;
-    this.openMenu.set(null);
     this.busy.set(`Reconnecting ${this.providerLabel(row.provider)}…`);
     try {
       let total = 0;
@@ -277,9 +255,21 @@ export class OrganizationIntegrationsPage {
     }
   }
 
-  askDisconnect(provider: ScmProviderName): void {
-    this.openMenu.set(null);
-    this.confirmId.set(provider);
+  async askDisconnect(row: ProviderRow): Promise<void> {
+    const confirmed = await firstValueFrom(
+      this.dialog
+        .open(ConfirmDialogComponent, {
+          data: {
+            title: `Disconnect ${this.providerLabel(row.provider)}`,
+            body: `Uninstalls every ${this.providerLabel(row.provider)} account and removes its imported repositories.`,
+            confirm: 'Disconnect',
+          },
+        })
+        .afterClosed(),
+    );
+    if (confirmed) {
+      await this.disconnect(row);
+    }
   }
 
   async disconnect(row: ProviderRow): Promise<void> {
@@ -290,7 +280,6 @@ export class OrganizationIntegrationsPage {
       for (const install of row.installations) {
         await this.scm.disconnect(org.id, install.id);
       }
-      this.confirmId.set(null);
       this.toast.show(`${this.providerLabel(row.provider)} disconnected.`, 'success');
       await this.load(org.id);
     } catch {

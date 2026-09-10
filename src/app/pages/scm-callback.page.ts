@@ -1,14 +1,18 @@
 import { Component, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { AuthService } from '../core/auth.service';
 import { ScmService } from '../core/scm.service';
 import { ToastService } from '../core/toast.service';
 import { scmProviderLabel, type ScmProviderName } from '../core/scm-providers';
 import type { Organization } from '../core/models';
+import { OrganizationTableComponent } from '../ui/organization-table.component';
 
 @Component({
   selector: 'app-scm-callback-page',
-  imports: [RouterLink],
+  imports: [RouterLink, MatButtonModule, MatCardModule, MatProgressSpinnerModule, OrganizationTableComponent],
   template: `
     <div class="space-y-6">
       @if (failed()) {
@@ -16,24 +20,21 @@ import type { Organization } from '../core/models';
           <p class="text-xs uppercase tracking-[0.2em] text-moss-400">Source control</p>
           <h1 class="text-3xl font-semibold">{{ label() }}</h1>
         </div>
-        <a routerLink="/organizations" class="rd-btn-ghost">Back to organizations</a>
+        <a mat-stroked-button routerLink="/organizations">Back to organizations</a>
       } @else if (needsOrg()) {
         <div>
           <p class="text-xs uppercase tracking-[0.2em] text-moss-400">Source control</p>
           <h1 class="text-3xl font-semibold">{{ label() }}</h1>
         </div>
-        <div class="rd-card space-y-3">
-          <p>Choose the organization that should own this installation.</p>
-          @for (org of organizations(); track org.id) {
-            <button class="rd-btn-ghost w-full justify-start" type="button" [disabled]="saving()" (click)="complete(org.id)">
-              {{ org.name }}
-              <span class="ml-2 font-mono text-xs text-ink-200">{{ org.slug }}</span>
-            </button>
-          }
-        </div>
+        <mat-card appearance="outlined">
+          <mat-card-content class="space-y-3">
+            <p>Choose the organization that should own this installation.</p>
+            <app-organization-table [organizations]="organizations()" (rowClick)="complete($event.id)" />
+          </mat-card-content>
+        </mat-card>
       } @else {
         <div class="flex min-h-[70vh] flex-col items-center justify-center gap-4 text-center">
-          <div class="rd-spinner" role="status" [attr.aria-label]="'Connecting ' + label()"></div>
+          <mat-progress-spinner diameter="40" mode="indeterminate" [attr.aria-label]="'Connecting ' + label()" />
           <h1 class="text-2xl font-semibold">Connecting {{ label() }}</h1>
           <p class="max-w-sm text-sm text-ink-200">
             Fetching repositories. Keep this window open until it closes.

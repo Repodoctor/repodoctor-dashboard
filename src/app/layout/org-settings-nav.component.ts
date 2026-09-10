@@ -1,42 +1,61 @@
 import { Component, input } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
+import { MatTabsModule } from '@angular/material/tabs';
 
 @Component({
   selector: 'app-org-settings-nav',
-  imports: [RouterLink, RouterLinkActive],
+  imports: [RouterLink, RouterLinkActive, MatTabsModule],
   template: `
-    <nav class="flex flex-wrap gap-2">
-      <a class="rd-btn-ghost" [routerLink]="['/organizations', organizationId()]">Overview</a>
+    <nav mat-tab-nav-bar [tabPanel]="panel" mat-stretch-tabs="false">
       <a
-        class="rd-btn-ghost"
+        mat-tab-link
+        [routerLink]="['/organizations', organizationId()]"
+        routerLinkActive
+        #overviewTab="routerLinkActive"
+        [active]="overviewTab.isActive"
+        [routerLinkActiveOptions]="{ exact: true }"
+      >
+        Overview
+      </a>
+      <a
+        mat-tab-link
         [routerLink]="['/organizations', organizationId(), 'settings']"
-        routerLinkActive="border-pulse text-pulse"
+        routerLinkActive
+        #orgTab="routerLinkActive"
+        [active]="orgTab.isActive"
         [routerLinkActiveOptions]="{ exact: true }"
       >
         Organization
       </a>
       <a
-        class="rd-btn-ghost"
+        mat-tab-link
         [routerLink]="['/organizations', organizationId(), 'settings', 'integrations']"
-        routerLinkActive="border-pulse text-pulse"
+        routerLinkActive
+        #integrationsTab="routerLinkActive"
+        [active]="integrationsTab.isActive"
       >
         Integrations
       </a>
       <a
-        class="rd-btn-ghost"
+        mat-tab-link
         [routerLink]="['/organizations', organizationId(), 'settings', 'members']"
-        routerLinkActive="border-pulse text-pulse"
+        routerLinkActive
+        #membersTab="routerLinkActive"
+        [active]="membersTab.isActive"
       >
         Members
       </a>
       <a
-        class="rd-btn-ghost"
+        mat-tab-link
         [routerLink]="['/organizations', organizationId(), 'settings', 'permissions']"
-        routerLinkActive="border-pulse text-pulse"
+        routerLinkActive
+        #permissionsTab="routerLinkActive"
+        [active]="permissionsTab.isActive"
       >
         Permissions
       </a>
     </nav>
+    <mat-tab-nav-panel #panel />
   `,
 })
 export class OrgSettingsNavComponent {

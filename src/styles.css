@@ -48,3 +48,54 @@ body {
 .rd-menu-item {
   @apply flex w-full flex-col items-start gap-0.5 px-3 py-2 text-left text-sm text-cloud transition hover:bg-line disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent;
 }
+
+.rd-table-wrap {
+  @apply overflow-hidden rounded-xl border border-line bg-panel;
+}
+
+.rd-table-wrap table {
+  width: 100%;
+}
+
+.rd-table-wrap .mat-mdc-row {
+  cursor: pointer;
+}
+
+.rd-table-wrap .mat-mdc-row:hover {
+  background: rgba(62, 224, 178, 0.08);
+}
+
+.rd-table-wrap.rd-table-static .mat-mdc-row {
+  cursor: default;
+}
+
+.rd-table-wrap .mat-mdc-paginator {
+  background: transparent;
+}
+
+.mat-mdc-form-field {
+  width: 100%;
+}
+
+.mat-mdc-form-field .mdc-notched-outline__notch {
+  border-left: none;
+  border-right: none;
+}
+
+.mat-mdc-card.mat-mdc-card-outlined {
+  --mdc-outlined-card-container-color: #12181f;
+  --mdc-outlined-card-outline-color: #1e2a36;
+}
+
+.mat-mdc-card-header {
+  padding: 1.25rem 1.25rem 0;
+}
+
+.mat-mdc-card-content {
+  padding: 1.25rem !important;
+}
+
+.mat-mdc-card-title {
+  font-size: 1.125rem;
+  font-weight: 500;
+}

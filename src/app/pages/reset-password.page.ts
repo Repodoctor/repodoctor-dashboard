@@ -1,6 +1,10 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import { MatButtonModule } from '@angular/material/button';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { AuthService } from '../core/auth.service';
 import { ToastService } from '../core/toast.service';
 import { errorMessage, isHttpError } from '../core/error-message';
@@ -8,7 +12,7 @@ import { PASSWORD_HINT, passwordRules, passwordStrength, passwordsMatch } from '
 
 @Component({
   selector: 'app-reset-password-page',
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, MatButtonModule, MatFormFieldModule, MatInputModule, MatProgressSpinnerModule],
   template: `
     <div class="mx-auto flex min-h-screen max-w-md items-center px-6">
       <form class="w-full space-y-4" [formGroup]="form" (ngSubmit)="submit()">
@@ -22,24 +26,26 @@ import { PASSWORD_HINT, passwordRules, passwordStrength, passwordsMatch } from '
             if it expired.
           </p>
         }
-        <label class="block text-sm">New password
-          <input class="rd-input mt-1" type="password" formControlName="password" autocomplete="new-password" />
-        </label>
+        <mat-form-field appearance="outline">
+          <mat-label>New password</mat-label>
+          <input matInput type="password" formControlName="password" autocomplete="new-password" />
+        </mat-form-field>
         @if (form.controls.password.value) {
           <p class="text-xs text-ink-200">{{ strength().label }}</p>
         }
-        <label class="block text-sm">Confirm password
-          <input class="rd-input mt-1" type="password" formControlName="confirmPassword" autocomplete="new-password" />
-        </label>
+        <mat-form-field appearance="outline">
+          <mat-label>Confirm password</mat-label>
+          <input matInput type="password" formControlName="confirmPassword" autocomplete="new-password" />
+        </mat-form-field>
         @if (form.hasError('mismatch') && form.touched) {
           <p class="text-sm text-red-200">Passwords do not match.</p>
         }
         @if (form.controls.password.touched && form.controls.password.hasError('passwordRules')) {
           <p class="text-sm text-red-200">{{ hint }}</p>
         }
-        <button class="rd-btn w-full" [disabled]="form.invalid || loading() || !auth.isAuthenticated()">
+        <button mat-flat-button class="w-full" [disabled]="form.invalid || loading() || !auth.isAuthenticated()">
           @if (loading()) {
-            <span class="rd-spinner-sm mr-2"></span>
+            <mat-progress-spinner class="mr-2" diameter="18" mode="indeterminate" />
           }
           {{ loading() ? 'Saving…' : 'Save password' }}
         </button>

@@ -1,6 +1,10 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { MatButtonModule } from '@angular/material/button';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { AuthService } from '../core/auth.service';
 import { ToastService } from '../core/toast.service';
 import { errorMessage, isHttpError } from '../core/error-message';
@@ -8,7 +12,7 @@ import { PASSWORD_HINT, passwordRules, passwordStrength, passwordsMatch } from '
 
 @Component({
   selector: 'app-signup-page',
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, MatButtonModule, MatFormFieldModule, MatInputModule, MatProgressSpinnerModule],
   template: `
     <div class="mx-auto flex min-h-screen max-w-md items-center px-6">
       <form
@@ -28,9 +32,10 @@ import { PASSWORD_HINT, passwordRules, passwordStrength, passwordsMatch } from '
           </p>
         }
         <p class="text-sm text-ink-200">{{ hint }}</p>
-        <label class="block text-sm">Display name
+        <mat-form-field appearance="outline">
+          <mat-label>Display name</mat-label>
           <input
-            class="rd-input mt-1"
+            matInput
             formControlName="displayName"
             name="rd-signup-display-name"
             autocomplete="off"
@@ -41,10 +46,11 @@ import { PASSWORD_HINT, passwordRules, passwordStrength, passwordsMatch } from '
             (mousedown)="unlock('displayName')"
             (focus)="unlock('displayName')"
           />
-        </label>
-        <label class="block text-sm">Email
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Email</mat-label>
           <input
-            class="rd-input mt-1"
+            matInput
             type="email"
             formControlName="email"
             name="rd-signup-email"
@@ -56,10 +62,11 @@ import { PASSWORD_HINT, passwordRules, passwordStrength, passwordsMatch } from '
             (mousedown)="unlock('email')"
             (focus)="unlock('email')"
           />
-        </label>
-        <label class="block text-sm">Password
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Password</mat-label>
           <input
-            class="rd-input mt-1"
+            matInput
             type="password"
             formControlName="password"
             name="rd-signup-password"
@@ -68,7 +75,7 @@ import { PASSWORD_HINT, passwordRules, passwordStrength, passwordsMatch } from '
             (mousedown)="unlock('password')"
             (focus)="unlock('password')"
           />
-        </label>
+        </mat-form-field>
         @if (form.controls.password.value) {
           <div>
             <div class="flex gap-1">
@@ -82,9 +89,10 @@ import { PASSWORD_HINT, passwordRules, passwordStrength, passwordsMatch } from '
             <p class="mt-1 text-xs text-ink-200">{{ strength().label }}</p>
           </div>
         }
-        <label class="block text-sm">Confirm password
+        <mat-form-field appearance="outline">
+          <mat-label>Confirm password</mat-label>
           <input
-            class="rd-input mt-1"
+            matInput
             type="password"
             formControlName="confirmPassword"
             name="rd-signup-confirm-password"
@@ -93,16 +101,16 @@ import { PASSWORD_HINT, passwordRules, passwordStrength, passwordsMatch } from '
             (mousedown)="unlock('confirmPassword')"
             (focus)="unlock('confirmPassword')"
           />
-        </label>
+        </mat-form-field>
         @if (form.hasError('mismatch') && form.touched) {
           <p class="text-sm text-red-200">Passwords do not match.</p>
         }
         @if (form.controls.password.touched && form.controls.password.hasError('passwordRules')) {
           <p class="text-sm text-red-200">{{ hint }}</p>
         }
-        <button class="rd-btn w-full" [disabled]="form.invalid || loading()">
+        <button mat-flat-button class="w-full" [disabled]="form.invalid || loading()">
           @if (loading()) {
-            <span class="rd-spinner-sm mr-2"></span>
+            <mat-progress-spinner class="mr-2" diameter="18" mode="indeterminate" />
           }
           {{ submitLabel() }}
         </button>

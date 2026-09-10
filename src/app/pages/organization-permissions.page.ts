@@ -1,18 +1,25 @@
 import { Component, inject, signal } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { MatCardModule } from '@angular/material/card';
+import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../core/auth.service';
 import { ScmService } from '../core/scm.service';
 import { ToastService } from '../core/toast.service';
 import { OrgSettingsNavComponent } from '../layout/org-settings-nav.component';
 import type { Organization, Repository } from '../core/models';
+import { LoadingStateComponent } from '../ui/loading-state.component';
+import { RepositoryTableComponent } from '../ui/repository-table.component';
 
 @Component({
   selector: 'app-organization-permissions-page',
-  imports: [RouterLink, OrgSettingsNavComponent],
+  imports: [OrgSettingsNavComponent, MatCardModule, LoadingStateComponent, RepositoryTableComponent],
   template: `
     <div class="space-y-6">
       @if (loading()) {
-        <div class="rd-card">Loading permissions…</div>
+        <mat-card appearance="outlined">
+          <mat-card-content>
+            <app-loading-state label="Loading permissions…" />
+          </mat-card-content>
+        </mat-card>
       } @else {
         @if (org(); as current) {
         <div>
@@ -23,27 +30,15 @@ import type { Organization, Repository } from '../core/models';
           </p>
         </div>
         <app-org-settings-nav [organizationId]="current.id" />
-        <div class="rd-card space-y-3">
-          @if (repositories().length === 0) {
-            <p class="text-sm text-ink-200">No repositories yet. Connect a provider from Integrations.</p>
-          } @else {
-            @for (repo of repositories(); track repo.id) {
-              <div class="flex items-center justify-between gap-3 rounded-md border border-ink-400 px-3 py-2">
-                <div>
-                  <p class="font-medium">{{ repo.fullName }}</p>
-                  <p class="font-mono text-xs text-ink-200">Your access · {{ repo.permission ?? 'VIEW' }}</p>
-                </div>
-                <a
-                  class="rd-btn-ghost"
-                  [routerLink]="['/repositories', repo.id, 'settings']"
-                  [queryParams]="{ organizationId: repo.organizationId }"
-                >
-                  {{ canAdminRepo(repo) ? 'Manage access' : 'View' }}
-                </a>
-              </div>
+        <mat-card appearance="outlined">
+          <mat-card-content>
+            @if (repositories().length === 0) {
+              <p class="text-sm text-ink-200">No repositories yet. Connect a provider from Integrations.</p>
+            } @else {
+              <app-repository-table [repositories]="repositories()" (rowClick)="openRepo($event)" />
             }
-          }
-        </div>
+          </mat-card-content>
+        </mat-card>
         }
       }
     </div>
@@ -54,6 +49,7 @@ export class OrganizationPermissionsPage {
   private readonly scm = inject(ScmService);
   private readonly toast = inject(ToastService);
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
   readonly org = signal<Organization | null>(null);
   readonly repositories = signal<Repository[]>([]);
@@ -69,8 +65,11 @@ export class OrganizationPermissionsPage {
     void this.load(id);
   }
 
-  canAdminRepo(repo: Repository): boolean {
-    return repo.permission === 'ADMIN';
+  openRepo(repo: Repository): void {
+    const section = repo.permission === 'ADMIN' ? 'settings' : 'overview';
+    void this.router.navigate(['/repositories', repo.id, section], {
+      queryParams: { organizationId: repo.organizationId },
+    });
   }
 
   private async load(id: string): Promise<void> {

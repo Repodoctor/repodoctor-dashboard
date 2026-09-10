@@ -1,15 +1,19 @@
 import { Component, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
 
 @Component({
   selector: 'app-placeholder-page',
-  imports: [RouterLink],
+  imports: [RouterLink, MatButtonModule, MatCardModule],
   template: `
-    <div class="rd-card">
-      <h1 class="text-2xl font-semibold">{{ title }}</h1>
-      <p class="mt-2 text-sm text-ink-200">{{ detail }}</p>
-      <a routerLink="/dashboard" class="rd-btn-ghost mt-4">Back to dashboard</a>
-    </div>
+    <mat-card appearance="outlined">
+      <mat-card-content>
+        <h1 class="text-2xl font-semibold">{{ title }}</h1>
+        <p class="mt-2 text-sm text-ink-200">{{ detail }}</p>
+        <a mat-stroked-button class="mt-4" routerLink="/dashboard">Back to dashboard</a>
+      </mat-card-content>
+    </mat-card>
   `,
 })
 export class PlaceholderPage {

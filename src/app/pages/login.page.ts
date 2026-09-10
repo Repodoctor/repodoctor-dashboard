@@ -1,13 +1,17 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { MatButtonModule } from '@angular/material/button';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { AuthService } from '../core/auth.service';
 import { ToastService } from '../core/toast.service';
 import { errorMessage, isHttpError } from '../core/error-message';
 
 @Component({
   selector: 'app-login-page',
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, MatButtonModule, MatFormFieldModule, MatInputModule, MatProgressSpinnerModule],
   template: `
     <div class="grid min-h-screen lg:grid-cols-2">
       <section class="hidden border-r border-ink-400 bg-ink-800 p-12 lg:flex lg:flex-col lg:justify-between">
@@ -30,17 +34,17 @@ import { errorMessage, isHttpError } from '../core/error-message';
               {{ inviteHint() }}
             </p>
           }
-          <label class="block text-sm">
-            Email
-            <input class="rd-input mt-1" type="email" formControlName="email" autocomplete="username" />
-          </label>
-          <label class="block text-sm">
-            Password
-            <input class="rd-input mt-1" type="password" formControlName="password" autocomplete="current-password" />
-          </label>
-          <button class="rd-btn w-full" type="submit" [disabled]="form.invalid || loading()">
+          <mat-form-field appearance="outline">
+            <mat-label>Email</mat-label>
+            <input matInput type="email" formControlName="email" autocomplete="username" />
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Password</mat-label>
+            <input matInput type="password" formControlName="password" autocomplete="current-password" />
+          </mat-form-field>
+          <button mat-flat-button class="w-full" type="submit" [disabled]="form.invalid || loading()">
             @if (loading()) {
-              <span class="rd-spinner-sm mr-2"></span>
+              <mat-progress-spinner class="mr-2" diameter="18" mode="indeterminate" />
             }
             {{ loading() ? 'Signing in…' : 'Sign in' }}
           </button>

@@ -1,0 +1,37 @@
+@use '@angular/material' as mat;
+
+html {
+  color-scheme: dark;
+  @include mat.theme(
+    (
+      color: (
+        primary: mat.$cyan-palette,
+        tertiary: mat.$orange-palette,
+        theme-type: dark,
+      ),
+      typography: (
+        plain-family: '"IBM Plex Sans", ui-sans-serif, system-ui, sans-serif',
+        brand-family: '"IBM Plex Sans", ui-sans-serif, system-ui, sans-serif',
+      ),
+      density: 0,
+    )
+  );
+}
+
+html {
+  --mat-sys-primary: #3ee0b2;
+  --mat-sys-on-primary: #0b0f14;
+  --mat-sys-primary-container: #1b5632;
+  --mat-sys-on-primary-container: #d6ffe4;
+  --mat-sys-surface: #0b0f14;
+  --mat-sys-surface-container: #12181f;
+  --mat-sys-surface-container-low: #12181f;
+  --mat-sys-surface-container-high: #161d26;
+  --mat-sys-surface-container-highest: #1e2a36;
+  --mat-sys-on-surface: #e8eef4;
+  --mat-sys-on-surface-variant: #8b9bb0;
+  --mat-sys-outline: #1e2a36;
+  --mat-sys-outline-variant: #1e2a36;
+  --mat-sys-error: #f43f5e;
+  --mat-sys-on-error: #ffffff;
+}

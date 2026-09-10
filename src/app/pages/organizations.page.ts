@@ -1,13 +1,30 @@
-import { Component, HostListener, inject, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
+import { MatDialog } from '@angular/material/dialog';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { ActivatedRoute, Router } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../core/auth.service';
 import { ToastService } from '../core/toast.service';
 import type { Organization } from '../core/models';
+import { ConfirmDialogComponent } from '../ui/confirm-dialog.component';
+import { LoadingStateComponent } from '../ui/loading-state.component';
+import { OrganizationTableComponent } from '../ui/organization-table.component';
 
 @Component({
   selector: 'app-organizations-page',
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [
+    ReactiveFormsModule,
+    MatButtonModule,
+    MatCardModule,
+    MatFormFieldModule,
+    MatInputModule,
+    LoadingStateComponent,
+    OrganizationTableComponent,
+  ],
   template: `
     <div class="space-y-6">
       <div class="flex flex-wrap items-end justify-between gap-4">
@@ -16,84 +33,41 @@ import type { Organization } from '../core/models';
           <h1 class="text-3xl font-semibold">Organizations</h1>
         </div>
       </div>
-      <form class="rd-card grid gap-3 md:grid-cols-[1fr_1fr_auto]" [formGroup]="form" (ngSubmit)="create()">
-        <label class="text-sm">Name
-          <input class="rd-input mt-1" formControlName="name" />
-        </label>
-        <label class="text-sm">Slug (optional)
-          <input class="rd-input mt-1" formControlName="slug" />
-        </label>
-        <button class="rd-btn self-end" [disabled]="form.invalid || saving()">Create</button>
-      </form>
+      <mat-card appearance="outlined">
+        <mat-card-content>
+          <form class="grid gap-3 md:grid-cols-[1fr_1fr_auto] md:items-start" [formGroup]="form" (ngSubmit)="create()">
+            <mat-form-field appearance="outline" subscriptSizing="dynamic">
+              <mat-label>Name</mat-label>
+              <input matInput formControlName="name" />
+            </mat-form-field>
+            <mat-form-field appearance="outline" subscriptSizing="dynamic">
+              <mat-label>Slug (optional)</mat-label>
+              <input matInput formControlName="slug" />
+            </mat-form-field>
+            <button mat-flat-button class="md:mt-1" type="submit" [disabled]="form.invalid || saving()">Create</button>
+          </form>
+        </mat-card-content>
+      </mat-card>
       @if (loading()) {
-        <p class="text-ink-200">Loading…</p>
+        <mat-card appearance="outlined">
+          <mat-card-content>
+            <app-loading-state label="Loading…" />
+          </mat-card-content>
+        </mat-card>
       } @else if (items().length === 0) {
-        <div class="rd-card text-ink-200">No organizations yet. Create one to become OWNER.</div>
+        <mat-card appearance="outlined">
+          <mat-card-content class="text-ink-200">No organizations yet. Create one to become OWNER.</mat-card-content>
+        </mat-card>
       } @else {
-        <div class="grid gap-3">
-          @for (org of items(); track org.id) {
-            <div class="rd-card flex items-start justify-between gap-3">
-              <a class="min-w-0 flex-1 hover:text-moss-300" [routerLink]="['/organizations', org.id]">
-                <p class="font-medium">{{ org.name }}</p>
-                <p class="font-mono text-xs text-ink-200">{{ org.slug }} · {{ org.role }}</p>
-              </a>
-              @if (org.role === 'OWNER' || org.role === 'ADMIN') {
-                <div class="relative z-[70]">
-                  <button
-                    class="rounded-md p-2 text-ink-200 hover:bg-ink-600 hover:text-moss-300"
-                    type="button"
-                    aria-label="Organization actions"
-                    [attr.aria-expanded]="menuId() === org.id"
-                    aria-haspopup="menu"
-                    (click)="toggleMenu(org.id, $event)"
-                  >
-                    <svg class="h-4 w-4" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-                      <circle cx="3" cy="8" r="1.5" />
-                      <circle cx="8" cy="8" r="1.5" />
-                      <circle cx="13" cy="8" r="1.5" />
-                    </svg>
-                  </button>
-                  @if (menuId() === org.id) {
-                    <div class="rd-menu min-w-36">
-                      <a
-                        class="block w-full px-3 py-2 text-left text-sm text-ink-100 hover:bg-ink-600"
-                        [routerLink]="['/organizations', org.id, 'settings']"
-                      >
-                        Settings
-                      </a>
-                      <button
-                        class="block w-full px-3 py-2 text-left text-sm text-red-200 hover:bg-ink-600"
-                        type="button"
-                        (click)="askDelete(org)"
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  }
-                </div>
-              }
-            </div>
-          }
-        </div>
+        <app-organization-table
+          [organizations]="items()"
+          [showActions]="true"
+          (rowClick)="open($event)"
+          (settings)="openSettings($event)"
+          (remove)="askDelete($event)"
+        />
       }
     </div>
-
-    @if (pendingDelete(); as org) {
-      <div class="fixed inset-0 z-40 flex items-center justify-center bg-black/70 px-4" (click)="pendingDelete.set(null)">
-        <div class="rd-card w-full max-w-md" (click)="$event.stopPropagation()">
-          <h2 class="text-lg font-semibold">Delete organization</h2>
-          <p class="mt-2 text-sm text-ink-200">
-            Delete <span class="font-medium text-moss-200">{{ org.name }}</span>? Repositories, analysis runs, findings, and GitHub App installations are removed. RepoDoctor also uninstalls the GitHub App from that account. This cannot be undone.
-          </p>
-          <div class="mt-5 flex justify-end gap-2">
-            <button class="rd-btn-ghost" type="button" (click)="pendingDelete.set(null)">Cancel</button>
-            <button class="rd-btn bg-red-400 hover:bg-red-300" type="button" [disabled]="saving()" (click)="confirmDelete()">
-              {{ saving() ? 'Deleting…' : 'Delete' }}
-            </button>
-          </div>
-        </div>
-      </div>
-    }
   `,
 })
 export class OrganizationsPage {
@@ -102,11 +76,10 @@ export class OrganizationsPage {
   private readonly fb = inject(FormBuilder);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly dialog = inject(MatDialog);
   readonly items = signal<Organization[]>([]);
   readonly loading = signal(true);
   readonly saving = signal(false);
-  readonly menuId = signal<string | null>(null);
-  readonly pendingDelete = signal<Organization | null>(null);
   readonly form = this.fb.nonNullable.group({
     name: ['', [Validators.required, Validators.minLength(2)]],
     slug: [''],
@@ -128,27 +101,31 @@ export class OrganizationsPage {
     void this.refresh();
   }
 
-  @HostListener('document:click')
-  closeMenu(): void {
-    this.menuId.set(null);
+  open(org: Organization): void {
+    void this.router.navigate(['/organizations', org.id]);
   }
 
-  toggleMenu(id: string, event: Event): void {
-    event.stopPropagation();
-    this.menuId.update((current) => (current === id ? null : id));
+  openSettings(org: Organization): void {
+    void this.router.navigate(['/organizations', org.id, 'settings']);
   }
 
-  askDelete(org: Organization): void {
-    this.menuId.set(null);
-    this.pendingDelete.set(org);
-  }
-
-  async create(): Promise<void> {
+  async askDelete(org: Organization): Promise<void> {
+    const confirmed = await firstValueFrom(
+      this.dialog
+        .open(ConfirmDialogComponent, {
+          data: {
+            title: 'Delete organization',
+            body: `Delete ${org.name}? Repositories, analysis runs, findings, and GitHub App installations are removed. RepoDoctor also uninstalls the GitHub App from that account. This cannot be undone.`,
+            confirm: 'Delete',
+          },
+        })
+        .afterClosed(),
+    );
+    if (!confirmed) return;
     this.saving.set(true);
     try {
-      const { name, slug } = this.form.getRawValue();
-      await this.auth.createOrganization({ name, slug: slug || undefined });
-      this.form.reset({ name: '', slug: '' });
+      await this.auth.deleteOrganization(org.id);
+      this.toast.show(`${org.name} was deleted.`, 'success');
       await this.refresh();
     } catch {
       // HTTP errors are toasted by the interceptor.
@@ -157,14 +134,12 @@ export class OrganizationsPage {
     }
   }
 
-  async confirmDelete(): Promise<void> {
-    const org = this.pendingDelete();
-    if (!org) return;
+  async create(): Promise<void> {
     this.saving.set(true);
     try {
-      await this.auth.deleteOrganization(org.id);
-      this.pendingDelete.set(null);
-      this.toast.show(`${org.name} was deleted.`, 'success');
+      const { name, slug } = this.form.getRawValue();
+      await this.auth.createOrganization({ name, slug: slug || undefined });
+      this.form.reset({ name: '', slug: '' });
       await this.refresh();
     } catch {
       // HTTP errors are toasted by the interceptor.

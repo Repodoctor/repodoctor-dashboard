@@ -1,10 +1,11 @@
 import { Component, inject } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
+import { MatButtonModule } from '@angular/material/button';
 import { AuthService } from '../core/auth.service';
 
 @Component({
   selector: 'app-home-page',
-  imports: [RouterLink],
+  imports: [RouterLink, MatButtonModule],
   template: `
     <div
       class="overflow-hidden bg-[radial-gradient(ellipse_80%_50%_at_50%_-10%,rgba(62,224,178,0.16),transparent_55%),radial-gradient(ellipse_40%_30%_at_100%_20%,rgba(245,165,36,0.06),transparent_50%),#0b0f14]"
@@ -18,9 +19,9 @@ import { AuthService } from '../core/auth.service';
           </a>
           <div class="pointer-events-auto">
             @if (auth.isAuthenticated()) {
-              <a routerLink="/dashboard" class="rd-btn-ghost">Open dashboard</a>
+              <a mat-stroked-button routerLink="/dashboard">Open dashboard</a>
             } @else {
-              <a routerLink="/login" class="rd-btn-ghost">Log in</a>
+              <a mat-stroked-button routerLink="/login">Log in</a>
             }
           </div>
         </div>
@@ -36,11 +37,11 @@ import { AuthService } from '../core/auth.service';
           </p>
           <div class="mt-8 flex flex-wrap gap-3">
             @if (auth.isAuthenticated()) {
-              <a routerLink="/dashboard" class="rd-btn">Open dashboard</a>
-              <a routerLink="/organizations" class="rd-btn-ghost">Browse organizations</a>
+              <a mat-flat-button routerLink="/dashboard">Open dashboard</a>
+              <a mat-stroked-button routerLink="/organizations">Browse organizations</a>
             } @else {
-              <a routerLink="/login" class="rd-btn">Log in</a>
-              <a routerLink="/signup" class="rd-btn-ghost">Create account</a>
+              <a mat-flat-button routerLink="/login">Log in</a>
+              <a mat-stroked-button routerLink="/signup">Create account</a>
             }
           </div>
         </div>
@@ -116,7 +117,7 @@ import { AuthService } from '../core/auth.service';
 
       <footer class="flex flex-col gap-4 border-t border-ink-400 px-4 py-6 text-sm text-ink-200 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-12">
         <span>RepoDoctor · diagnose early, ship confidently</span>
-        <a routerLink="/login" class="rd-btn-ghost w-fit">Log in</a>
+        <a mat-stroked-button routerLink="/login">Log in</a>
       </footer>
     </div>
   `,

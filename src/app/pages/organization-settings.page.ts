@@ -1,29 +1,50 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
+import { MatDialog } from '@angular/material/dialog';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ActivatedRoute, Router } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../core/auth.service';
 import { ToastService } from '../core/toast.service';
 import { OrgSettingsNavComponent } from '../layout/org-settings-nav.component';
 import type { Organization } from '../core/models';
+import { ConfirmDialogComponent } from '../ui/confirm-dialog.component';
+import { LoadingStateComponent } from '../ui/loading-state.component';
 
 @Component({
   selector: 'app-organization-settings-page',
-  imports: [ReactiveFormsModule, OrgSettingsNavComponent],
+  imports: [
+    ReactiveFormsModule,
+    OrgSettingsNavComponent,
+    MatButtonModule,
+    MatCardModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatProgressSpinnerModule,
+    LoadingStateComponent,
+  ],
   template: `
     <div class="space-y-6">
       @if (saving()) {
         <div class="fixed inset-0 z-50 flex items-center justify-center bg-ink/80">
-          <div class="rd-card flex flex-col items-center gap-4 text-center">
-            <div class="rd-spinner" role="status" aria-label="Processing"></div>
-            <p class="font-medium">Processing…</p>
-          </div>
+          <mat-card appearance="outlined">
+            <mat-card-content class="flex flex-col items-center gap-4 text-center">
+              <mat-progress-spinner diameter="40" mode="indeterminate" />
+              <p class="font-medium">Processing…</p>
+            </mat-card-content>
+          </mat-card>
         </div>
       }
       @if (loading()) {
-        <div class="rd-card flex items-center gap-3">
-          <div class="rd-spinner-sm" role="status" aria-label="Loading"></div>
-          Loading settings…
-        </div>
+        <mat-card appearance="outlined">
+          <mat-card-content>
+            <app-loading-state label="Loading settings…" />
+          </mat-card-content>
+        </mat-card>
       } @else {
         @if (org(); as current) {
         <div>
@@ -31,39 +52,39 @@ import type { Organization } from '../core/models';
           <h1 class="text-3xl font-semibold">{{ current.name }}</h1>
         </div>
         <app-org-settings-nav [organizationId]="current.id" />
-        <div class="rd-card space-y-4">
-          <h2 class="font-medium">Details</h2>
-          @if (canAdmin()) {
-            <form class="grid gap-3 sm:grid-cols-[1fr_auto]" [formGroup]="nameForm" (ngSubmit)="saveName()">
-              <input class="rd-input" formControlName="name" />
-              <button class="rd-btn" type="submit" [disabled]="nameForm.invalid || saving()">
-                {{ saving() ? 'Saving…' : 'Save' }}
-              </button>
-            </form>
-          } @else {
-            <p class="text-sm text-ink-200">{{ current.name }} · {{ current.slug }}</p>
-            <p class="text-xs text-ink-300">Only OWNER or ADMIN can rename the organization.</p>
-          }
-        </div>
-        @if (canAdmin()) {
-          <div class="rd-card space-y-4 border-red-500/40">
-            <h2 class="font-medium text-red-200">Delete organization</h2>
-            <p class="text-sm text-ink-200">
-              Removes repositories, analysis, findings, and every source-control installation. OWNER and ADMIN can do this.
-            </p>
-            @if (!pendingDelete()) {
-              <button class="rd-btn bg-red-400 hover:bg-red-300" type="button" (click)="pendingDelete.set(true)">
-                Delete organization
-              </button>
-            } @else {
-              <div class="flex gap-2">
-                <button class="rd-btn bg-red-400 hover:bg-red-300" type="button" [disabled]="saving()" (click)="deleteOrg()">
-                  {{ saving() ? 'Deleting…' : 'Confirm delete' }}
+        <mat-card appearance="outlined">
+          <mat-card-header>
+            <mat-card-title>Details</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            @if (canAdmin()) {
+              <form class="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-start" [formGroup]="nameForm" (ngSubmit)="saveName()">
+                <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                  <mat-label>Name</mat-label>
+                  <input matInput formControlName="name" />
+                </mat-form-field>
+                <button mat-flat-button class="sm:mt-1" type="submit" [disabled]="nameForm.invalid || saving()">
+                  {{ saving() ? 'Saving…' : 'Save' }}
                 </button>
-                <button class="rd-btn-ghost" type="button" (click)="pendingDelete.set(false)">Cancel</button>
-              </div>
+              </form>
+            } @else {
+              <p class="text-sm text-ink-200">{{ current.name }} · {{ current.slug }}</p>
+              <p class="text-xs text-ink-300">Only OWNER or ADMIN can rename the organization.</p>
             }
-          </div>
+          </mat-card-content>
+        </mat-card>
+        @if (canAdmin()) {
+          <mat-card appearance="outlined">
+            <mat-card-header>
+              <mat-card-title class="text-red-200">Delete organization</mat-card-title>
+            </mat-card-header>
+            <mat-card-content class="space-y-4">
+              <p class="text-sm text-ink-200">
+                Removes repositories, analysis, findings, and every source-control installation. OWNER and ADMIN can do this.
+              </p>
+              <button mat-flat-button color="warn" type="button" (click)="askDelete()">Delete organization</button>
+            </mat-card-content>
+          </mat-card>
         }
         }
       }
@@ -76,11 +97,11 @@ export class OrganizationSettingsPage {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);
+  private readonly dialog = inject(MatDialog);
 
   readonly org = signal<Organization | null>(null);
   readonly loading = signal(true);
   readonly saving = signal(false);
-  readonly pendingDelete = signal(false);
   readonly nameForm = this.fb.nonNullable.group({
     name: ['', [Validators.required, Validators.minLength(2)]],
   });
@@ -115,9 +136,21 @@ export class OrganizationSettingsPage {
     }
   }
 
-  async deleteOrg(): Promise<void> {
+  async askDelete(): Promise<void> {
     const org = this.org();
     if (!org) return;
+    const confirmed = await firstValueFrom(
+      this.dialog
+        .open(ConfirmDialogComponent, {
+          data: {
+            title: 'Delete organization',
+            body: `Delete ${org.name}? Repositories, analysis, findings, and every source-control installation are removed. This cannot be undone.`,
+            confirm: 'Delete',
+          },
+        })
+        .afterClosed(),
+    );
+    if (!confirmed) return;
     this.saving.set(true);
     try {
       await this.auth.deleteOrganization(org.id);

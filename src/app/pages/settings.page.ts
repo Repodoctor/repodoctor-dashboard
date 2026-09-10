@@ -1,15 +1,27 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
 import { AuthService } from '../core/auth.service';
 import { ToastService } from '../core/toast.service';
 import { errorMessage, isHttpError } from '../core/error-message';
 import { PASSWORD_HINT, passwordRules, passwordStrength, passwordsMatch } from '../core/password-strength';
 import type { Organization } from '../core/models';
+import { OrganizationTableComponent } from '../ui/organization-table.component';
 
 @Component({
   selector: 'app-settings-page',
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [
+    ReactiveFormsModule,
+    MatButtonModule,
+    MatCardModule,
+    MatFormFieldModule,
+    MatInputModule,
+    OrganizationTableComponent,
+  ],
   template: `
     <div class="space-y-6">
       <div>
@@ -17,91 +29,104 @@ import type { Organization } from '../core/models';
         <h1 class="text-3xl font-semibold">Settings</h1>
         <p class="mt-1 text-sm text-ink-200">Personal profile and account deletion. Organization settings live on each organization.</p>
       </div>
-      <div class="rd-card space-y-4">
-        <h2 class="font-medium">Profile</h2>
-        <p class="font-mono text-sm text-ink-200">{{ auth.user()?.email }}</p>
-        <form class="grid gap-3 sm:grid-cols-[1fr_auto]" [formGroup]="profileForm" (ngSubmit)="saveProfile()">
-          <input class="rd-input" formControlName="displayName" />
-          <button class="rd-btn" type="submit" [disabled]="profileForm.invalid || saving()">
-            {{ saving() ? 'Saving…' : 'Save' }}
-          </button>
-        </form>
-      </div>
-      <div class="rd-card space-y-4">
-        <h2 class="font-medium">Password</h2>
-        @if (!changingPassword()) {
-          <button class="rd-btn-ghost" type="button" (click)="changingPassword.set(true)">Change password</button>
-        } @else {
-          <form class="space-y-3" [formGroup]="passwordForm" (ngSubmit)="savePassword()">
-            <p class="text-sm text-ink-200">{{ hint }}</p>
-            <label class="block text-sm">Current password
-              <input class="rd-input mt-1" type="password" formControlName="currentPassword" autocomplete="current-password" />
-            </label>
-            <label class="block text-sm">New password
-              <input class="rd-input mt-1" type="password" formControlName="password" autocomplete="new-password" />
-            </label>
-            @if (passwordForm.controls.password.value) {
-              <p class="text-xs text-ink-200">{{ passwordStrengthLabel() }}</p>
-            }
-            <label class="block text-sm">Confirm new password
-              <input class="rd-input mt-1" type="password" formControlName="confirmPassword" autocomplete="new-password" />
-            </label>
-            @if (passwordForm.hasError('mismatch') && passwordForm.touched) {
-              <p class="text-sm text-red-200">Passwords do not match.</p>
-            }
-            @if (passwordForm.controls.password.touched && passwordForm.controls.password.hasError('passwordRules')) {
-              <p class="text-sm text-red-200">{{ hint }}</p>
-            }
-            <div class="flex flex-wrap gap-2">
-              <button class="rd-btn" type="submit" [disabled]="passwordForm.invalid || savingPassword()">
-                {{ savingPassword() ? 'Saving…' : 'Save' }}
-              </button>
-              <button class="rd-btn-ghost" type="button" (click)="cancelPasswordChange()">Cancel</button>
-            </div>
+      <mat-card appearance="outlined">
+        <mat-card-header>
+          <mat-card-title>Profile</mat-card-title>
+        </mat-card-header>
+        <mat-card-content class="space-y-4">
+          <p class="font-mono text-sm text-ink-200">{{ auth.user()?.email }}</p>
+          <form class="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-start" [formGroup]="profileForm" (ngSubmit)="saveProfile()">
+            <mat-form-field appearance="outline" subscriptSizing="dynamic">
+              <mat-label>Display name</mat-label>
+              <input matInput formControlName="displayName" />
+            </mat-form-field>
+            <button mat-flat-button class="sm:mt-1" type="submit" [disabled]="profileForm.invalid || saving()">
+              {{ saving() ? 'Saving…' : 'Save' }}
+            </button>
           </form>
-        }
-      </div>
-      <div class="rd-card space-y-3">
-        <h2 class="font-medium">Organizations you belong to</h2>
-        @if (organizations().length === 0) {
-          <p class="text-sm text-ink-200">You are not in any organizations.</p>
-        } @else {
-          <div class="space-y-2">
-            @for (org of organizations(); track org.id) {
-              <div class="flex items-center justify-between gap-3 rounded-md border border-ink-400 px-3 py-2">
-                <div>
-                  <p class="font-medium">{{ org.name }}</p>
-                  <p class="font-mono text-xs text-ink-200">{{ org.role }}</p>
-                </div>
-                <a class="rd-btn-ghost" [routerLink]="['/organizations', org.id, 'settings']">Org settings</a>
+        </mat-card-content>
+      </mat-card>
+      <mat-card appearance="outlined">
+        <mat-card-header>
+          <mat-card-title>Password</mat-card-title>
+        </mat-card-header>
+        <mat-card-content class="space-y-4">
+          @if (!changingPassword()) {
+            <button mat-stroked-button type="button" (click)="changingPassword.set(true)">Change password</button>
+          } @else {
+            <form class="space-y-3" [formGroup]="passwordForm" (ngSubmit)="savePassword()">
+              <p class="text-sm text-ink-200">{{ hint }}</p>
+              <mat-form-field appearance="outline">
+                <mat-label>Current password</mat-label>
+                <input matInput type="password" formControlName="currentPassword" autocomplete="current-password" />
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>New password</mat-label>
+                <input matInput type="password" formControlName="password" autocomplete="new-password" />
+              </mat-form-field>
+              @if (passwordForm.controls.password.value) {
+                <p class="text-xs text-ink-200">{{ passwordStrengthLabel() }}</p>
+              }
+              <mat-form-field appearance="outline">
+                <mat-label>Confirm new password</mat-label>
+                <input matInput type="password" formControlName="confirmPassword" autocomplete="new-password" />
+              </mat-form-field>
+              @if (passwordForm.hasError('mismatch') && passwordForm.touched) {
+                <p class="text-sm text-red-200">Passwords do not match.</p>
+              }
+              @if (passwordForm.controls.password.touched && passwordForm.controls.password.hasError('passwordRules')) {
+                <p class="text-sm text-red-200">{{ hint }}</p>
+              }
+              <div class="flex flex-wrap gap-2">
+                <button mat-flat-button type="submit" [disabled]="passwordForm.invalid || savingPassword()">
+                  {{ savingPassword() ? 'Saving…' : 'Save' }}
+                </button>
+                <button mat-stroked-button type="button" (click)="cancelPasswordChange()">Cancel</button>
               </div>
-            }
-          </div>
-        }
-      </div>
-      <div class="rd-card space-y-4 border-red-500/40">
-        <h2 class="font-medium text-red-200">Delete account</h2>
-        <p class="text-sm text-ink-200">
-          This signs you out and removes your RepoDoctor user. Organizations you <span class="font-medium">own</span>
-          are deleted with their repositories, findings, and GitHub App installations. Organizations where you are only
-          ADMIN, MEMBER, or VIEWER stay; you are removed from them.
-        </p>
-        @if (ownedOrgs().length > 0) {
-          <p class="text-sm text-red-200">Owned organizations that will be deleted: {{ ownedNames() }}</p>
-        }
-        <label class="text-sm text-ink-200">
-          Type your email to confirm
-          <input class="rd-input mt-1" [formControl]="confirmEmail" />
-        </label>
-        <button
-          class="rd-btn bg-red-400 hover:bg-red-300"
-          type="button"
-          [disabled]="confirmEmail.value !== auth.user()?.email || deleting()"
-          (click)="deleteAccount()"
-        >
-          {{ deleting() ? 'Deleting…' : 'Delete my account' }}
-        </button>
-      </div>
+            </form>
+          }
+        </mat-card-content>
+      </mat-card>
+      <mat-card appearance="outlined">
+        <mat-card-header>
+          <mat-card-title>Organizations you belong to</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          @if (organizations().length === 0) {
+            <p class="text-sm text-ink-200">You are not in any organizations.</p>
+          } @else {
+            <app-organization-table [organizations]="organizations()" (rowClick)="openOrgSettings($event)" />
+          }
+        </mat-card-content>
+      </mat-card>
+      <mat-card appearance="outlined">
+        <mat-card-header>
+          <mat-card-title class="text-red-200">Delete account</mat-card-title>
+        </mat-card-header>
+        <mat-card-content class="space-y-4">
+          <p class="text-sm text-ink-200">
+            This signs you out and removes your RepoDoctor user. Organizations you <span class="font-medium">own</span>
+            are deleted with their repositories, findings, and GitHub App installations. Organizations where you are only
+            ADMIN, MEMBER, or VIEWER stay; you are removed from them.
+          </p>
+          @if (ownedOrgs().length > 0) {
+            <p class="text-sm text-red-200">Owned organizations that will be deleted: {{ ownedNames() }}</p>
+          }
+          <mat-form-field appearance="outline">
+            <mat-label>Type your email to confirm</mat-label>
+            <input matInput [formControl]="confirmEmail" />
+          </mat-form-field>
+          <button
+            mat-flat-button
+            color="warn"
+            type="button"
+            [disabled]="confirmEmail.value !== auth.user()?.email || deleting()"
+            (click)="deleteAccount()"
+          >
+            {{ deleting() ? 'Deleting…' : 'Delete my account' }}
+          </button>
+        </mat-card-content>
+      </mat-card>
     </div>
   `,
 })
@@ -109,6 +134,7 @@ export class SettingsPage {
   readonly auth = inject(AuthService);
   private readonly toast = inject(ToastService);
   private readonly fb = inject(FormBuilder);
+  private readonly router = inject(Router);
 
   readonly organizations = signal<Organization[]>([]);
   readonly saving = signal(false);
@@ -134,6 +160,10 @@ export class SettingsPage {
 
   constructor() {
     void this.load();
+  }
+
+  openOrgSettings(org: Organization): void {
+    void this.router.navigate(['/organizations', org.id, 'settings']);
   }
 
   async saveProfile(): Promise<void> {
