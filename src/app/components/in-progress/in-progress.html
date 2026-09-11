@@ -1,0 +1,9 @@
+    <mat-card appearance="outlined">
+      <mat-card-content class="space-y-3 px-1 py-2 sm:px-0">
+        <p class="font-mono text-xs tracking-[0.18em] text-pulse uppercase">In progress</p>
+        <h2 class="text-2xl font-semibold tracking-tight">{{ title() }}</h2>
+        <p class="max-w-2xl text-sm leading-relaxed text-ink-200">{{ body() }}</p>
+        <p class="max-w-2xl text-sm text-mute">{{ hint() }}</p>
+        <a mat-stroked-button routerLink="/dashboard">Back to dashboard</a>
+      </mat-card-content>
+    </mat-card>

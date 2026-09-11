@@ -1,0 +1,10 @@
+    <mat-form-field appearance="outline" subscriptSizing="dynamic" class="w-full sm:max-w-sm">
+      <mat-label>{{ label() }}</mat-label>
+      <input
+        matInput
+        [value]="query()"
+        (input)="query.set($any($event.target).value)"
+        autocomplete="off"
+      />
+      <mat-icon matPrefix>search</mat-icon>
+    </mat-form-field>

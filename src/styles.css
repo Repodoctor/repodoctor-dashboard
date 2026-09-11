@@ -73,6 +73,10 @@ body {
   background: transparent;
 }
 
+.mat-mdc-paginator {
+  background: transparent;
+}
+
 .mat-mdc-form-field {
   width: 100%;
 }

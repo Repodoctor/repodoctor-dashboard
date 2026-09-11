@@ -4,39 +4,62 @@ import { authGuard, guestGuard } from './guards/auth.guard';
 export const routes: Routes = [
   {
     path: '',
-    pathMatch: 'full',
-    loadComponent: () => import('./pages/home/home').then((m) => m.HomePage),
+    loadComponent: () =>
+      import('./pages/public/public-shell/public-shell').then((m) => m.PublicShellComponent),
+    children: [
+      {
+        path: '',
+        pathMatch: 'full',
+        loadComponent: () => import('./pages/public/home/home').then((m) => m.HomePage),
+      },
+      {
+        path: 'products',
+        loadComponent: () => import('./pages/public/products/products').then((m) => m.ProductsPage),
+      },
+      {
+        path: 'solutions',
+        loadComponent: () => import('./pages/public/solutions/solutions').then((m) => m.SolutionsPage),
+      },
+      {
+        path: 'pricing',
+        loadComponent: () => import('./pages/public/pricing/pricing').then((m) => m.PricingPage),
+      },
+      {
+        path: 'docs',
+        loadComponent: () => import('./pages/public/docs/docs').then((m) => m.DocsPage),
+      },
+    ],
   },
   {
     path: 'login',
     canActivate: [guestGuard],
-    loadComponent: () => import('./pages/login/login').then((m) => m.LoginPage),
+    loadComponent: () => import('./pages/auth/login/login').then((m) => m.LoginPage),
   },
   {
     path: 'signup',
     canActivate: [guestGuard],
-    loadComponent: () => import('./pages/signup/signup').then((m) => m.SignupPage),
+    loadComponent: () => import('./pages/auth/signup/signup').then((m) => m.SignupPage),
   },
   {
     path: 'forgot-password',
     canActivate: [guestGuard],
-    loadComponent: () => import('./pages/forgot-password/forgot-password').then((m) => m.ForgotPasswordPage),
+    loadComponent: () => import('./pages/auth/forgot-password/forgot-password').then((m) => m.ForgotPasswordPage),
   },
   {
     path: 'set-password',
-    loadComponent: () => import('./pages/set-password/set-password').then((m) => m.SetPasswordPage),
+    loadComponent: () => import('./pages/auth/set-password/set-password').then((m) => m.SetPasswordPage),
   },
   {
     path: 'reset-password',
-    loadComponent: () => import('./pages/set-password/set-password').then((m) => m.SetPasswordPage),
+    loadComponent: () => import('./pages/auth/set-password/set-password').then((m) => m.SetPasswordPage),
   },
   {
     path: 'auth/callback',
-    loadComponent: () => import('./pages/auth-callback/auth-callback').then((m) => m.AuthCallbackPage),
+    loadComponent: () => import('./pages/auth/auth-callback/auth-callback').then((m) => m.AuthCallbackPage),
   },
   {
     path: 'error',
-    loadComponent: () => import('./pages/error/error').then((m) => m.ErrorPage),
+    loadComponent: () => import('./pages/auth/error/error').then((m) => m.ErrorPage),
   },
   {
     path: '',
@@ -49,7 +72,8 @@ export const routes: Routes = [
       },
       {
         path: 'organizations',
-        loadComponent: () => import('./pages/organizations/organizations').then((m) => m.OrganizationsPage),
+        loadComponent: () =>
+          import('./pages/organizations/list/organizations').then((m) => m.OrganizationsPage),
       },
       {
         path: 'organizations/:organizationId',
@@ -59,36 +83,37 @@ export const routes: Routes = [
           {
             path: '',
             loadComponent: () =>
-              import('./pages/organization-detail/organization-detail').then((m) => m.OrganizationDetailPage),
+              import('./pages/organizations/overview/organization-detail').then((m) => m.OrganizationDetailPage),
           },
           {
             path: 'details',
             loadComponent: () =>
-              import('./pages/organization-settings/organization-settings').then((m) => m.OrganizationSettingsPage),
+              import('./pages/organizations/settings/organization-settings').then(
+                (m) => m.OrganizationSettingsPage,
+              ),
           },
           {
             path: 'integrations',
             loadComponent: () =>
-              import('./pages/organization-integrations/organization-integrations').then(
+              import('./pages/organizations/integrations/organization-integrations').then(
                 (m) => m.OrganizationIntegrationsPage,
               ),
           },
           {
             path: 'members',
             loadComponent: () =>
-              import('./pages/organization-members/organization-members').then((m) => m.OrganizationMembersPage),
+              import('./pages/organizations/members/organization-members').then(
+                (m) => m.OrganizationMembersPage,
+              ),
           },
           {
             path: 'permissions',
             loadComponent: () =>
-              import('./pages/organization-permissions/organization-permissions').then(
+              import('./pages/organizations/permissions/organization-permissions').then(
                 (m) => m.OrganizationPermissionsPage,
               ),
           },
-          {
-            path: 'repositories',
-            loadComponent: () => import('./pages/repositories/repositories').then((m) => m.RepositoriesPage),
-          },
+          { path: 'repositories', redirectTo: '', pathMatch: 'full' },
           { path: 'settings', redirectTo: 'details', pathMatch: 'full' },
           { path: 'settings/integrations', redirectTo: 'integrations' },
           { path: 'settings/members', redirectTo: 'members' },
@@ -97,7 +122,8 @@ export const routes: Routes = [
       },
       {
         path: 'settings/scm/:provider/callback',
-        loadComponent: () => import('./pages/scm-callback/scm-callback').then((m) => m.ScmCallbackPage),
+        loadComponent: () =>
+          import('./pages/account/scm-callback/scm-callback').then((m) => m.ScmCallbackPage),
       },
       {
         path: 'repositories/:repositoryId',
@@ -106,11 +132,11 @@ export const routes: Routes = [
       },
       {
         path: 'repositories/:repositoryId/:section',
-        loadComponent: () => import('./pages/repository/repository').then((m) => m.RepositoryPage),
+        loadComponent: () => import('./pages/repositories/detail/repository').then((m) => m.RepositoryPage),
       },
       {
         path: 'settings',
-        loadComponent: () => import('./pages/settings/settings').then((m) => m.SettingsPage),
+        loadComponent: () => import('./pages/account/settings/settings').then((m) => m.SettingsPage),
       },
     ],
   },

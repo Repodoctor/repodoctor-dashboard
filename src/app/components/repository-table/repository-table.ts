@@ -1,11 +1,14 @@
-import { Component, effect, input, output, viewChild, ChangeDetectionStrategy } from '@angular/core';
-import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
-import { MatTableDataSource, MatTableModule } from '@angular/material/table';
+import { Component, computed, input, output, ChangeDetectionStrategy } from '@angular/core';
+import { MatPaginatorModule } from '@angular/material/paginator';
+import { MatSortModule } from '@angular/material/sort';
+import { MatTableModule } from '@angular/material/table';
 import type { Repository } from '../../interfaces/api';
+import { ClientTable } from '../../utils/client-table';
+import { TableSearchComponent } from '../table-search/table-search';
 
 @Component({
   selector: 'app-repository-table',
-  imports: [MatTableModule, MatPaginatorModule],
+  imports: [MatTableModule, MatPaginatorModule, MatSortModule, TableSearchComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './repository-table.html',
 })
@@ -14,18 +17,14 @@ export class RepositoryTableComponent {
   readonly clickable = input(true);
   readonly rowClick = output<Repository>();
   readonly displayedColumns = ['fullName', 'branch', 'visibility', 'permission'];
-  readonly dataSource = new MatTableDataSource<Repository>([]);
-  private readonly paginator = viewChild(MatPaginator);
-
-  constructor() {
-    effect(() => {
-      this.dataSource.data = this.repositories();
-    });
-    effect(() => {
-      const paginator = this.paginator();
-      if (paginator) {
-        this.dataSource.paginator = paginator;
-      }
-    });
-  }
+  readonly table = new ClientTable(
+    computed(() => this.repositories()),
+    (repo, column) => {
+      if (column === 'fullName') return repo.fullName;
+      if (column === 'branch') return repo.defaultBranch;
+      if (column === 'visibility') return repo.private ? 'private' : 'public';
+      if (column === 'permission') return repo.permission ?? 'VIEW';
+      return '';
+    },
+  );
 }

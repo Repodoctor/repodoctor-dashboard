@@ -1,0 +1,42 @@
+    <section class="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-14 lg:px-8">
+      <p class="font-mono text-xs tracking-[0.2em] text-pulse uppercase">Pricing</p>
+      <h1 class="mt-3 max-w-3xl text-[clamp(1.8rem,5vw,3rem)] font-semibold tracking-[-0.03em]">
+        Free while RepoDoctor is in alpha.
+      </h1>
+      <p class="mt-4 max-w-2xl text-base leading-relaxed text-ink-200 sm:text-lg">
+        Paid plans will use Stripe later. For now every account is on Free so we can test the product without
+        billing.
+      </p>
+      <div class="mt-10 grid gap-4 lg:grid-cols-2">
+        <mat-card appearance="outlined">
+          <mat-card-header>
+            <mat-card-title>Free</mat-card-title>
+          </mat-card-header>
+          <mat-card-content class="space-y-3">
+            <p class="text-3xl font-semibold tracking-tight">$0</p>
+            <ul class="list-disc space-y-1.5 pl-5 text-sm text-ink-200">
+              <li>{{ plan.maxOwnedOrganizations }} organizations you own</li>
+              <li>{{ plan.maxRepositoriesPerOrganization }} repositories per organization</li>
+              <li>{{ plan.maxMembersPerOrganization }} members per organization</li>
+              <li>{{ plan.maxPendingInvitesPerOrganization }} pending invites</li>
+              <li>{{ plan.maxScmInstallationsPerOrganization }} GitHub App installation per organization</li>
+              <li>{{ plan.maxManualAnalysisRunsPerRepositoryPerDay }} manual analysis runs per repository per day</li>
+            </ul>
+            <a mat-flat-button routerLink="/signup">Start on Free</a>
+          </mat-card-content>
+        </mat-card>
+        <mat-card appearance="outlined">
+          <mat-card-header>
+            <mat-card-title>Team</mat-card-title>
+          </mat-card-header>
+          <mat-card-content class="space-y-3">
+            <p class="font-mono text-xs uppercase tracking-[0.16em] text-pulse">Coming later</p>
+            <p class="text-sm leading-relaxed text-ink-200">
+              Higher organization, repository, member, and analysis limits. Checkout will go through Stripe.
+              Nothing to buy during alpha.
+            </p>
+            <button mat-stroked-button type="button" disabled>Not available yet</button>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </section>

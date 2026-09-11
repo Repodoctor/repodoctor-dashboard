@@ -2,22 +2,48 @@
 
 Angular frontend for RepoDoctor. The browser authenticates with **Supabase Auth** and talks to **repodoctor-gateway** for product APIs. Internal microservices are not exposed to the browser.
 
+Version: `0.1.0-alpha.1` (alpha).
 
 ## Purpose
 
-Developer-focused UI for authentication, organizations, repositories, findings, and analysis.
+Public marketing pages plus a developer dashboard for authentication, organizations, repositories, findings, and analysis.
 
 ## Visual system
 
-Light green on near-black (GitHub / Linear / Vercel inspired). Tailwind CSS.
+Near-black panels with pulse green (`#3ee0b2`), in the spirit of GitHub and Supabase. Tailwind CSS. Mobile-first: the signed-in sidenav is hidden below `lg`; account navigation stays in the avatar menu. Tables stack as cards on small screens and sort/search/paginate on desktop.
+
+## Page groups
+
+- `src/app/pages/public/` — home, Products, Solutions, Pricing, Docs
+- `src/app/pages/auth/` — login, signup, password, callback, error
+- `src/app/pages/organizations/` — list, overview, details, integrations, members, permissions
+- `src/app/pages/repositories/` — repository detail (overview, findings, analysis, settings; other tabs are in progress)
+- `src/app/pages/account/` — profile settings and SCM callback
+- `src/app/pages/dashboard/` — signed-in home
+
+The old organization `/repositories` list is gone; overview already has the table.
 
 ## Routes
 
+- `/` `/products` `/solutions` `/pricing` `/docs`
 - `/login` `/signup` `/forgot-password`
 - `/dashboard`
-- `/organizations` `/organizations/:organizationId` `/organizations/:organizationId/repositories`
-- `/repositories/:repositoryId/{overview,findings,reviews,graph,security,dependencies,ci,docs,analysis,ai}`
+- `/organizations` `/organizations/:organizationId` (tabs: overview, details, integrations, members, permissions)
+- `/repositories/:repositoryId/{overview,findings,reviews,graph,security,dependencies,ci,docs,analysis,ai,settings}`
 - `/settings`
+
+## Free plan (alpha)
+
+Only Free is available. Paid checkout (Stripe) is not implemented yet.
+
+- 2 organizations you own
+- 20 repositories per organization
+- 5 members per organization
+- 10 pending invites
+- 1 GitHub App installation per organization
+- 10 manual analysis runs per repository per day
+
+Repository permission `NONE` hides a repo from MEMBER and VIEWER. OWNER/ADMIN still see it.
 
 ## Local development
 

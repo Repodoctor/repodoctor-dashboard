@@ -1,0 +1,23 @@
+    <section class="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-14 lg:px-8">
+      <p class="font-mono text-xs tracking-[0.2em] text-pulse uppercase">Solutions</p>
+      <h1 class="mt-3 max-w-3xl text-[clamp(1.8rem,5vw,3rem)] font-semibold tracking-[-0.03em]">
+        Built for teams that already live in GitHub.
+      </h1>
+      <p class="mt-4 max-w-2xl text-base leading-relaxed text-ink-200 sm:text-lg">
+        Start with organizations, members, and connected repositories. Deeper graph, review, and CI views
+        are on the way — they already have routes so the product shape is visible.
+      </p>
+      <div class="mt-10 grid gap-4 lg:grid-cols-3">
+        @for (item of solutions; track item.name) {
+          <mat-card appearance="outlined">
+            <mat-card-header>
+              <mat-card-title>{{ item.name }}</mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <p class="text-sm leading-relaxed text-ink-200">{{ item.body }}</p>
+            </mat-card-content>
+          </mat-card>
+        }
+      </div>
+      <a mat-flat-button class="mt-10" routerLink="/docs">Read the product docs</a>
+    </section>

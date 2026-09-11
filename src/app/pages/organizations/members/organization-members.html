@@ -1,0 +1,178 @@
+    <div class="space-y-6">
+      @if (loading()) {
+        <mat-card appearance="outlined">
+          <mat-card-content>
+            <app-loading-state label="Loading members…" />
+          </mat-card-content>
+        </mat-card>
+      } @else {
+        @if (org()) {
+        <mat-card appearance="outlined">
+          <mat-card-header>
+            <mat-card-title>Members</mat-card-title>
+          </mat-card-header>
+          <mat-card-content class="space-y-4">
+            @if (canAdmin()) {
+              <form class="flex flex-wrap items-start gap-3" [formGroup]="inviteForm" (ngSubmit)="invite()">
+                <mat-form-field appearance="outline" subscriptSizing="dynamic" class="min-w-[16rem] flex-1">
+                  <mat-label>Email</mat-label>
+                  <input matInput type="email" formControlName="email" placeholder="user@example.com" />
+                </mat-form-field>
+                <mat-form-field appearance="outline" subscriptSizing="dynamic" class="w-36">
+                  <mat-label>Role</mat-label>
+                  <mat-select formControlName="role">
+                    @for (role of assignableRoles; track role) {
+                      <mat-option [value]="role">{{ role }}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+                <button mat-flat-button class="ml-auto" type="submit" [disabled]="inviteForm.invalid || inviting()">
+                  {{ inviting() ? 'Inviting…' : 'Invite' }}
+                </button>
+              </form>
+              <p class="text-xs text-ink-300">
+                OWNER cannot be assigned here. VIEWER can read; MEMBER can analyze; ADMIN can manage.
+                Free plan: {{ plan.maxMembersPerOrganization }} members, {{ plan.maxPendingInvitesPerOrganization }} pending invites.
+              </p>
+            }
+            @if (invites().length > 0) {
+              <div class="space-y-3">
+                <p class="text-xs uppercase tracking-[0.16em] text-ink-300">Pending invites</p>
+                <app-table-search [query]="inviteTable.query()" (queryChange)="inviteTable.onSearch($event)" label="Search invites" />
+                <div class="space-y-3 md:hidden">
+                  @for (invite of inviteTable.page(); track invite.id) {
+                    <div class="rounded-xl border border-line bg-panel p-4">
+                      <p class="font-mono text-xs">{{ invite.email }}</p>
+                      <p class="mt-1 text-sm">{{ invite.role }} · {{ invite.expiresAt.slice(0, 10) }}</p>
+                      @if (canAdmin()) {
+                        <div class="mt-2 flex flex-wrap gap-2">
+                          <button mat-stroked-button type="button" (click)="copyInvite(invite)">Copy link</button>
+                          <button mat-button color="warn" type="button" (click)="revokeInvite(invite)">Revoke</button>
+                        </div>
+                      }
+                    </div>
+                  }
+                </div>
+                <div class="rd-table-wrap rd-table-static hidden md:block">
+                  <table mat-table [dataSource]="inviteTable.page()" matSort (matSortChange)="inviteTable.onSort($event)">
+                    <ng-container matColumnDef="email">
+                      <th mat-header-cell *matHeaderCellDef mat-sort-header>Email</th>
+                      <td mat-cell *matCellDef="let invite">
+                        <span class="font-mono text-xs">{{ invite.email }}</span>
+                      </td>
+                    </ng-container>
+                    <ng-container matColumnDef="role">
+                      <th mat-header-cell *matHeaderCellDef mat-sort-header>Role</th>
+                      <td mat-cell *matCellDef="let invite">{{ invite.role }}</td>
+                    </ng-container>
+                    <ng-container matColumnDef="expires">
+                      <th mat-header-cell *matHeaderCellDef mat-sort-header>Expires</th>
+                      <td mat-cell *matCellDef="let invite">{{ invite.expiresAt.slice(0, 10) }}</td>
+                    </ng-container>
+                    <ng-container matColumnDef="actions">
+                      <th mat-header-cell *matHeaderCellDef></th>
+                      <td mat-cell *matCellDef="let invite">
+                        @if (canAdmin()) {
+                          <button mat-stroked-button type="button" (click)="copyInvite(invite)">Copy link</button>
+                          <button mat-button color="warn" type="button" (click)="revokeInvite(invite)">Revoke</button>
+                        }
+                      </td>
+                    </ng-container>
+                    <tr mat-header-row *matHeaderRowDef="inviteColumns()"></tr>
+                    <tr mat-row *matRowDef="let row; columns: inviteColumns()"></tr>
+                  </table>
+                </div>
+                <mat-paginator
+                  [length]="inviteTable.total()"
+                  [pageIndex]="inviteTable.pageIndex()"
+                  [pageSize]="inviteTable.pageSize()"
+                  [pageSizeOptions]="[5, 10, 25]"
+                  showFirstLastButtons
+                  (page)="inviteTable.onPage($event)"
+                />
+              </div>
+            }
+            <div class="space-y-3">
+              <app-table-search [query]="memberTable.query()" (queryChange)="memberTable.onSearch($event)" label="Search members" />
+              <div class="space-y-3 md:hidden">
+                @for (member of memberTable.page(); track member.userId) {
+                  <div class="rounded-xl border border-line bg-panel p-4">
+                    <p class="font-medium">{{ member.displayName }}</p>
+                    <p class="font-mono text-xs text-ink-200">{{ member.email }}</p>
+                    @if (canAdmin() && member.role !== 'OWNER') {
+                      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="mt-3 !w-full">
+                        <mat-select [value]="draftRole(member)" (selectionChange)="setDraftRole(member, $event.value)">
+                          @for (role of assignableRoles; track role) {
+                            <mat-option [value]="role">{{ role }}</mat-option>
+                          }
+                        </mat-select>
+                      </mat-form-field>
+                      <button mat-button color="warn" type="button" class="mt-1 !px-0" (click)="remove(member)">Remove</button>
+                    } @else {
+                      <p class="mt-2 font-mono text-xs text-moss-200">{{ member.role }}</p>
+                    }
+                  </div>
+                }
+              </div>
+              <div class="rd-table-wrap rd-table-static hidden md:block">
+                <table mat-table [dataSource]="memberTable.page()" matSort (matSortChange)="memberTable.onSort($event)">
+                  <ng-container matColumnDef="name">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header>Name</th>
+                    <td mat-cell *matCellDef="let member">{{ member.displayName }}</td>
+                  </ng-container>
+                  <ng-container matColumnDef="email">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header>Email</th>
+                    <td mat-cell *matCellDef="let member">
+                      <span class="font-mono text-xs text-ink-200">{{ member.email }}</span>
+                    </td>
+                  </ng-container>
+                  <ng-container matColumnDef="role">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header>Role</th>
+                    <td mat-cell *matCellDef="let member">
+                      @if (canAdmin() && member.role !== 'OWNER') {
+                        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="!w-36">
+                          <mat-select [value]="draftRole(member)" (selectionChange)="setDraftRole(member, $event.value)">
+                            @for (role of assignableRoles; track role) {
+                              <mat-option [value]="role">{{ role }}</mat-option>
+                            }
+                          </mat-select>
+                        </mat-form-field>
+                      } @else {
+                        <span class="font-mono text-xs text-moss-200">{{ member.role }}</span>
+                      }
+                    </td>
+                  </ng-container>
+                  <ng-container matColumnDef="actions">
+                    <th mat-header-cell *matHeaderCellDef></th>
+                    <td mat-cell *matCellDef="let member">
+                      @if (canAdmin() && member.role !== 'OWNER') {
+                        <button mat-button color="warn" type="button" (click)="remove(member)">Remove</button>
+                      }
+                    </td>
+                  </ng-container>
+                  <tr mat-header-row *matHeaderRowDef="memberColumns()"></tr>
+                  <tr mat-row *matRowDef="let row; columns: memberColumns()"></tr>
+                </table>
+              </div>
+              <mat-paginator
+                [length]="memberTable.total()"
+                [pageIndex]="memberTable.pageIndex()"
+                [pageSize]="memberTable.pageSize()"
+                [pageSizeOptions]="[5, 10, 25]"
+                showFirstLastButtons
+                (page)="memberTable.onPage($event)"
+              />
+            </div>
+            @if (canAdmin()) {
+              <div class="flex justify-end">
+                <button mat-flat-button type="button" [disabled]="!rolesDirty() || savingRoles()" (click)="saveRoles()">
+                  {{ savingRoles() ? 'Saving…' : 'Save roles' }}
+                </button>
+              </div>
+            }
+          </mat-card-content>
+        </mat-card>
+        }
+      }
+    </div>
+  

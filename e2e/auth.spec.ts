@@ -5,6 +5,15 @@ test('homepage is the main landing page', async ({ page }) => {
   await expect(page.getByRole('heading', { name: /Diagnose repositories/ })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Services behind the dashboard' })).toBeVisible();
   await expect(page.getByText('Unified API surface')).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Products' }).first()).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Pricing' }).first()).toBeVisible();
+});
+
+test('public marketing pages render', async ({ page }) => {
+  await page.goto('/pricing');
+  await expect(page.getByRole('heading', { name: /Free while RepoDoctor is in alpha/ })).toBeVisible();
+  await page.goto('/docs');
+  await expect(page.getByRole('heading', { name: /How to use RepoDoctor/ })).toBeVisible();
 });
 
 test('login page renders', async ({ page }) => {

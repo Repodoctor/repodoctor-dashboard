@@ -1,6 +1,6 @@
 {
   "name": "repodoctor-dashboard",
-  "version": "0.0.0",
+  "version": "0.1.0-alpha.1",
   "scripts": {
     "ng": "ng",
     "start": "node scripts/inject-ng-env.mjs && ng serve --host 0.0.0.0 --port 43120",

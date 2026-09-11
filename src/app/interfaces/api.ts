@@ -68,7 +68,7 @@ export interface ScmInstallation {
   updatedAt: string;
 }
 
-export type RepositoryPermission = 'VIEW' | 'ANALYZE' | 'MANAGE' | 'ADMIN';
+export type RepositoryPermission = 'NONE' | 'VIEW' | 'ANALYZE' | 'MANAGE' | 'ADMIN';
 
 export interface Repository {
   id: string;
