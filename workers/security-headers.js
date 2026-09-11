@@ -9,7 +9,9 @@ const SECURITY_HEADERS = {
     "object-src 'none'",
     "frame-src 'none'",
     "frame-ancestors 'none'",
-    "script-src 'self' https://static.cloudflareinsights.com",
+    // Angular loads CSS with onload="this.media='all'". Allow that handler only.
+    "script-src 'self' 'unsafe-hashes' 'sha256-MhtPZXr7+LpJUY5qtMutB+qWfQtMaPccfe7QXtCcEYc=' https://static.cloudflareinsights.com",
+    "script-src-attr 'unsafe-hashes' 'sha256-MhtPZXr7+LpJUY5qtMutB+qWfQtMaPccfe7QXtCcEYc='",
     "style-src 'self' 'unsafe-inline'",
     "font-src 'self'",
     "img-src 'self' data: https://github.com https://avatars.githubusercontent.com",
