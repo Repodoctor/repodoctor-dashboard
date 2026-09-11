@@ -72,3 +72,5 @@ See `.env.example` (`NG_APP_GATEWAY_URL`, `NG_APP_SUPABASE_URL`, `NG_APP_SUPABAS
 ## Deployment
 
 Cloudflare Workers static assets (`wrangler.jsonc`). SPA fallback is `assets.not_found_handling = "single-page-application"` — do not use `/* /index.html 200` in `_redirects`; Wrangler rejects that rule as an infinite loop.
+
+`workers/security-headers.js` runs first: HTTP → HTTPS 301, plus HSTS, CSP, `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, and `Permissions-Policy`. `public/robots.txt` blocks AI training crawlers. Also enable **Always Use HTTPS** and the **Cloudflare WAF** on the zone; those are dashboard settings, not app code.
