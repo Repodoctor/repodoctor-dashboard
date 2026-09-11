@@ -1,0 +1,36 @@
+    <div class="space-y-6">
+      <app-page-header [eyebrow]="copy.eyebrow" [title]="copy.title" [subtitle]="copy.subtitle" />
+      @if (filterLabel(); as repoName) {
+        <mat-card appearance="outlined">
+          <mat-card-content class="flex flex-wrap items-center justify-between gap-3">
+            <p class="text-sm text-ink-200">
+              Showing findings for <span class="font-mono text-moss-200">{{ repoName }}</span>
+            </p>
+            <a mat-stroked-button [routerLink]="'/' + category">Clear repository filter</a>
+          </mat-card-content>
+        </mat-card>
+      }
+      @if (loading()) {
+        <mat-card appearance="outlined">
+          <mat-card-content>
+            <app-loading-state label="Loading findings…" />
+          </mat-card-content>
+        </mat-card>
+      } @else if (findings().length === 0) {
+        <mat-card appearance="outlined">
+          <mat-card-content>
+            <p class="text-sm text-ink-200">{{ copy.empty }}</p>
+          </mat-card-content>
+        </mat-card>
+      } @else {
+        <mat-card appearance="outlined">
+          <mat-card-content>
+            <app-finding-table
+              [findings]="findings()"
+              [repositoryNames]="repositoryNames()"
+              (rowClick)="openFinding($event)"
+            />
+          </mat-card-content>
+        </mat-card>
+      }
+    </div>

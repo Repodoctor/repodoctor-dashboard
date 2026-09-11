@@ -10,6 +10,7 @@ import { FindingTableComponent } from '../../components/finding-table/finding-ta
 import { LoadingStateComponent } from '../../components/loading-state/loading-state';
 import { OrganizationTableComponent } from '../../components/organization-table/organization-table';
 import { PageHeaderComponent } from '../../components/page-header/page-header';
+import { findingCategory } from '../../utils/finding-category';
 
 @Component({
   selector: 'app-dashboard-page',
@@ -33,8 +34,15 @@ export class DashboardPage {
   readonly organizations = signal<Organization[]>([]);
   readonly repositoryCount = signal(0);
   readonly findings = signal<Finding[]>([]);
+  readonly repositoryNames = signal<Record<string, string>>({});
   readonly loading = signal(true);
   readonly openFindings = () => this.findings().filter((item) => item.status === 'OPEN');
+  readonly codeFindings = () =>
+    this.openFindings().filter((item) => findingCategory(item.source) === 'code');
+  readonly secretFindings = () =>
+    this.openFindings().filter((item) => findingCategory(item.source) === 'secrets');
+  readonly supplyChainFindings = () =>
+    this.openFindings().filter((item) => findingCategory(item.source) === 'supply-chain');
 
   constructor() {
     void this.refresh();
@@ -61,6 +69,9 @@ export class DashboardPage {
       this.organizations.set(organizations);
       this.repositoryCount.set(repositories.length);
       this.findings.set(findings);
+      const names: Record<string, string> = {};
+      for (const repo of repositories) names[repo.id] = repo.fullName;
+      this.repositoryNames.set(names);
     } catch {
       // HTTP errors are toasted by the interceptor.
     } finally {

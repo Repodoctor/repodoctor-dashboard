@@ -14,8 +14,11 @@
                 <p class="mt-1 line-clamp-2 text-xs text-ink-200">{{ finding.description }}</p>
               }
               <p class="mt-2 font-mono text-xs text-moss-200">
-                {{ finding.severity }} · {{ finding.source }} · {{ finding.status }}
+                {{ finding.severity }} · {{ repoName(finding) }} · {{ finding.status }}
               </p>
+              @if (finding.filePath) {
+                <p class="mt-1 font-mono text-xs text-ink-200">{{ finding.filePath }}{{ finding.lineNumber ? ':' + finding.lineNumber : '' }}</p>
+              }
             </button>
           } @empty {
             <p class="px-1 text-sm text-ink-200">No matching findings.</p>
@@ -23,6 +26,12 @@
         </div>
         <div class="rd-table-wrap hidden md:block" [class.rd-table-static]="!clickable()">
           <table mat-table [dataSource]="table.page()" matSort (matSortChange)="table.onSort($event)">
+            <ng-container matColumnDef="repository">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Repository</th>
+              <td mat-cell *matCellDef="let finding">
+                <span class="font-mono text-xs text-ink-200">{{ repoName(finding) }}</span>
+              </td>
+            </ng-container>
             <ng-container matColumnDef="title">
               <th mat-header-cell *matHeaderCellDef mat-sort-header>Finding</th>
               <td mat-cell *matCellDef="let finding">
@@ -38,10 +47,12 @@
                 <span class="font-mono text-xs text-moss-200">{{ finding.severity }}</span>
               </td>
             </ng-container>
-            <ng-container matColumnDef="source">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>Source</th>
+            <ng-container matColumnDef="file">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>File</th>
               <td mat-cell *matCellDef="let finding">
-                <span class="font-mono text-xs text-ink-200">{{ finding.source }}</span>
+                <span class="font-mono text-xs text-ink-200">
+                  {{ finding.filePath || '—' }}{{ finding.lineNumber ? ':' + finding.lineNumber : '' }}
+                </span>
               </td>
             </ng-container>
             <ng-container matColumnDef="status">

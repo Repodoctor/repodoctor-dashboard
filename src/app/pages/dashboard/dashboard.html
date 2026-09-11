@@ -15,7 +15,7 @@
           </mat-card-content>
         </mat-card>
       } @else {
-        <div class="grid gap-4 md:grid-cols-3">
+        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
           <mat-card appearance="outlined">
             <mat-card-content>
               <p class="text-xs uppercase text-ink-200">Organizations</p>
@@ -26,24 +26,53 @@
             <mat-card-content>
               <p class="text-xs uppercase text-ink-200">Repositories</p>
               <p class="mt-2 font-mono text-3xl text-moss-300">{{ repositoryCount() }}</p>
-              <p class="mt-2 text-xs text-ink-300">Connected through GitHub App ingestion.</p>
             </mat-card-content>
           </mat-card>
+          <a routerLink="/code" class="block">
+            <mat-card appearance="outlined">
+              <mat-card-content>
+                <p class="text-xs uppercase text-ink-200">Code</p>
+                <p class="mt-2 font-mono text-3xl text-moss-300">{{ codeFindings().length }}</p>
+                <p class="mt-2 text-xs text-ink-300">Open code findings</p>
+              </mat-card-content>
+            </mat-card>
+          </a>
+          <a routerLink="/secrets" class="block">
+            <mat-card appearance="outlined">
+              <mat-card-content>
+                <p class="text-xs uppercase text-ink-200">Secrets</p>
+                <p class="mt-2 font-mono text-3xl text-moss-300">{{ secretFindings().length }}</p>
+                <p class="mt-2 text-xs text-ink-300">Open secret findings</p>
+              </mat-card-content>
+            </mat-card>
+          </a>
+          <a routerLink="/supply-chain" class="block">
+            <mat-card appearance="outlined">
+              <mat-card-content>
+                <p class="text-xs uppercase text-ink-200">Supply chain</p>
+                <p class="mt-2 font-mono text-3xl text-moss-300">{{ supplyChainFindings().length }}</p>
+                <p class="mt-2 text-xs text-ink-300">Open package findings</p>
+              </mat-card-content>
+            </mat-card>
+          </a>
           <mat-card appearance="outlined">
             <mat-card-content>
               <p class="text-xs uppercase text-ink-200">Open findings</p>
               <p class="mt-2 font-mono text-3xl text-moss-300">{{ openFindings().length }}</p>
-              <p class="mt-2 text-xs text-ink-300">Across every organization you can access.</p>
             </mat-card-content>
           </mat-card>
         </div>
         @if (findings().length > 0) {
           <mat-card appearance="outlined">
             <mat-card-header>
-              <mat-card-title>Organization findings</mat-card-title>
+              <mat-card-title>Recent findings</mat-card-title>
             </mat-card-header>
             <mat-card-content>
-              <app-finding-table [findings]="findings()" (rowClick)="openFinding($event)" />
+              <app-finding-table
+                [findings]="findings()"
+                [repositoryNames]="repositoryNames()"
+                (rowClick)="openFinding($event)"
+              />
             </mat-card-content>
           </mat-card>
         }

@@ -30,9 +30,9 @@ export class OrgSettingsNavComponent {
     const items: { id: 'overview' | 'details' | 'integrations' | 'members' | 'permissions'; label: string }[] = [
       { id: 'overview', label: 'Overview' },
       { id: 'details', label: 'Details' },
+      { id: 'integrations', label: 'Integrations' },
+      { id: 'members', label: 'Members' },
     ];
-    if (admin) items.push({ id: 'integrations', label: 'Integrations' });
-    items.push({ id: 'members', label: 'Members' });
     if (admin) items.push({ id: 'permissions', label: 'Permissions' });
     return items;
   });

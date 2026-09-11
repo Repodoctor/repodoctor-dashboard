@@ -17,19 +17,19 @@ Near-black panels with pulse green (`#3ee0b2`), in the spirit of GitHub and Supa
 - `src/app/pages/public/` — home, Products, Solutions, Pricing, Docs
 - `src/app/pages/auth/` — login, signup, password, callback, error
 - `src/app/pages/organizations/` — list, overview, details, integrations, members, permissions
-- `src/app/pages/repositories/` — repository detail (overview, findings, analysis, settings; other tabs are in progress)
+- `src/app/pages/repositories/` — all-repos list plus repository detail
+- `src/app/pages/findings/` — Code, Secrets, and Supply chain inboxes
 - `src/app/pages/account/` — profile settings and SCM callback
 - `src/app/pages/dashboard/` — signed-in home
-
-The old organization `/repositories` list is gone; overview already has the table.
 
 ## Routes
 
 - `/` `/products` `/solutions` `/pricing` `/docs`
 - `/login` `/signup` `/forgot-password`
 - `/dashboard`
-- `/organizations` `/organizations/:organizationId` (tabs: overview, details, integrations, members, permissions)
-- `/repositories/:repositoryId/{overview,findings,reviews,graph,security,dependencies,ci,docs,analysis,ai,settings}`
+- `/organizations` `/organizations/:organizationId` (tabs: overview, details, integrations, members, permissions — permissions is OWNER/ADMIN only)
+- `/repositories` `/repositories/:repositoryId/{overview,findings,reviews,graph,security,dependencies,ci,docs,analysis,ai,settings}`
+- `/code` `/secrets` `/supply-chain`
 - `/settings`
 
 ## Free plan (alpha)

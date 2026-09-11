@@ -14,17 +14,23 @@ import { TableSearchComponent } from '../table-search/table-search';
 })
 export class FindingTableComponent {
   readonly findings = input.required<Finding[]>();
+  readonly repositoryNames = input<Record<string, string>>({});
   readonly clickable = input(true);
   readonly rowClick = output<Finding>();
-  readonly displayedColumns = ['title', 'severity', 'source', 'status'];
+  readonly displayedColumns = ['repository', 'title', 'severity', 'file', 'status'];
   readonly table = new ClientTable(
     computed(() => this.findings()),
     (finding, column) => {
+      if (column === 'repository') return this.repositoryNames()[finding.repositoryId] ?? finding.repositoryId;
       if (column === 'title') return finding.title;
       if (column === 'severity') return finding.severity;
-      if (column === 'source') return finding.source;
+      if (column === 'file') return finding.filePath ?? '';
       if (column === 'status') return finding.status;
       return '';
     },
   );
+
+  repoName(finding: Finding): string {
+    return this.repositoryNames()[finding.repositoryId] ?? finding.repositoryId;
+  }
 }

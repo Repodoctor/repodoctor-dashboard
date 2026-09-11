@@ -41,7 +41,11 @@
             @if (repositories().length === 0) {
               <p class="text-sm text-ink-200">No repositories connected yet.</p>
             } @else {
-              <app-repository-table [repositories]="repositories()" (rowClick)="openRepository($event)" />
+            <app-repository-table
+              [repositories]="repositories()"
+              [findings]="findings()"
+              (rowClick)="openRepository($event)"
+            />
             }
           </mat-card-content>
         </mat-card>
@@ -53,7 +57,11 @@
             @if (findings().length === 0) {
               <p class="text-sm text-ink-200">No findings yet for this organization.</p>
             } @else {
-              <app-finding-table [findings]="findings()" (rowClick)="openFinding($event)" />
+            <app-finding-table
+              [findings]="findings()"
+              [repositoryNames]="repositoryNames()"
+              (rowClick)="openFinding($event)"
+            />
             }
           </mat-card-content>
         </mat-card>

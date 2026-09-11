@@ -1,0 +1,30 @@
+    <div class="space-y-6">
+      <app-page-header
+        eyebrow="Inventory"
+        title="Repositories"
+        subtitle="Every repository you can access across organizations, with scan and finding counts."
+      />
+      @if (loading()) {
+        <mat-card appearance="outlined">
+          <mat-card-content>
+            <app-loading-state label="Loading repositories…" />
+          </mat-card-content>
+        </mat-card>
+      } @else if (repositories().length === 0) {
+        <mat-card appearance="outlined">
+          <mat-card-content>
+            <p class="text-sm text-ink-200">No repositories yet. Connect GitHub from an organization Integrations tab.</p>
+          </mat-card-content>
+        </mat-card>
+      } @else {
+        <mat-card appearance="outlined">
+          <mat-card-content>
+            <app-repository-table
+              [repositories]="repositories()"
+              [findings]="findings()"
+              (rowClick)="openRepository($event)"
+            />
+          </mat-card-content>
+        </mat-card>
+      }
+    </div>

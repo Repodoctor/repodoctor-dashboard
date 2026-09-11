@@ -29,6 +29,7 @@ export class OrganizationDetailPage {
   readonly installations = signal<ScmInstallation[]>([]);
   readonly repositories = signal<Repository[]>([]);
   readonly findings = signal<Finding[]>([]);
+  readonly repositoryNames = signal<Record<string, string>>({});
   readonly loading = signal(true);
 
   providerLabel(provider: ScmProviderName): string {
@@ -69,6 +70,9 @@ export class OrganizationDetailPage {
       this.installations.set(installations);
       this.repositories.set(repositories);
       this.findings.set(findings);
+      const names: Record<string, string> = {};
+      for (const repo of repositories) names[repo.id] = repo.fullName;
+      this.repositoryNames.set(names);
     } catch {
       // HTTP errors are toasted by the interceptor.
     } finally {

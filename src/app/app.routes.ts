@@ -121,6 +121,30 @@ export const routes: Routes = [
         ],
       },
       {
+        path: 'repositories',
+        pathMatch: 'full',
+        loadComponent: () =>
+          import('./pages/repositories/list/repositories').then((m) => m.RepositoriesPage),
+      },
+      {
+        path: 'code',
+        loadComponent: () =>
+          import('./pages/findings/findings-inbox').then((m) => m.FindingsInboxPage),
+        data: { category: 'code' },
+      },
+      {
+        path: 'secrets',
+        loadComponent: () =>
+          import('./pages/findings/findings-inbox').then((m) => m.FindingsInboxPage),
+        data: { category: 'secrets' },
+      },
+      {
+        path: 'supply-chain',
+        loadComponent: () =>
+          import('./pages/findings/findings-inbox').then((m) => m.FindingsInboxPage),
+        data: { category: 'supply-chain' },
+      },
+      {
         path: 'settings/scm/:provider/callback',
         loadComponent: () =>
           import('./pages/account/scm-callback/scm-callback').then((m) => m.ScmCallbackPage),
