@@ -7,7 +7,7 @@
             [queryParams]="{ organizationId: repository()?.organizationId }"
             routerLinkActive
             #rla="routerLinkActive"
-            [active]="rla.isActive || section() === item"
+            [active]="rla.isActive || knownSection() === item"
           >
             {{ item }}
           </a>
@@ -34,7 +34,7 @@
           </p>
         </div>
 
-        @if (section() === 'overview') {
+        @if (knownSection() === 'overview') {
           <div class="grid gap-4 sm:grid-cols-3">
             <mat-card appearance="outlined">
               <mat-card-content>
@@ -64,36 +64,43 @@
                 <p class="font-mono text-sm text-moss-200">{{ run.status }} · {{ run.type }} · {{ run.trigger }}</p>
                 <p class="text-xs text-ink-200">{{ run.commitSha.slice(0, 7) }} on {{ run.branch }}</p>
               } @else {
-                <p class="text-sm text-ink-200">No analysis has been requested yet. A FULL run is queued when GitHub connects or a push webhook arrives.</p>
+                <p class="text-sm text-ink-200">No scan has been requested yet. Connecting GitHub or a push webhook queues Semgrep automatically.</p>
               }
             </mat-card-content>
+            @if (canAnalyze()) {
+              <mat-card-actions>
+                <button mat-flat-button type="button" [disabled]="requesting()" (click)="requestAnalysis()">
+                  {{ requesting() ? 'Queuing…' : 'Scan repository' }}
+                </button>
+              </mat-card-actions>
+            }
           </mat-card>
-        } @else if (section() === 'findings') {
+        } @else if (knownSection() === 'findings') {
           <mat-card appearance="outlined">
             <mat-card-header>
               <mat-card-title>Findings</mat-card-title>
             </mat-card-header>
             <mat-card-content>
               @if (findings().length === 0) {
-                <p class="text-sm text-ink-200">No findings yet. Analyzers persist them through the findings API after RepoGraph and Repo Doctor run.</p>
+                <p class="text-sm text-ink-200">No findings yet. Scan the repository to run Semgrep. Secrets and supply-chain scanners land in their inboxes when those adapters ship.</p>
               } @else {
                 <app-finding-table [findings]="findings()" [clickable]="false" />
               }
             </mat-card-content>
           </mat-card>
-        } @else if (section() === 'analysis') {
+        } @else if (knownSection() === 'analysis') {
           <mat-card appearance="outlined">
             <mat-card-header>
               <mat-card-title>Analysis runs</mat-card-title>
               @if (canAnalyze()) {
                 <button mat-flat-button class="!ml-auto" type="button" [disabled]="requesting()" (click)="requestAnalysis()">
-                  {{ requesting() ? 'Queuing…' : 'Request FULL analysis' }}
+                  {{ requesting() ? 'Queuing…' : 'Scan repository' }}
                 </button>
               }
             </mat-card-header>
             <mat-card-content>
               @if (analyses().length === 0) {
-                <p class="text-sm text-ink-200">No analysis runs yet. Free plan allows 10 manual runs per repository per day.</p>
+                <p class="text-sm text-ink-200">No scans yet. Free plan allows 10 manual scans per repository per day.</p>
               } @else {
                 @defer (on viewport; prefetch on idle) {
                   <div class="space-y-3">
@@ -150,7 +157,7 @@
               }
             </mat-card-content>
           </mat-card>
-        } @else if (section() === 'settings') {
+        } @else if (knownSection() === 'settings') {
           <mat-card appearance="outlined">
             <mat-card-header>
               <mat-card-title>Repository access</mat-card-title>
@@ -235,8 +242,6 @@
               }
             </mat-card-content>
           </mat-card>
-        } @else {
-          <app-in-progress [title]="later().title" [body]="later().body" />
         }
         }
       }

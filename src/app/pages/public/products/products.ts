@@ -12,16 +12,16 @@ import { MatCardModule } from '@angular/material/card';
 export class ProductsPage {
   readonly products = [
     {
-      name: 'Repository catalog',
-      body: 'Connect GitHub App installations, keep a tenant-safe catalog, and see which repos you can actually open.',
+      name: 'GitHub connection',
+      body: 'Install the GitHub App, keep a tenant-safe catalog, and scan the repositories you can actually open.',
     },
     {
-      name: 'Findings',
-      body: 'Severity-ranked issues from analyzers, not from a chatbot. The dashboard reads them through the gateway.',
+      name: 'Scanner orchestration',
+      body: 'One worker runs pinned Semgrep today, then Gitleaks and Trivy. Findings are normalized, not invented.',
     },
     {
-      name: 'Analysis runs',
-      body: 'Queue FULL diagnostics when overview signals are not enough. History and status stay on the repository.',
+      name: 'Code, Secrets, Supply chain',
+      body: 'Semgrep fills Code. Gitleaks fills Secrets without storing raw values. Trivy fills Supply chain.',
     },
     {
       name: 'Access control',

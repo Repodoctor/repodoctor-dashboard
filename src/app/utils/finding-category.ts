@@ -1,7 +1,7 @@
 export type FindingCategory = 'code' | 'secrets' | 'supply-chain';
 
-const SECRET_SOURCES = new Set(['SECURITY']);
-const SUPPLY_CHAIN_SOURCES = new Set(['DEPENDENCY']);
+const SECRET_SOURCES = new Set(['GITLEAKS']);
+const SUPPLY_CHAIN_SOURCES = new Set(['TRIVY']);
 
 export function findingCategory(source: string): FindingCategory {
   if (SECRET_SOURCES.has(source)) return 'secrets';

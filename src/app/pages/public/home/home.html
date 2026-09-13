@@ -7,11 +7,10 @@
         <div class="relative z-10 max-w-xl animate-home-rise">
           <p class="font-mono text-xs tracking-[0.22em] text-moss-400 uppercase sm:text-sm">RepoDoctor</p>
           <h1 class="mt-4 text-[clamp(2.25rem,8vw,4.25rem)] font-semibold leading-[1.05] tracking-[-0.03em] text-moss-100">
-            Diagnose repositories before they fail in production.
+            Find the important problems and fix the ones that are safe.
           </h1>
           <p class="mt-5 max-w-lg text-base leading-relaxed text-ink-200 sm:text-lg">
-            One dashboard for findings, dependency graphs, CI signals, and deep analysis — all through the
-            RepoDoctor gateway.
+            Connect GitHub, run Semgrep, Gitleaks, and Trivy, then triage normalized findings in one dashboard.
           </p>
           <div class="mt-8 flex flex-wrap gap-3">
             @if (auth.isAuthenticated()) {
@@ -42,24 +41,24 @@
                 <span>/api/v1 · healthy</span>
               </div>
               <div class="grid grid-cols-[4.5rem_1fr] gap-3 text-ink-200">
-                <span class="text-moss-400">findings</span>
-                <span><span class="text-red-300">2 critical</span> · <span class="text-amber-300">5 warn</span></span>
+                <span class="text-moss-400">semgrep</span>
+                <span><span class="text-red-300">2 high</span> · code inbox</span>
               </div>
               <div class="grid grid-cols-[4.5rem_1fr] gap-3 text-ink-200">
-                <span class="text-moss-400">graph</span>
-                <span>148 nodes · 312 edges synced</span>
+                <span class="text-moss-400">gitleaks</span>
+                <span>secrets redacted · never stored raw</span>
               </div>
               <div class="grid grid-cols-[4.5rem_1fr] gap-3 text-ink-200">
-                <span class="text-moss-400">ci</span>
-                <span class="text-amber-300">main failing · flaky suite</span>
+                <span class="text-moss-400">trivy</span>
+                <span>deps and images next</span>
               </div>
               <div class="grid grid-cols-[4.5rem_1fr] gap-3 text-ink-200">
-                <span class="text-moss-400">analysis</span>
-                <span class="text-moss-300">report ready · 12m ago</span>
+                <span class="text-moss-400">scan</span>
+                <span class="text-moss-300">completed · 12m ago</span>
               </div>
               <div class="grid grid-cols-[4.5rem_1fr] gap-3 text-ink-200">
-                <span class="text-moss-400">overview</span>
-                <span>health 72 · drift detected</span>
+                <span class="text-moss-400">github</span>
+                <span>app install · tarball fetched</span>
               </div>
             </div>
           </div>
@@ -70,11 +69,11 @@
         <div class="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
           <div class="mb-10 max-w-2xl">
             <h2 class="text-[clamp(1.5rem,4vw,2.2rem)] font-semibold tracking-[-0.02em] text-moss-100">
-              Services behind the dashboard
+              Orchestration, not another scanner engine
             </h2>
             <p class="mt-3 leading-relaxed text-ink-200">
-              RepoDoctor never talks to internal systems from the browser. Everything routes through the gateway
-              so you get one secure surface for every diagnostic signal.
+              RepoDoctor runs existing tools, normalizes findings, and (later) explains the ones that matter.
+              The browser talks only to the gateway.
             </p>
           </div>
           <div class="border-t border-ink-400">

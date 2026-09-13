@@ -4,8 +4,8 @@
         Free while RepoDoctor is in alpha.
       </h1>
       <p class="mt-4 max-w-2xl text-base leading-relaxed text-ink-200 sm:text-lg">
-        Paid plans will use Stripe later. For now every account is on Free so we can test the product without
-        billing.
+        Paid plans will use Stripe later. For now every account is on Free so you can connect GitHub
+        and scan with Semgrep without billing.
       </p>
       <div class="mt-10 grid gap-4 lg:grid-cols-2">
         <mat-card appearance="outlined">
@@ -20,7 +20,7 @@
               <li>{{ plan.maxMembersPerOrganization }} members per organization</li>
               <li>{{ plan.maxPendingInvitesPerOrganization }} pending invites</li>
               <li>{{ plan.maxScmInstallationsPerOrganization }} GitHub App installation per organization</li>
-              <li>{{ plan.maxManualAnalysisRunsPerRepositoryPerDay }} manual analysis runs per repository per day</li>
+              <li>{{ plan.maxManualAnalysisRunsPerRepositoryPerDay }} manual scans per repository per day</li>
             </ul>
             <a mat-flat-button routerLink="/signup">Start on Free</a>
           </mat-card-content>

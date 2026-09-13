@@ -17,11 +17,11 @@ export class SolutionsPage {
     },
     {
       name: 'Security reviews',
-      body: 'Findings and analysis history in one place. AI explanations are planned and will stay grounded in analyzer facts.',
+      body: 'Code, secrets, and supply-chain findings in one place. OpenRouter can explain after scanners produce evidence.',
     },
     {
-      name: 'CI reliability',
-      body: 'CI Doctor will cluster failing jobs and flaky suites. That surface is in progress during alpha.',
+      name: 'Safe fixes later',
+      body: 'Autofix, validation, and GitHub PRs stay in this worker. They will only run on findings marked SAFE.',
     },
   ];
 }

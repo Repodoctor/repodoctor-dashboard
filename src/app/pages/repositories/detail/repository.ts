@@ -14,55 +14,11 @@ import { CatalogApi } from '../../../api/catalog.api';
 import { ToastService } from '../../../services/toast.service';
 import type { AnalysisRun, Finding, Repository, RepositoryAccessGrant } from '../../../interfaces/api';
 import { FindingTableComponent } from '../../../components/finding-table/finding-table';
-import { InProgressComponent } from '../../../components/in-progress/in-progress';
 import { LoadingStateComponent } from '../../../components/loading-state/loading-state';
 import { TableSearchComponent } from '../../../components/table-search/table-search';
 import { ClientTable } from '../../../utils/client-table';
 
-const NAV = [
-  'overview',
-  'findings',
-  'reviews',
-  'graph',
-  'security',
-  'dependencies',
-  'ci',
-  'docs',
-  'analysis',
-  'ai',
-  'settings',
-] as const;
-
-const LATER: Record<string, { title: string; body: string }> = {
-  reviews: {
-    title: 'Pull request reviews',
-    body: 'The code-review worker will list review status, requested changes, and evidence here. Nothing is stored yet during alpha.',
-  },
-  graph: {
-    title: 'RepoGraph',
-    body: 'Architecture and dependency topology from the graph worker will render here, with searchable metadata in Postgres and artifacts in object storage.',
-  },
-  security: {
-    title: 'Security findings',
-    body: 'Secret detection and configuration analysis from the security worker will land in this tab once that pipeline is wired through the gateway.',
-  },
-  dependencies: {
-    title: 'Dependencies',
-    body: 'Inventory, vulnerabilities, and license risk from the dependency worker are not implemented yet. This route is a placeholder.',
-  },
-  ci: {
-    title: 'CI Doctor',
-    body: 'Failure clusters, flaky suites, and remediation hints from the CI worker will show here. Connect GitHub first; analysis of workflows comes later.',
-  },
-  docs: {
-    title: 'Documentation quality',
-    body: 'README quality, onboarding coverage, and generated summaries from the documentation worker are still in progress.',
-  },
-  ai: {
-    title: 'AI explanations',
-    body: 'Evidence-based explanations over analyzer facts. AI is never the source of truth, and this tab stays empty until that worker ships.',
-  },
-};
+const NAV = ['overview', 'findings', 'analysis', 'settings'] as const;
 
 const PERMISSIONS = ['NONE', 'VIEW', 'ANALYZE', 'MANAGE', 'ADMIN'] as const;
 const PERMISSION_RANK: Record<(typeof PERMISSIONS)[number], number> = {
@@ -87,7 +43,6 @@ const PERMISSION_RANK: Record<(typeof PERMISSIONS)[number], number> = {
     MatSortModule,
     MatTabsModule,
     FindingTableComponent,
-    InProgressComponent,
     LoadingStateComponent,
     TableSearchComponent,
   ],
@@ -139,7 +94,10 @@ export class RepositoryPage {
     this.findings().filter((item) => item.severity === 'CRITICAL' || item.severity === 'HIGH'),
   );
   readonly latestAnalysis = computed(() => this.analyses()[0] ?? null);
-  readonly later = computed(() => LATER[this.section() ?? ''] ?? LATER['ai']!);
+  readonly knownSection = computed(() => {
+    const value = this.section() ?? 'overview';
+    return (NAV as readonly string[]).includes(value) ? value : 'overview';
+  });
   readonly canAnalyze = () => {
     const permission = this.repository()?.permission;
     return permission ? PERMISSION_RANK[permission] >= PERMISSION_RANK.ANALYZE : false;

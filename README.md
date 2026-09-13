@@ -28,7 +28,7 @@ Near-black panels with pulse green (`#3ee0b2`), in the spirit of GitHub and Supa
 - `/login` `/signup` `/forgot-password`
 - `/dashboard`
 - `/organizations` `/organizations/:organizationId` (tabs: overview, details, integrations, members, permissions — permissions is OWNER/ADMIN only)
-- `/repositories` `/repositories/:repositoryId/{overview,findings,reviews,graph,security,dependencies,ci,docs,analysis,ai,settings}`
+- `/repositories` `/repositories/:repositoryId/{overview,findings,analysis,settings}`
 - `/code` `/secrets` `/supply-chain`
 - `/settings`
 
@@ -41,7 +41,7 @@ Only Free is available. Paid checkout (Stripe) is not implemented yet.
 - 5 members per organization
 - 10 pending invites
 - 1 GitHub App installation per organization
-- 10 manual analysis runs per repository per day
+- 10 manual scans per repository per day
 
 Repository permission `NONE` hides a repo from MEMBER and VIEWER. OWNER/ADMIN still see it.
 

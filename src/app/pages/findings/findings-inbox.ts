@@ -18,20 +18,20 @@ const COPY: Record<
   code: {
     eyebrow: 'SAST',
     title: 'Code',
-    subtitle: 'Deterministic findings from RepoDoctor, RepoGraph, code review, CI, docs, and AI analyzers.',
-    empty: 'No code findings yet. Connect a repository and run analysis to populate this inbox.',
+    subtitle: 'Semgrep findings from scanned repositories. A scanner crash is a failed run, not an empty inbox.',
+    empty: 'No Semgrep findings yet. Connect GitHub and click Scan repository.',
   },
   secrets: {
     eyebrow: 'Secrets',
     title: 'Secrets',
-    subtitle: 'Credential and secret detections from the security analyzer. Values are never shown.',
-    empty: 'No secrets detected in repositories you can access. The security worker will fill this inbox.',
+    subtitle: 'Gitleaks detections. Raw secret values are never stored or shown.',
+    empty: 'No secrets yet. The Gitleaks adapter is not in this slice.',
   },
   'supply-chain': {
     eyebrow: 'Dependencies',
     title: 'Supply chain',
-    subtitle: 'Package, lockfile, and vulnerability findings from the dependency analyzer.',
-    empty: 'No supply-chain findings yet. Dependency inventory will land with the supply-chain worker.',
+    subtitle: 'Trivy filesystem, dependency, and (later) container image findings.',
+    empty: 'No supply-chain findings yet. The Trivy adapter is not in this slice.',
   },
 };
 

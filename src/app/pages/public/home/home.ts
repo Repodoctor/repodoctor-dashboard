@@ -23,40 +23,40 @@ export class HomePage {
   }
   readonly services = [
     {
-      name: 'Gateway',
-      title: 'Unified API surface',
+      name: 'Semgrep',
+      title: 'Code findings',
       description:
-        'The dashboard speaks only to repodoctor-gateway at /api/v1. Auth, tenancy, and service orchestration stay out of the browser.',
+        'Pinned Semgrep Community Edition runs in the worker. Normalized results land in the Code inbox — a crash is a failed scanner run, not an empty list.',
     },
     {
-      name: 'Overview',
-      title: 'Repository health at a glance',
+      name: 'Gitleaks',
+      title: 'Secrets without raw values',
       description:
-        'Roll up severity, last analysis, and drift into a single overview so you know which repos need attention first.',
+        'Credential detections go to Secrets. RepoDoctor never persists the secret itself.',
+    },
+    {
+      name: 'Trivy',
+      title: 'Supply chain and images',
+      description:
+        'Filesystem and dependency scanning first, container images next. Results show under Supply chain.',
+    },
+    {
+      name: 'GitHub',
+      title: 'Connect and scan',
+      description:
+        'Install the GitHub App, then Scan repository. Pushes queue the same worker. The App private key stays in SCM.',
     },
     {
       name: 'Findings',
-      title: 'Severity-ranked issues',
+      title: 'One normalized inbox',
       description:
-        'Surface actionable findings from the Findings service — critical paths, policy breaks, and debt that will bite production.',
+        'Fingerprinted issues from every scanner, ranked by severity, visible through the gateway only.',
     },
     {
-      name: 'Graph',
-      title: 'RepoGraph dependency map',
+      name: 'OpenRouter',
+      title: 'Explain after evidence',
       description:
-        'Explore ownership and dependency topology from RepoGraph to see blast radius before you change a shared package.',
-    },
-    {
-      name: 'CI',
-      title: 'Pipeline failure signals',
-      description:
-        'Track recent CI runs, flaky suites, and failure clusters so broken main never hides behind noisy logs.',
-    },
-    {
-      name: 'Analysis',
-      title: 'Deep diagnostic jobs',
-      description:
-        'Kick off and review deeper analysis reports when overview signals are not enough — status and history in one place.',
+        'AI triage is optional and only after scanner output exists. The key never ships in Angular.',
     },
   ];
 }
