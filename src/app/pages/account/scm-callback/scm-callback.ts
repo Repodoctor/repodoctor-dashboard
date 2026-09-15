@@ -31,8 +31,11 @@ export class ScmCallbackPage {
   readonly needsOrg = signal(false);
   readonly saving = signal(false);
   readonly failed = signal(false);
+  readonly done = signal(false);
+  readonly repoCount = signal(0);
 
   constructor() {
+    window.name = 'repodoctor-scm-install';
     void this.start();
   }
 
@@ -63,6 +66,7 @@ export class ScmCallbackPage {
       const result = await this.scm.connect(workspaceId, this.provider(), { callback: this.callbackQuery() });
       this.scm.clearPendingWorkspace();
       const count = result.repositories.length;
+      this.repoCount.set(count);
       this.toast.show(
         count === 1
           ? `Connected 1 repository from ${this.label()}.`
@@ -77,6 +81,10 @@ export class ScmCallbackPage {
     }
   }
 
+  closePopup(): void {
+    window.close();
+  }
+
   private async finishConnect(workspaceId: string): Promise<void> {
     const origin = window.location.origin;
     const isPopup = window.name === 'repodoctor-scm-install' || Boolean(window.opener && !window.opener.closed);
@@ -84,15 +92,15 @@ export class ScmCallbackPage {
       try {
         window.opener.postMessage({ type: 'repodoctor-scm-connected', workspaceId }, origin);
       } catch {
-        try {
-          window.opener.location.assign(`/workspaces/${workspaceId}/integrations`);
-        } catch {
-          // Fall through to close or in-tab navigation.
-        }
+        // Parent watches popup.closed instead of navigating from here.
       }
     }
     if (isPopup) {
       window.close();
+      await new Promise((resolve) => window.setTimeout(resolve, 250));
+      if (!window.closed) {
+        this.done.set(true);
+      }
       return;
     }
     await this.router.navigate(['/workspaces', workspaceId, 'integrations']);

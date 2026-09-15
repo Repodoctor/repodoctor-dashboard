@@ -24,9 +24,32 @@
             />
           </mat-card-content>
         </mat-card>
+      } @else if (done()) {
+        <div class="flex min-h-[70vh] flex-col items-center justify-center gap-3">
+          <p class="text-sm text-ink-200">
+            @if (repoCount() === 1) {
+              Connected 1 repository.
+            } @else {
+              Connected {{ repoCount() }} repositories.
+            }
+          </p>
+          <p class="text-sm text-ink-300">You can close this window.</p>
+          <button mat-flat-button type="button" (click)="closePopup()">Close</button>
+        </div>
       } @else {
-        <div class="flex min-h-[70vh] flex-col items-center justify-center">
-          <mat-progress-spinner diameter="40" mode="indeterminate" [attr.aria-label]="'Connecting ' + label()" />
+        <div class="flex min-h-[70vh] flex-col items-center justify-center gap-3">
+          <mat-progress-spinner
+            diameter="40"
+            mode="indeterminate"
+            [attr.aria-label]="saving() ? 'Loading repositories' : 'Connecting ' + label()"
+          />
+          <p class="text-sm text-ink-200">
+            @if (saving()) {
+              Loading repositories from {{ label() }}…
+            } @else {
+              Connecting {{ label() }}…
+            }
+          </p>
         </div>
       }
     </div>

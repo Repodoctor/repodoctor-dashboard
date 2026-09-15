@@ -157,6 +157,12 @@ export const routes: Routes = [
         data: { category: 'supply-chain' },
       },
       {
+        // SCM install popup: our origin first so the callback can show progress and close.
+        path: 'settings/scm/:provider/install',
+        loadComponent: () =>
+          import('./pages/account/scm-install/scm-install').then((m) => m.ScmInstallPage),
+      },
+      {
         // SCM callback routes
         path: 'settings/scm/:provider/callback',
         loadComponent: () =>

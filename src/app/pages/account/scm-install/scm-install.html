@@ -1,0 +1,8 @@
+    <div class="flex min-h-[70vh] flex-col items-center justify-center gap-3">
+      @if (failed()) {
+        <p class="text-sm text-ink-200">Could not open {{ label() }}.</p>
+      } @else {
+        <mat-progress-spinner diameter="40" mode="indeterminate" [attr.aria-label]="'Opening ' + label()" />
+        <p class="text-sm text-ink-200">Opening {{ label() }}…</p>
+      }
+    </div>

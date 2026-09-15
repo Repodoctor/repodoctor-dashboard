@@ -1,4 +1,4 @@
-import { Component, DestroyRef, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { WorkspaceStore } from '../../../stores/workspace.store';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -41,7 +41,6 @@ export class WorkspaceIntegrationsPage {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly dialog = inject(MatDialog);
-  private readonly destroyRef = inject(DestroyRef);
 
   readonly providers = SCM_PROVIDERS;
   readonly org = signal<Workspace | null>(null);
@@ -62,14 +61,6 @@ export class WorkspaceIntegrationsPage {
       return;
     }
     void this.load(id);
-    const onMessage = (event: MessageEvent) => {
-      if (event.origin !== window.location.origin) return;
-      if (event.data?.type !== 'repodoctor-scm-connected') return;
-      const workspaceId = typeof event.data.workspaceId === 'string' ? event.data.workspaceId : id;
-      void this.onScmConnected(workspaceId);
-    };
-    window.addEventListener('message', onMessage);
-    this.destroyRef.onDestroy(() => window.removeEventListener('message', onMessage));
   }
 
   providerLabel(provider: ScmProviderName): string {
@@ -186,14 +177,17 @@ export class WorkspaceIntegrationsPage {
     this.waitingPopup.set(true);
     try {
       this.scm.rememberWorkspace(org.id);
-      const { url } = await this.scm.getInstallUrl(org.id, provider, externalInstallationId);
+      const params = new URLSearchParams({ workspaceId: org.id });
+      if (externalInstallationId) {
+        params.set('externalInstallationId', externalInstallationId);
+      }
+      const url = `${window.location.origin}/settings/scm/${provider}/install?${params.toString()}`;
       const popup = window.open(url, 'repodoctor-scm-install', 'popup=yes,width=980,height=780');
       if (!popup) {
         window.location.assign(url);
         return;
       }
-      const existing = new Set(this.installations().map((item) => item.id));
-      await this.waitForInstallComplete(popup, org.id, existing);
+      await this.waitUntilPopupCloses(popup);
       await this.load(org.id);
     } catch {
       // HTTP errors are toasted by the interceptor.
@@ -203,45 +197,13 @@ export class WorkspaceIntegrationsPage {
     }
   }
 
-  private async onScmConnected(workspaceId: string): Promise<void> {
-    this.waitingPopup.set(false);
-    this.busy.set(null);
-    await this.load(workspaceId);
-  }
-
-  private waitForInstallComplete(popup: Window, workspaceId: string, existing: Set<string>): Promise<void> {
+  private waitUntilPopupCloses(popup: Window): Promise<void> {
     return new Promise((resolve) => {
-      let done = false;
-      const finish = () => {
-        if (done) return;
-        done = true;
-        window.clearInterval(closedTimer);
-        window.clearInterval(pollTimer);
-        window.removeEventListener('message', onMessage);
-        try {
-          popup.close();
-        } catch {
-          // GitHub may have already navigated away from a scriptable document.
-        }
+      const timer = window.setInterval(() => {
+        if (!popup.closed) return;
+        window.clearInterval(timer);
         resolve();
-      };
-      const onMessage = (event: MessageEvent) => {
-        if (event.origin !== window.location.origin) return;
-        if (event.data?.type !== 'repodoctor-scm-connected') return;
-        finish();
-      };
-      const closedTimer = window.setInterval(() => {
-        if (popup.closed) finish();
       }, 400);
-      const pollTimer = window.setInterval(() => {
-        void this.scm
-          .listInstallations(workspaceId)
-          .then((items) => {
-            if (items.some((item) => !existing.has(item.id))) finish();
-          })
-          .catch(() => undefined);
-      }, 1500);
-      window.addEventListener('message', onMessage);
     });
   }
 
