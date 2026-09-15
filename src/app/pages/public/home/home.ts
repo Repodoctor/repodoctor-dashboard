@@ -1,5 +1,5 @@
 import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { AuthStore } from '../../../stores/auth.store';
 
@@ -12,8 +12,23 @@ import { AuthStore } from '../../../stores/auth.store';
 export class HomePage {
   readonly auth = inject(AuthStore);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
 
   constructor() {
+    const query = this.route.snapshot.queryParamMap;
+    if (
+      query.has('installation_id') ||
+      query.get('setup_action') === 'install' ||
+      query.get('setup_action') === 'update'
+    ) {
+      const queryParams: Record<string, string> = {};
+      query.keys.forEach((key) => {
+        const value = query.get(key);
+        if (value != null) queryParams[key] = value;
+      });
+      void this.router.navigate(['/settings/scm/github/callback'], { queryParams, replaceUrl: true });
+      return;
+    }
     void this.auth.whenReady().then(() => {
       this.auth.consumeAuthUrlError();
       if (this.auth.pendingPassword()) {

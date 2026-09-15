@@ -3,6 +3,8 @@ import { ScmApi } from '../api/scm.api';
 import type { Repository, ScmInstallation, ScmProviderName } from '../interfaces/api';
 
 const PENDING_ORG_KEY = 'repodoctor.pendingScmWorkspaceId';
+const SCM_POPUP_CHANNEL = 'repodoctor-scm';
+const SCM_POPUP_STORAGE = 'repodoctor.scmPopup';
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 @Injectable({ providedIn: 'root' })
@@ -54,5 +56,60 @@ export class ScmService {
 
   listRepositories(workspaceId: string): Promise<Repository[]> {
     return this.api.listRepositories(workspaceId);
+  }
+
+  notifyPopupConnected(workspaceId: string): void {
+    const payload = { type: 'connected', workspaceId, at: Date.now() };
+    try {
+      const channel = new BroadcastChannel(SCM_POPUP_CHANNEL);
+      channel.postMessage(payload);
+      channel.close();
+    } catch {
+      // Safari private mode may lack BroadcastChannel.
+    }
+    localStorage.setItem(SCM_POPUP_STORAGE, JSON.stringify(payload));
+  }
+
+  waitForPopupConnected(timeoutMs = 10 * 60_000): Promise<string> {
+    return new Promise((resolve, reject) => {
+      let settled = false;
+      let channel: BroadcastChannel | undefined;
+      const finish = (workspaceId: string) => {
+        if (settled) return;
+        settled = true;
+        window.clearTimeout(timer);
+        window.removeEventListener('storage', onStorage);
+        channel?.close();
+        resolve(workspaceId);
+      };
+      const onMessage = (event: MessageEvent) => {
+        if (event.data?.type === 'connected' && typeof event.data.workspaceId === 'string') {
+          finish(event.data.workspaceId);
+        }
+      };
+      const onStorage = (event: StorageEvent) => {
+        if (event.key !== SCM_POPUP_STORAGE || !event.newValue) return;
+        try {
+          const data = JSON.parse(event.newValue) as { type?: string; workspaceId?: string };
+          if (data.type === 'connected' && data.workspaceId) finish(data.workspaceId);
+        } catch {
+          // Ignore malformed storage writes.
+        }
+      };
+      try {
+        channel = new BroadcastChannel(SCM_POPUP_CHANNEL);
+        channel.addEventListener('message', onMessage);
+      } catch {
+        // localStorage fallback only.
+      }
+      window.addEventListener('storage', onStorage);
+      const timer = window.setTimeout(() => {
+        if (settled) return;
+        settled = true;
+        window.removeEventListener('storage', onStorage);
+        channel?.close();
+        reject(new Error('Timed out waiting for GitHub install'));
+      }, timeoutMs);
+    });
   }
 }

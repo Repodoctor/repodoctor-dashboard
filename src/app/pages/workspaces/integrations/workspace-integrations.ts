@@ -177,17 +177,22 @@ export class WorkspaceIntegrationsPage {
     this.waitingPopup.set(true);
     try {
       this.scm.rememberWorkspace(org.id);
-      const params = new URLSearchParams({ workspaceId: org.id });
-      if (externalInstallationId) {
-        params.set('externalInstallationId', externalInstallationId);
-      }
-      const url = `${window.location.origin}/settings/scm/${provider}/install?${params.toString()}`;
+      const { url } = await this.scm.getInstallUrl(org.id, provider, externalInstallationId);
       const popup = window.open(url, 'repodoctor-scm-install', 'popup=yes,width=980,height=780');
       if (!popup) {
         window.location.assign(url);
         return;
       }
-      await this.waitUntilPopupCloses(popup);
+      try {
+        await this.scm.waitForPopupConnected();
+      } catch {
+        // Webhook ingest may still have completed if the window was closed early.
+      }
+      try {
+        popup.close();
+      } catch {
+        // GitHub COOP may already have isolated the handle.
+      }
       await this.load(org.id);
     } catch {
       // HTTP errors are toasted by the interceptor.
@@ -195,16 +200,6 @@ export class WorkspaceIntegrationsPage {
       this.busy.set(null);
       this.waitingPopup.set(false);
     }
-  }
-
-  private waitUntilPopupCloses(popup: Window): Promise<void> {
-    return new Promise((resolve) => {
-      const timer = window.setInterval(() => {
-        if (!popup.closed) return;
-        window.clearInterval(timer);
-        resolve();
-      }, 400);
-    });
   }
 
   private async load(id: string): Promise<void> {

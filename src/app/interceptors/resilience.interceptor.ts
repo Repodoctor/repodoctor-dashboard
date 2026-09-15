@@ -10,7 +10,7 @@ import {
 } from 'cockatiel';
 import { environment } from '../../environments/environment';
 
-const RETRY_STATUS = new Set([0, 408, 429, 502, 503, 504]);
+const RETRY_STATUS = new Set([429, 503]);
 const IDEMPOTENT = new Set(['GET', 'HEAD', 'PUT', 'DELETE', 'OPTIONS']);
 
 function isGatewayRequest(url: string): boolean {
@@ -32,8 +32,8 @@ const policy = wrap(
     breaker: new ConsecutiveBreaker(5),
   }),
   retry(handleWhen(isRetryable), {
-    maxAttempts: 3,
-    backoff: new ExponentialBackoff({ initialDelay: 200, maxDelay: 2000 }),
+    maxAttempts: 2,
+    backoff: new ExponentialBackoff({ initialDelay: 150, maxDelay: 800 }),
   }),
 );
 

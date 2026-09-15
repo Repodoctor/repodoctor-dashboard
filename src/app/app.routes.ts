@@ -3,6 +3,11 @@ import { authGuard, guestGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
   {
+    path: 'settings/scm/:provider/callback',
+    loadComponent: () =>
+      import('./pages/account/scm-callback/scm-callback').then((m) => m.ScmCallbackPage),
+  },
+  {
     // Public routes
     path: '',
     loadComponent: () =>
@@ -155,18 +160,6 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./pages/findings/findings-inbox').then((m) => m.FindingsInboxPage),
         data: { category: 'supply-chain' },
-      },
-      {
-        // SCM install popup: our origin first so the callback can show progress and close.
-        path: 'settings/scm/:provider/install',
-        loadComponent: () =>
-          import('./pages/account/scm-install/scm-install').then((m) => m.ScmInstallPage),
-      },
-      {
-        // SCM callback routes
-        path: 'settings/scm/:provider/callback',
-        loadComponent: () =>
-          import('./pages/account/scm-callback/scm-callback').then((m) => m.ScmCallbackPage),
       },
       {
         // Repository routes

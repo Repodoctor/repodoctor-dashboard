@@ -35,7 +35,9 @@ export class ScmCallbackPage {
   readonly repoCount = signal(0);
 
   constructor() {
-    window.name = 'repodoctor-scm-install';
+    if (window.opener || window.name === 'repodoctor-scm-install') {
+      window.name = 'repodoctor-scm-install';
+    }
     void this.start();
   }
 
@@ -86,13 +88,13 @@ export class ScmCallbackPage {
   }
 
   private async finishConnect(workspaceId: string): Promise<void> {
-    const origin = window.location.origin;
+    this.scm.notifyPopupConnected(workspaceId);
     const isPopup = window.name === 'repodoctor-scm-install' || Boolean(window.opener && !window.opener.closed);
     if (window.opener && !window.opener.closed) {
       try {
-        window.opener.postMessage({ type: 'repodoctor-scm-connected', workspaceId }, origin);
+        window.opener.postMessage({ type: 'repodoctor-scm-connected', workspaceId }, window.location.origin);
       } catch {
-        // Parent watches popup.closed instead of navigating from here.
+        // BroadcastChannel is the reliable path after GitHub COOP.
       }
     }
     if (isPopup) {
