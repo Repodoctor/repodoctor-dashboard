@@ -35,7 +35,11 @@ export class ScmCallbackPage {
   readonly repoCount = signal(0);
 
   constructor() {
-    if (window.opener || window.name === 'repodoctor-scm-install') {
+    if (
+      window.opener ||
+      window.name === 'repodoctor-scm-install' ||
+      this.route.snapshot.queryParamMap.has('installation_id')
+    ) {
       window.name = 'repodoctor-scm-install';
     }
     void this.start();
@@ -84,12 +88,31 @@ export class ScmCallbackPage {
   }
 
   closePopup(): void {
+    this.tryCloseWindow();
+  }
+
+  private isInstallPopup(): boolean {
+    const query = this.route.snapshot.queryParamMap;
+    return (
+      window.name === 'repodoctor-scm-install' ||
+      Boolean(window.opener) ||
+      query.has('installation_id') ||
+      query.get('setup_action') === 'install' ||
+      query.get('setup_action') === 'update'
+    );
+  }
+
+  private tryCloseWindow(): void {
+    try {
+      window.open('', '_self');
+    } catch {
+      // Some browsers block retargeting the popup to itself.
+    }
     window.close();
   }
 
   private async finishConnect(workspaceId: string): Promise<void> {
     this.scm.notifyPopupConnected(workspaceId);
-    const isPopup = window.name === 'repodoctor-scm-install' || Boolean(window.opener && !window.opener.closed);
     if (window.opener && !window.opener.closed) {
       try {
         window.opener.postMessage({ type: 'repodoctor-scm-connected', workspaceId }, window.location.origin);
@@ -97,10 +120,11 @@ export class ScmCallbackPage {
         // BroadcastChannel is the reliable path after GitHub COOP.
       }
     }
-    if (isPopup) {
-      window.close();
-      await new Promise((resolve) => window.setTimeout(resolve, 250));
+    if (this.isInstallPopup()) {
+      this.tryCloseWindow();
+      await new Promise((resolve) => window.setTimeout(resolve, 100));
       if (!window.closed) {
+        this.tryCloseWindow();
         this.done.set(true);
       }
       return;
