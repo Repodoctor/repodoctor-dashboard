@@ -6,7 +6,7 @@ html {
     (
       color: (
         primary: mat.$spring-green-palette,
-        tertiary: mat.$azure-palette,
+        tertiary: mat.$cyan-palette,
         theme-type: light,
       ),
       typography: (
@@ -23,15 +23,15 @@ html {
   --mat-sys-on-primary: #ffffff;
   --mat-sys-primary-container: #d1fae5;
   --mat-sys-on-primary-container: #065f46;
-  --mat-sys-surface: #f8fafc;
+  --mat-sys-surface: #fafafa;
   --mat-sys-surface-container: #ffffff;
-  --mat-sys-surface-container-low: #f1f5f9;
+  --mat-sys-surface-container-low: #f5f5f5;
   --mat-sys-surface-container-high: #ffffff;
   --mat-sys-surface-container-highest: #ffffff;
-  --mat-sys-on-surface: #0f172a;
-  --mat-sys-on-surface-variant: #64748b;
-  --mat-sys-outline: #e2e8f0;
-  --mat-sys-outline-variant: #f1f5f9;
-  --mat-sys-error: #ef4444;
+  --mat-sys-on-surface: #404040;
+  --mat-sys-on-surface-variant: #737373;
+  --mat-sys-outline: #e5e5e5;
+  --mat-sys-outline-variant: #f5f5f5;
+  --mat-sys-error: #dc2626;
   --mat-sys-on-error: #ffffff;
 }

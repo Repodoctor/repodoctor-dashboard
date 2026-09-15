@@ -1,4 +1,4 @@
-    <div class="min-h-screen bg-canvas text-ink">
+    <div class="min-h-screen bg-canvas text-ink flex flex-col">
       <header class="sticky top-0 z-40 border-b border-line/80 bg-panel/90 backdrop-blur-md">
         <div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3.5 sm:px-6 lg:px-8">
           <a routerLink="/" class="inline-flex items-center gap-2 font-mono text-xs tracking-[0.22em] text-ink uppercase sm:text-sm">
@@ -33,7 +33,7 @@
           }
         </nav>
       </header>
-      <main>
+      <main class="flex-1">
         <router-outlet />
       </main>
       <footer class="border-t border-line bg-panel">

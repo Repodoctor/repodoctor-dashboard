@@ -99,7 +99,7 @@ body {
 
 .mat-mdc-card.mat-mdc-card-outlined {
   --mat-card-outlined-container-color: #ffffff;
-  --mat-card-outlined-outline-color: #e2e8f0;
+  --mat-card-outlined-outline-color: #e5e5e5;
 }
 
 .mat-mdc-card-header {
@@ -116,30 +116,30 @@ body {
 }
 
 .rd-chrome {
-  --mat-sys-on-surface: #e2e8f0;
-  --mat-sys-on-surface-variant: #94a3b8;
+  --mat-sys-on-surface: #f5f5f5;
+  --mat-sys-on-surface-variant: #d4d4d4;
   --mat-sys-primary: #1b9e6c;
   --mat-sys-on-primary: #ffffff;
-  --mat-list-list-item-label-text-color: #e2e8f0;
-  --mat-list-list-item-leading-icon-color: #94a3b8;
+  --mat-list-list-item-label-text-color: #f5f5f5;
+  --mat-list-list-item-leading-icon-color: #d4d4d4;
   --mat-list-list-item-hover-label-text-color: #ffffff;
   --mat-list-list-item-hover-leading-icon-color: #1b9e6c;
   --mat-list-list-item-focus-label-text-color: #ffffff;
-  --mat-list-active-indicator-color: rgba(27, 158, 108, 0.16);
-  --mat-button-text-label-text-color: #e2e8f0;
-  color: #e2e8f0;
+  --mat-list-active-indicator-color: rgba(27, 158, 108, 0.2);
+  --mat-button-text-label-text-color: #f5f5f5;
+  color: #f5f5f5;
 }
 
 .rd-org-tabs {
-  --mat-tab-active-label-text-color: #0f172a;
-  --mat-tab-active-focus-label-text-color: #0f172a;
-  --mat-tab-active-hover-label-text-color: #0f172a;
+  --mat-tab-active-label-text-color: #404040;
+  --mat-tab-active-focus-label-text-color: #404040;
+  --mat-tab-active-hover-label-text-color: #404040;
   --mat-tab-active-indicator-color: #1b9e6c;
-  --mat-tab-inactive-label-text-color: #64748b;
+  --mat-tab-inactive-label-text-color: #737373;
 }
 
 .rd-org-tabs .mat-mdc-tab-link.mdc-tab--active {
-  color: #0f172a;
+  color: #404040;
 }
 
 .rd-col-end {
@@ -154,4 +154,31 @@ body {
 
 .rd-user-menu {
   min-width: 17rem;
+  --mat-menu-container-color: #525252;
+  --mat-menu-item-label-text-color: #f5f5f5;
+  --mat-menu-item-icon-color: #d4d4d4;
+  --mat-menu-item-hover-state-layer-color: rgba(255, 255, 255, 0.08);
+  --mat-menu-item-focus-state-layer-color: rgba(255, 255, 255, 0.12);
+  background: #525252;
+  color: #f5f5f5;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.5rem;
+  box-shadow: 0 18px 48px rgba(23, 23, 23, 0.2);
+}
+
+.rd-user-menu .mat-mdc-menu-item {
+  color: #f5f5f5;
+}
+
+.rd-user-menu .mat-mdc-menu-item .mat-icon {
+  color: #d4d4d4;
+}
+
+.rd-user-menu .mat-mdc-menu-item:hover .mat-icon,
+.rd-user-menu .mat-mdc-menu-item:focus .mat-icon {
+  color: #1b9e6c;
+}
+
+.rd-user-menu hr {
+  border-color: rgba(255, 255, 255, 0.1);
 }

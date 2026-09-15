@@ -12,7 +12,7 @@
       />
     </button>
     <mat-menu #menu="matMenu" xPosition="before" panelClass="rd-user-menu">
-      <div class="flex items-center gap-3 px-4 py-3" (click)="$event.stopPropagation()">
+      <div class="flex items-center gap-3 px-4 py-3 text-chrome" (click)="$event.stopPropagation()">
         <app-avatar
           [url]="auth.avatarUrl()"
           [name]="auth.user()?.displayName"
@@ -20,18 +20,18 @@
           size="md"
         />
         <div class="min-w-0">
-          <p class="truncate font-medium">{{ auth.user()?.displayName }}</p>
+          <p class="truncate font-medium text-chrome">{{ auth.user()?.displayName }}</p>
           <p class="truncate font-mono text-xs text-ink-300">{{ auth.user()?.email }}</p>
         </div>
       </div>
-      <hr class="my-1 border-line" />
+      <hr class="my-1 border-white/10" />
       @for (item of links; track item.path) {
         <a mat-menu-item [routerLink]="item.path">
           <mat-icon>{{ item.icon }}</mat-icon>
           <span>{{ item.label }}</span>
         </a>
       }
-      <hr class="my-1 border-line" />
+      <hr class="my-1 border-white/10" />
       <button mat-menu-item type="button" (click)="auth.logout()">
         <mat-icon>logout</mat-icon>
         <span>Sign out</span>
