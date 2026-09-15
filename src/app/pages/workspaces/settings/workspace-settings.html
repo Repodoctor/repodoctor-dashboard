@@ -23,7 +23,7 @@
               </form>
             } @else {
               <p class="text-sm text-ink-200">{{ current.name }} · {{ current.slug }}</p>
-              <p class="text-xs text-ink-300">Only OWNER or ADMIN can rename the organization.</p>
+              <p class="text-xs text-ink-300">Only OWNER or ADMIN can rename the workspace.</p>
             }
           }
         </mat-card-content>
@@ -31,7 +31,7 @@
       @if (loading() || canAdmin()) {
         <mat-card appearance="outlined">
           <mat-card-header>
-            <mat-card-title class="text-red-200">Delete organization</mat-card-title>
+            <mat-card-title class="text-red-200">Delete workspace</mat-card-title>
           </mat-card-header>
           <mat-card-content class="space-y-4">
             @if (loading()) {
@@ -41,7 +41,7 @@
               <p class="text-sm text-ink-200">
                 Removes repositories, analysis, findings, and every source-control installation. OWNER and ADMIN can do this.
               </p>
-              <button mat-flat-button color="warn" type="button" (click)="askDelete()">Delete organization</button>
+              <button mat-flat-button color="warn" type="button" (click)="askDelete()">Delete workspace</button>
             }
           </mat-card-content>
         </mat-card>

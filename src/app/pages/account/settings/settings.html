@@ -2,7 +2,7 @@
       <app-page-header
         eyebrow="Account"
         title="Settings"
-        subtitle="Personal profile and account deletion. Organization settings live on each organization."
+        subtitle="Personal profile and account deletion. Workspace settings live on each workspace."
       />
       <mat-card appearance="outlined">
         <mat-card-header>
@@ -62,18 +62,18 @@
       </mat-card>
       <mat-card appearance="outlined">
         <mat-card-header>
-          <mat-card-title>Organizations you belong to</mat-card-title>
+          <mat-card-title>Workspaces you belong to</mat-card-title>
         </mat-card-header>
         <mat-card-content>
-          @if (organizations().length === 0) {
-            <p class="text-sm text-ink-200">You are not in any organizations.</p>
+          @if (workspaces().length === 0) {
+            <p class="text-sm text-ink-200">You are not in any workspaces.</p>
           } @else {
             <app-data-table
-              [rows]="organizations()"
+              [rows]="workspaces()"
               [columns]="orgColumns"
-              searchLabel="Search organizations"
-              emptyLabel="No matching organizations."
-              loadingLabel="Loading organizations…"
+              searchLabel="Search workspaces"
+              emptyLabel="No matching workspaces."
+              loadingLabel="Loading workspaces…"
               [clickable]="true"
               (rowClick)="openOrgSettings($event)"
             />
@@ -86,12 +86,12 @@
         </mat-card-header>
         <mat-card-content class="space-y-4">
           <p class="text-sm text-ink-200">
-            This signs you out and removes your RepoDoctor user. Organizations you <span class="font-medium">own</span>
-            are deleted with their repositories, findings, and GitHub App installations. Organizations where you are only
+            This signs you out and removes your RepoDoctor user. Workspaces you <span class="font-medium">own</span>
+            are deleted with their repositories, findings, and GitHub App installations. Workspaces where you are only
             ADMIN, MEMBER, or VIEWER stay; you are removed from them.
           </p>
           @if (ownedOrgs().length > 0) {
-            <p class="text-sm text-red-200">Owned organizations that will be deleted: {{ ownedNames() }}</p>
+            <p class="text-sm text-red-200">Owned workspaces that will be deleted: {{ ownedNames() }}</p>
           }
           <button mat-flat-button color="warn" type="button" [disabled]="deleting()" (click)="askDeleteAccount()">
             {{ deleting() ? 'Deleting…' : 'Delete my account' }}

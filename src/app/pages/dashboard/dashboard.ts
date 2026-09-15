@@ -1,16 +1,16 @@
 import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
-import { OrganizationStore } from '../../stores/organization.store';
+import { WorkspaceStore } from '../../stores/workspace.store';
 import { Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { CatalogApi } from '../../api/catalog.api';
 import { AuthStore } from '../../stores/auth.store';
-import type { Finding, Organization } from '../../interfaces/api';
+import type { Finding, Workspace } from '../../interfaces/api';
 import { DataTableMobileDirective } from '../../components/data-table/data-table-mobile.directive';
 import { DataTableComponent } from '../../components/data-table/data-table';
 import { SkeletonComponent } from '../../components/skeleton/skeleton';
 import { PageHeaderComponent } from '../../components/page-header/page-header';
-import { findingColumns, organizationColumns } from '../../utils/data-table-columns';
+import { findingColumns, workspaceColumns } from '../../utils/data-table-columns';
 import { findingCategory } from '../../utils/finding-category';
 
 @Component({
@@ -29,15 +29,15 @@ import { findingCategory } from '../../utils/finding-category';
 })
 export class DashboardPage {
   readonly auth = inject(AuthStore);
-  private readonly organizationStore = inject(OrganizationStore);
+  private readonly workspaceStore = inject(WorkspaceStore);
   private readonly catalog = inject(CatalogApi);
   private readonly router = inject(Router);
-  readonly organizations = signal<Organization[]>([]);
+  readonly workspaces = signal<Workspace[]>([]);
   readonly repositoryCount = signal(0);
   readonly findings = signal<Finding[]>([]);
   readonly repositoryNames = signal<Record<string, string>>({});
   readonly loading = signal(true);
-  readonly orgColumns = organizationColumns();
+  readonly orgColumns = workspaceColumns();
   readonly findingCols = computed(() => findingColumns((finding) => this.repoName(finding)));
   readonly openFindings = () => this.findings().filter((item) => item.status === 'OPEN');
   readonly codeFindings = () =>
@@ -55,25 +55,25 @@ export class DashboardPage {
     return this.repositoryNames()[finding.repositoryId] ?? finding.repositoryId;
   }
 
-  openOrganization(org: Organization): void {
-    void this.router.navigate(['/organizations', org.id]);
+  openWorkspace(org: Workspace): void {
+    void this.router.navigate(['/workspaces', org.id]);
   }
 
   openFinding(finding: Finding): void {
     void this.router.navigate(['/repositories', finding.repositoryId, 'findings'], {
-      queryParams: { organizationId: finding.organizationId },
+      queryParams: { workspaceId: finding.workspaceId },
     });
   }
 
   private async refresh(): Promise<void> {
     this.loading.set(true);
     try {
-      const [organizations, repositories, findings] = await Promise.all([
-        this.organizationStore.listAll(),
+      const [workspaces, repositories, findings] = await Promise.all([
+        this.workspaceStore.listAll(),
         this.catalog.listMyRepositories().catch(() => []),
         this.catalog.listFindings().catch(() => []),
       ]);
-      this.organizations.set(organizations);
+      this.workspaces.set(workspaces);
       this.repositoryCount.set(repositories.length);
       this.findings.set(findings);
       const names: Record<string, string> = {};

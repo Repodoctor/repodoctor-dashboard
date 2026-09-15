@@ -1,17 +1,17 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { OrganizationsApi } from '../api/organizations.api';
+import { WorkspacesApi } from '../api/workspaces.api';
 import type {
-  Organization,
-  OrganizationInvite,
-  OrganizationInvitePreview,
-  OrganizationMember,
+  Workspace,
+  WorkspaceInvite,
+  WorkspaceInvitePreview,
+  WorkspaceMember,
 } from '../interfaces/api';
 
 /**
- * Shared organization state.
+ * Shared workspace state.
  *
  * Pages fetch through this store so the current org (and list) survive
- * tab switches inside `/organizations/:id` instead of each route
+ * tab switches inside `/workspaces/:id` instead of each route
  * re-owning the same GET.
  *
  * This is a signal store, not NgRx: the app is still small, auth already
@@ -19,36 +19,36 @@ import type {
  * second client (desktop/mobile) sharing the same state machine.
  */
 @Injectable({ providedIn: 'root' })
-export class OrganizationStore {
-  private readonly api = inject(OrganizationsApi);
+export class WorkspaceStore {
+  private readonly api = inject(WorkspacesApi);
 
-  private readonly currentSignal = signal<Organization | null>(null);
-  private readonly listSignal = signal<Organization[]>([]);
+  private readonly currentSignal = signal<Workspace | null>(null);
+  private readonly listSignal = signal<Workspace[]>([]);
 
   readonly current = this.currentSignal.asReadonly();
   readonly list = this.listSignal.asReadonly();
   readonly hasCurrent = computed(() => this.currentSignal() !== null);
 
-  async listAll(): Promise<Organization[]> {
+  async listAll(): Promise<Workspace[]> {
     const items = await this.api.list();
     this.listSignal.set(items);
     return items;
   }
 
-  async create(input: { name: string; slug?: string }): Promise<Organization> {
+  async create(input: { name: string; slug?: string }): Promise<Workspace> {
     const org = await this.api.create(input);
     this.listSignal.update((items) => [org, ...items.filter((item) => item.id !== org.id)]);
     return org;
   }
 
-  async get(id: string): Promise<Organization> {
+  async get(id: string): Promise<Workspace> {
     const org = await this.api.get(id);
     this.currentSignal.set(org);
     this.listSignal.update((items) => items.map((item) => (item.id === org.id ? org : item)));
     return org;
   }
 
-  async update(id: string, name: string): Promise<Organization> {
+  async update(id: string, name: string): Promise<Workspace> {
     const org = await this.api.update(id, name);
     if (this.currentSignal()?.id === id) {
       this.currentSignal.set(org);
@@ -65,42 +65,42 @@ export class OrganizationStore {
     this.listSignal.update((items) => items.filter((item) => item.id !== id));
   }
 
-  listMembers(organizationId: string): Promise<OrganizationMember[]> {
-    return this.api.listMembers(organizationId);
+  listMembers(workspaceId: string): Promise<WorkspaceMember[]> {
+    return this.api.listMembers(workspaceId);
   }
 
   addMember(
-    organizationId: string,
-    input: { email: string; role: OrganizationMember['role'] },
-  ): Promise<{ member?: OrganizationMember; invite?: OrganizationInvite }> {
-    return this.api.addMember(organizationId, input);
+    workspaceId: string,
+    input: { email: string; role: WorkspaceMember['role'] },
+  ): Promise<{ member?: WorkspaceMember; invite?: WorkspaceInvite }> {
+    return this.api.addMember(workspaceId, input);
   }
 
   updateMember(
-    organizationId: string,
+    workspaceId: string,
     userId: string,
-    role: OrganizationMember['role'],
-  ): Promise<OrganizationMember> {
-    return this.api.updateMember(organizationId, userId, role);
+    role: WorkspaceMember['role'],
+  ): Promise<WorkspaceMember> {
+    return this.api.updateMember(workspaceId, userId, role);
   }
 
-  removeMember(organizationId: string, userId: string): Promise<void> {
-    return this.api.removeMember(organizationId, userId);
+  removeMember(workspaceId: string, userId: string): Promise<void> {
+    return this.api.removeMember(workspaceId, userId);
   }
 
-  listInvites(organizationId: string): Promise<OrganizationInvite[]> {
-    return this.api.listInvites(organizationId);
+  listInvites(workspaceId: string): Promise<WorkspaceInvite[]> {
+    return this.api.listInvites(workspaceId);
   }
 
-  revokeInvite(organizationId: string, inviteId: string): Promise<void> {
-    return this.api.revokeInvite(organizationId, inviteId);
+  revokeInvite(workspaceId: string, inviteId: string): Promise<void> {
+    return this.api.revokeInvite(workspaceId, inviteId);
   }
 
-  previewInvite(token: string): Promise<OrganizationInvitePreview> {
+  previewInvite(token: string): Promise<WorkspaceInvitePreview> {
     return this.api.previewInvite(token);
   }
 
-  acceptInvite(token: string): Promise<OrganizationMember> {
+  acceptInvite(token: string): Promise<WorkspaceMember> {
     return this.api.acceptInvite(token);
   }
 

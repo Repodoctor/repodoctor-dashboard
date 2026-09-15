@@ -10,7 +10,7 @@ export interface ScmProviderOption {
 }
 
 export const SCM_PROVIDERS: ScmProviderOption[] = [
-  { id: 'github', label: 'GitHub', description: 'GitHub App for organizations and user accounts', available: true },
+  { id: 'github', label: 'GitHub', description: 'GitHub App for workspaces and user accounts', available: true },
   { id: 'gitlab', label: 'GitLab', description: 'Coming soon', available: false },
   { id: 'bitbucket', label: 'Bitbucket Cloud', description: 'Coming soon', available: false },
   { id: 'azure_devops', label: 'Azure DevOps', description: 'Coming soon', available: false },

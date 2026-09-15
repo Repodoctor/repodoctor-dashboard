@@ -13,11 +13,11 @@ export class DocsPage {
   readonly topics = [
     {
       title: 'Sign in',
-      body: 'Create an account, or accept an organization invite from email. GitHub OAuth is available on login.',
+      body: 'Create an account, or accept an workspace invite from email. GitHub OAuth is available on login.',
     },
     {
-      title: 'Organizations',
-      body: 'You can own two organizations on Free. Overview lists repositories and findings. Details, integrations, members, and permissions live in the tabs.',
+      title: 'Workspaces',
+      body: 'You can own two workspaces on Free. Overview lists repositories and findings. Details, integrations, members, and permissions live in the tabs.',
     },
     {
       title: 'Repository access',

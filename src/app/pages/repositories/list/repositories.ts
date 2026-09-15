@@ -44,7 +44,7 @@ export class RepositoriesPage {
 
   openRepository(repo: Repository): void {
     void this.router.navigate(['/repositories', repo.id, 'overview'], {
-      queryParams: { organizationId: repo.organizationId },
+      queryParams: { workspaceId: repo.workspaceId },
     });
   }
 

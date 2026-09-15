@@ -1,5 +1,5 @@
 import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
-import { OrganizationStore } from '../../../stores/organization.store';
+import { WorkspaceStore } from '../../../stores/workspace.store';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -26,7 +26,7 @@ import { LoadingButtonComponent } from '../../../components/loading-button/loadi
 export class LoginPage {
   private readonly fb = inject(FormBuilder);
   private readonly auth = inject(AuthStore);
-  private readonly organizations = inject(OrganizationStore);
+  private readonly workspaces = inject(WorkspaceStore);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly toast = inject(ToastService);
@@ -42,11 +42,11 @@ export class LoginPage {
     const token = this.route.snapshot.queryParamMap.get('invite');
     if (token) {
       this.inviteToken = token;
-      void this.organizations
+      void this.workspaces
         .previewInvite(token)
         .then((preview) => {
           this.form.patchValue({ email: preview.email });
-          this.inviteHint.set(`Join ${preview.organizationName} as ${preview.role} after you sign in.`);
+          this.inviteHint.set(`Join ${preview.workspaceName} as ${preview.role} after you sign in.`);
         })
         .catch(() => undefined);
     }
@@ -73,7 +73,7 @@ export class LoginPage {
       await this.auth.login(this.form.getRawValue());
       if (this.inviteToken) {
         try {
-          await this.organizations.acceptInvite(this.inviteToken);
+          await this.workspaces.acceptInvite(this.inviteToken);
         } catch {
           // ensureUser also accepts pending invites for this email.
         }

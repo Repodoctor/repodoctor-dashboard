@@ -250,7 +250,7 @@ export class AuthStore {
     return merged;
   }
 
-  async deleteAccount(): Promise<{ deletedOrganizationIds: string[] }> {
+  async deleteAccount(): Promise<{ deletedWorkspaceIds: string[] }> {
     const token = await this.getAccessToken();
     const result = await this.usersApi.deleteMe();
     if (this.supabase && token && environment.supabaseUrl && environment.supabaseAnonKey) {

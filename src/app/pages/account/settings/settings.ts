@@ -1,5 +1,5 @@
 import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
-import { OrganizationStore } from '../../../stores/organization.store';
+import { WorkspaceStore } from '../../../stores/workspace.store';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -12,14 +12,14 @@ import { AuthStore } from '../../../stores/auth.store';
 import { ToastService } from '../../../services/toast.service';
 import { errorMessage, isHttpError } from '../../../utils/error-message';
 import { passwordRules, passwordsMatch } from '../../../utils/password-strength';
-import type { Organization } from '../../../interfaces/api';
+import type { Workspace } from '../../../interfaces/api';
 import { ConfirmDialogComponent } from '../../../components/confirm-dialog/confirm-dialog';
 import { DataTableComponent } from '../../../components/data-table/data-table';
 import { AvatarComponent } from '../../../components/avatar/avatar';
 import { LoadingButtonComponent } from '../../../components/loading-button/loading-button';
 import { PageHeaderComponent } from '../../../components/page-header/page-header';
 import { PasswordFieldsComponent } from '../../../components/password-fields/password-fields';
-import { organizationColumns } from '../../../utils/data-table-columns';
+import { workspaceColumns } from '../../../utils/data-table-columns';
 
 @Component({
   selector: 'app-settings-page',
@@ -40,14 +40,14 @@ import { organizationColumns } from '../../../utils/data-table-columns';
 })
 export class SettingsPage {
   readonly auth = inject(AuthStore);
-  private readonly organizationStore = inject(OrganizationStore);
+  private readonly workspaceStore = inject(WorkspaceStore);
   private readonly toast = inject(ToastService);
   private readonly fb = inject(FormBuilder);
   private readonly router = inject(Router);
   private readonly dialog = inject(MatDialog);
 
-  readonly organizations = signal<Organization[]>([]);
-  readonly orgColumns = organizationColumns();
+  readonly workspaces = signal<Workspace[]>([]);
+  readonly orgColumns = workspaceColumns();
   readonly saving = signal(false);
   readonly savingPassword = signal(false);
   readonly deleting = signal(false);
@@ -64,15 +64,15 @@ export class SettingsPage {
     { validators: passwordsMatch },
   );
 
-  readonly ownedOrgs = () => this.organizations().filter((item) => item.role === 'OWNER');
+  readonly ownedOrgs = () => this.workspaces().filter((item) => item.role === 'OWNER');
   readonly ownedNames = () => this.ownedOrgs().map((item) => item.name).join(', ');
 
   constructor() {
     void this.load();
   }
 
-  openOrgSettings(org: Organization): void {
-    void this.router.navigate(['/organizations', org.id]);
+  openOrgSettings(org: Workspace): void {
+    void this.router.navigate(['/workspaces', org.id]);
   }
 
   async saveProfile(): Promise<void> {
@@ -122,8 +122,8 @@ export class SettingsPage {
             body:
               `This permanently deletes your RepoDoctor account and signs you out.` +
               (owned
-                ? ` Owned organizations that will also be deleted: ${owned}.`
-                : ' Organizations you do not own stay; you are removed from them.') +
+                ? ` Owned workspaces that will also be deleted: ${owned}.`
+                : ' Workspaces you do not own stay; you are removed from them.') +
               ' Type your email to confirm. This cannot be undone.',
             confirm: 'Delete my account',
             typedValueLabel: 'Type your email to confirm',
@@ -143,7 +143,7 @@ export class SettingsPage {
 
   private async load(): Promise<void> {
     try {
-      this.organizations.set(await this.organizationStore.listAll());
+      this.workspaces.set(await this.workspaceStore.listAll());
     } catch {
       // HTTP errors are toasted by the interceptor.
     }

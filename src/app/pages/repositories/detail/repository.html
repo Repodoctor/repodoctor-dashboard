@@ -4,7 +4,7 @@
           <a
             mat-tab-link
             [routerLink]="['/repositories', repositoryId, item]"
-            [queryParams]="{ organizationId: repository()?.organizationId }"
+            [queryParams]="{ workspaceId: repository()?.workspaceId }"
             routerLinkActive
             #rla="routerLinkActive"
             [active]="rla.isActive || knownSection() === item"
@@ -173,7 +173,7 @@
             <mat-card-content class="space-y-4">
               <p class="text-sm text-ink-200">
                 NONE hides this repository from MEMBER and VIEWER. VIEW reads findings. ANALYZE can request runs.
-                MANAGE is reserved. ADMIN sets grants. Organization owners and admins always have ADMIN.
+                MANAGE is reserved. ADMIN sets grants. Workspace owners and admins always have ADMIN.
               </p>
               @if (!canAdminRepo()) {
                 <p class="text-sm text-ink-200">You can view this repository as {{ repository()?.permission }}. Only repo ADMIN can change grants.</p>

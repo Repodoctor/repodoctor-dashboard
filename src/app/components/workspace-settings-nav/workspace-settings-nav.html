@@ -2,7 +2,7 @@
       @for (tab of tabs(); track tab.id) {
         <a
           mat-tab-link
-          [routerLink]="tab.id === 'overview' ? ['/organizations', organizationId()] : ['/organizations', organizationId(), tab.id]"
+          [routerLink]="tab.id === 'overview' ? ['/workspaces', workspaceId()] : ['/workspaces', workspaceId(), tab.id]"
           [active]="isTab(tab.id)"
         >
           {{ tab.label }}

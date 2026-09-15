@@ -1,8 +1,8 @@
-import type { Finding, Organization, Repository } from '../interfaces/api';
+import type { Finding, Workspace, Repository } from '../interfaces/api';
 import type { DataTableColumn } from '../components/data-table/data-table.types';
 
-export function organizationColumns(showActions = false): DataTableColumn<Organization>[] {
-  const cols: DataTableColumn<Organization>[] = [
+export function workspaceColumns(showActions = false): DataTableColumn<Workspace>[] {
+  const cols: DataTableColumn<Workspace>[] = [
     { key: 'name', header: 'Name', value: (org) => org.name, mobile: 'title' },
     { key: 'slug', header: 'Slug', type: 'mono', value: (org) => org.slug, mobile: 'meta' },
     { key: 'role', header: 'Role', type: 'accent', value: (org) => org.role ?? '', mobile: 'meta' },
@@ -73,10 +73,23 @@ export function repositoryColumns(
 ): DataTableColumn<Repository>[] {
   return [
     {
-      key: 'fullName',
+      key: 'name',
       header: 'Repo name',
-      value: (repo) => repo.fullName,
+      value: (repo) => repo.name,
       mobile: 'title',
+    },
+    {
+      key: 'owner',
+      header: 'Organization',
+      type: 'mono',
+      value: (repo) => repo.owner,
+      mobile: 'meta',
+    },
+    {
+      key: 'workspaceName',
+      header: 'Workspace',
+      value: (repo) => repo.workspaceName ?? 'Workspace',
+      mobile: 'meta',
     },
     {
       key: 'branch',

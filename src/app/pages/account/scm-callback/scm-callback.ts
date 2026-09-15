@@ -1,5 +1,5 @@
 import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
-import { OrganizationStore } from '../../../stores/organization.store';
+import { WorkspaceStore } from '../../../stores/workspace.store';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -7,9 +7,9 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ScmService } from '../../../services/scm.service';
 import { ToastService } from '../../../services/toast.service';
 import { scmProviderLabel, type ScmProviderName } from '../../../utils/scm-providers';
-import type { Organization } from '../../../interfaces/api';
+import type { Workspace } from '../../../interfaces/api';
 import { DataTableComponent } from '../../../components/data-table/data-table';
-import { organizationColumns } from '../../../utils/data-table-columns';
+import { workspaceColumns } from '../../../utils/data-table-columns';
 
 @Component({
   selector: 'app-scm-callback-page',
@@ -21,11 +21,11 @@ export class ScmCallbackPage {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly scm = inject(ScmService);
-  private readonly organizationStore = inject(OrganizationStore);
+  private readonly workspaceStore = inject(WorkspaceStore);
   private readonly toast = inject(ToastService);
 
-  readonly organizations = signal<Organization[]>([]);
-  readonly orgColumns = organizationColumns();
+  readonly workspaces = signal<Workspace[]>([]);
+  readonly orgColumns = workspaceColumns();
   readonly needsOrg = signal(false);
   readonly saving = signal(false);
   readonly failed = signal(false);
@@ -54,12 +54,12 @@ export class ScmCallbackPage {
     return query;
   }
 
-  async complete(organizationId: string): Promise<void> {
+  async complete(workspaceId: string): Promise<void> {
     this.needsOrg.set(false);
     this.saving.set(true);
     try {
-      const result = await this.scm.connect(organizationId, this.provider(), { callback: this.callbackQuery() });
-      this.scm.clearPendingOrganization();
+      const result = await this.scm.connect(workspaceId, this.provider(), { callback: this.callbackQuery() });
+      this.scm.clearPendingWorkspace();
       const count = result.repositories.length;
       this.toast.show(
         count === 1
@@ -67,7 +67,7 @@ export class ScmCallbackPage {
           : `Connected ${count} repositories from ${this.label()}.`,
         'success',
       );
-      await this.finishConnect(organizationId);
+      await this.finishConnect(workspaceId);
     } catch {
       this.failed.set(true);
     } finally {
@@ -75,15 +75,15 @@ export class ScmCallbackPage {
     }
   }
 
-  private async finishConnect(organizationId: string): Promise<void> {
+  private async finishConnect(workspaceId: string): Promise<void> {
     const origin = window.location.origin;
     const isPopup = window.name === 'repodoctor-scm-install' || Boolean(window.opener && !window.opener.closed);
     if (window.opener && !window.opener.closed) {
       try {
-        window.opener.postMessage({ type: 'repodoctor-scm-connected', organizationId }, origin);
+        window.opener.postMessage({ type: 'repodoctor-scm-connected', workspaceId }, origin);
       } catch {
         try {
-          window.opener.location.assign(`/organizations/${organizationId}/integrations`);
+          window.opener.location.assign(`/workspaces/${workspaceId}/integrations`);
         } catch {
           // Fall through to close or in-tab navigation.
         }
@@ -93,26 +93,26 @@ export class ScmCallbackPage {
       window.close();
       return;
     }
-    await this.router.navigate(['/organizations', organizationId, 'integrations']);
+    await this.router.navigate(['/workspaces', workspaceId, 'integrations']);
   }
 
   private async start(): Promise<void> {
-    const fromState = this.scm.organizationIdFromState(this.route.snapshot.queryParamMap.get('state'));
-    const organizationId = fromState ?? this.scm.readPendingOrganization();
-    if (organizationId) {
-      await this.complete(organizationId);
+    const fromState = this.scm.workspaceIdFromState(this.route.snapshot.queryParamMap.get('state'));
+    const workspaceId = fromState ?? this.scm.readPendingWorkspace();
+    if (workspaceId) {
+      await this.complete(workspaceId);
       return;
     }
     try {
-      const items = await this.organizationStore.listAll();
-      this.organizations.set(items);
+      const items = await this.workspaceStore.listAll();
+      this.workspaces.set(items);
       if (items.length === 1) {
         await this.complete(items[0]!.id);
         return;
       }
       if (items.length === 0) {
         this.failed.set(true);
-        this.toast.show('Create an organization before connecting source control.', 'error');
+        this.toast.show('Create a workspace before connecting source control.', 'error');
         return;
       }
       this.needsOrg.set(true);

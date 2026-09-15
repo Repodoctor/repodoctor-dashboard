@@ -1,5 +1,5 @@
 import { Component, DestroyRef, inject, signal, ChangeDetectionStrategy } from '@angular/core';
-import { OrganizationStore } from '../../../stores/organization.store';
+import { WorkspaceStore } from '../../../stores/workspace.store';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -10,11 +10,11 @@ import { firstValueFrom } from 'rxjs';
 import { ScmService } from '../../../services/scm.service';
 import { ToastService } from '../../../services/toast.service';
 import { SCM_PROVIDERS, scmProviderLabel, type ScmProviderName } from '../../../utils/scm-providers';
-import type { Organization, Repository, ScmInstallation } from '../../../interfaces/api';
+import type { Workspace, Repository, ScmInstallation } from '../../../interfaces/api';
 import { ConfirmDialogComponent } from '../../../components/confirm-dialog/confirm-dialog';
 import { SkeletonComponent } from '../../../components/skeleton/skeleton';
 import { BusyOverlayComponent } from '../../../components/busy-overlay/busy-overlay';
-import { isOrgAdmin } from '../../../utils/org-role';
+import { isOrgAdmin } from '../../../utils/workspace-role';
 
 interface ProviderRow {
   provider: ScmProviderName;
@@ -22,7 +22,7 @@ interface ProviderRow {
 }
 
 @Component({
-  selector: 'app-organization-integrations-page',
+  selector: 'app-workspace-integrations-page',
   imports: [
     MatButtonModule,
     MatCardModule,
@@ -32,10 +32,10 @@ interface ProviderRow {
     BusyOverlayComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  templateUrl: './organization-integrations.html',
+  templateUrl: './workspace-integrations.html',
 })
-export class OrganizationIntegrationsPage {
-  private readonly organizations = inject(OrganizationStore);
+export class WorkspaceIntegrationsPage {
+  private readonly workspaces = inject(WorkspaceStore);
   private readonly scm = inject(ScmService);
   private readonly toast = inject(ToastService);
   private readonly route = inject(ActivatedRoute);
@@ -44,7 +44,7 @@ export class OrganizationIntegrationsPage {
   private readonly destroyRef = inject(DestroyRef);
 
   readonly providers = SCM_PROVIDERS;
-  readonly org = signal<Organization | null>(null);
+  readonly org = signal<Workspace | null>(null);
   readonly installations = signal<ScmInstallation[]>([]);
   readonly repositories = signal<Repository[]>([]);
   readonly loading = signal(true);
@@ -55,9 +55,9 @@ export class OrganizationIntegrationsPage {
   readonly canAdmin = () => isOrgAdmin(this.org()?.role);
 
   constructor() {
-    const id = this.route.snapshot.paramMap.get('organizationId');
+    const id = this.route.snapshot.paramMap.get('workspaceId');
     if (!id) {
-      this.toast.show('Missing organization id', 'error');
+      this.toast.show('Missing workspace id', 'error');
       this.loading.set(false);
       return;
     }
@@ -65,8 +65,8 @@ export class OrganizationIntegrationsPage {
     const onMessage = (event: MessageEvent) => {
       if (event.origin !== window.location.origin) return;
       if (event.data?.type !== 'repodoctor-scm-connected') return;
-      const organizationId = typeof event.data.organizationId === 'string' ? event.data.organizationId : id;
-      void this.onScmConnected(organizationId);
+      const workspaceId = typeof event.data.workspaceId === 'string' ? event.data.workspaceId : id;
+      void this.onScmConnected(workspaceId);
     };
     window.addEventListener('message', onMessage);
     this.destroyRef.onDestroy(() => window.removeEventListener('message', onMessage));
@@ -185,7 +185,7 @@ export class OrganizationIntegrationsPage {
     this.busy.set(`Waiting for ${this.providerLabel(provider)}…`);
     this.waitingPopup.set(true);
     try {
-      this.scm.rememberOrganization(org.id);
+      this.scm.rememberWorkspace(org.id);
       const { url } = await this.scm.getInstallUrl(org.id, provider, externalInstallationId);
       const popup = window.open(url, 'repodoctor-scm-install', 'popup=yes,width=980,height=780');
       if (!popup) {
@@ -202,10 +202,10 @@ export class OrganizationIntegrationsPage {
     }
   }
 
-  private async onScmConnected(organizationId: string): Promise<void> {
+  private async onScmConnected(workspaceId: string): Promise<void> {
     this.waitingPopup.set(false);
     this.busy.set(null);
-    await this.load(organizationId);
+    await this.load(workspaceId);
   }
 
   private waitForPopup(popup: Window): Promise<void> {
@@ -237,10 +237,10 @@ export class OrganizationIntegrationsPage {
 
   private async load(id: string): Promise<void> {
     try {
-      const org = await this.organizations.get(id);
+      const org = await this.workspaces.get(id);
       this.org.set(org);
       if (!isOrgAdmin(org.role)) {
-        await this.router.navigate(['/organizations', id]);
+        await this.router.navigate(['/workspaces', id]);
         return;
       }
       const [installations, repositories] = await Promise.all([

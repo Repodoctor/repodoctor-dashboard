@@ -1,5 +1,5 @@
 import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
-import { OrganizationStore } from '../../../stores/organization.store';
+import { WorkspaceStore } from '../../../stores/workspace.store';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -11,17 +11,17 @@ import { MatMenuModule } from '@angular/material/menu';
 import { ActivatedRoute, Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { ToastService } from '../../../services/toast.service';
-import type { Organization } from '../../../interfaces/api';
+import type { Workspace } from '../../../interfaces/api';
 import { ConfirmDialogComponent } from '../../../components/confirm-dialog/confirm-dialog';
 import { DataTableCellDirective } from '../../../components/data-table/data-table-cell.directive';
 import { DataTableMobileDirective } from '../../../components/data-table/data-table-mobile.directive';
 import { DataTableComponent } from '../../../components/data-table/data-table';
 import { PageHeaderComponent } from '../../../components/page-header/page-header';
-import { organizationColumns } from '../../../utils/data-table-columns';
+import { workspaceColumns } from '../../../utils/data-table-columns';
 import { FREE_PLAN } from '../../../utils/plan';
 
 @Component({
-  selector: 'app-organizations-page',
+  selector: 'app-workspaces-page',
   imports: [
     ReactiveFormsModule,
     MatButtonModule,
@@ -36,22 +36,22 @@ import { FREE_PLAN } from '../../../utils/plan';
     PageHeaderComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  templateUrl: './organizations.html',
+  templateUrl: './workspaces.html',
 })
-export class OrganizationsPage {
-  private readonly organizations = inject(OrganizationStore);
+export class WorkspacesPage {
+  private readonly workspaces = inject(WorkspaceStore);
   private readonly toast = inject(ToastService);
   private readonly fb = inject(FormBuilder);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly dialog = inject(MatDialog);
-  readonly items = signal<Organization[]>([]);
+  readonly items = signal<Workspace[]>([]);
   readonly loading = signal(true);
   readonly saving = signal(false);
   readonly plan = FREE_PLAN;
-  readonly orgColumns = organizationColumns(true);
+  readonly orgColumns = workspaceColumns(true);
   readonly ownedCount = () => this.items().filter((org) => org.role === 'OWNER').length;
-  readonly atOrgLimit = () => this.ownedCount() >= FREE_PLAN.maxOwnedOrganizations;
+  readonly atWorkspaceLimit = () => this.ownedCount() >= FREE_PLAN.maxOwnedWorkspaces;
   readonly form = this.fb.nonNullable.group({
     name: ['', [Validators.required, Validators.minLength(2)]],
     slug: [''],
@@ -73,19 +73,19 @@ export class OrganizationsPage {
     void this.refresh();
   }
 
-  open(org: Organization): void {
-    void this.router.navigate(['/organizations', org.id]);
+  open(org: Workspace): void {
+    void this.router.navigate(['/workspaces', org.id]);
   }
 
-  async askDelete(org: Organization): Promise<void> {
+  async askDelete(org: Workspace): Promise<void> {
     const confirmed = await firstValueFrom(
       this.dialog
         .open(ConfirmDialogComponent, {
           data: {
-            title: 'Delete organization',
-            body: `Delete ${org.name}? Repositories, analysis runs, findings, and GitHub App installations are removed. RepoDoctor also uninstalls the GitHub App from that account. Type the organization name to confirm. This cannot be undone.`,
-            confirm: 'Delete organization',
-            typedValueLabel: 'Type the organization name to confirm',
+            title: 'Delete workspace',
+            body: `Delete ${org.name}? Repositories, analysis runs, findings, and GitHub App installations are removed. RepoDoctor also uninstalls the GitHub App from that account. Type the workspace name to confirm. This cannot be undone.`,
+            confirm: 'Delete workspace',
+            typedValueLabel: 'Type the workspace name to confirm',
             typedValueToMatch: org.name,
           },
         })
@@ -94,7 +94,7 @@ export class OrganizationsPage {
     if (!confirmed) return;
     this.saving.set(true);
     try {
-      await this.organizations.delete(org.id);
+      await this.workspaces.delete(org.id);
       this.toast.show(`${org.name} was deleted.`, 'success');
       await this.refresh();
     } catch {
@@ -108,7 +108,7 @@ export class OrganizationsPage {
     this.saving.set(true);
     try {
       const { name, slug } = this.form.getRawValue();
-      await this.organizations.create({ name, slug: slug || undefined });
+      await this.workspaces.create({ name, slug: slug || undefined });
       this.form.reset({ name: '', slug: '' });
       await this.refresh();
     } catch {
@@ -121,7 +121,7 @@ export class OrganizationsPage {
   private async refresh(): Promise<void> {
     this.loading.set(true);
     try {
-      this.items.set(await this.organizations.listAll());
+      this.items.set(await this.workspaces.listAll());
     } catch {
       // HTTP errors are toasted by the interceptor.
     } finally {

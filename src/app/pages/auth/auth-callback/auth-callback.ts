@@ -1,5 +1,5 @@
 import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
-import { OrganizationStore } from '../../../stores/organization.store';
+import { WorkspaceStore } from '../../../stores/workspace.store';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { AuthStore } from '../../../stores/auth.store';
@@ -13,7 +13,7 @@ import { ToastService } from '../../../services/toast.service';
 })
 export class AuthCallbackPage {
   private readonly auth = inject(AuthStore);
-  private readonly organizations = inject(OrganizationStore);
+  private readonly workspaces = inject(WorkspaceStore);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly toast = inject(ToastService);
@@ -39,7 +39,7 @@ export class AuthCallbackPage {
       this.route.snapshot.queryParamMap.get('invite') ?? this.auth.pendingInviteToken();
     if (invite) {
       try {
-        await this.organizations.acceptInvite(invite);
+        await this.workspaces.acceptInvite(invite);
         this.auth.clearPendingInvite();
       } catch {
         this.toast.show('Signed in, but this invite belongs to a different email address.', 'error');

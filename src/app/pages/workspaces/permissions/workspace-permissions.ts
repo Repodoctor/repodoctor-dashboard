@@ -1,5 +1,5 @@
 import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
-import { OrganizationStore } from '../../../stores/organization.store';
+import { WorkspaceStore } from '../../../stores/workspace.store';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -8,12 +8,12 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { CatalogApi } from '../../../api/catalog.api';
 import { ScmService } from '../../../services/scm.service';
 import { ToastService } from '../../../services/toast.service';
-import type { Organization, Repository, RepositoryAccessGrant } from '../../../interfaces/api';
+import type { Workspace, Repository, RepositoryAccessGrant } from '../../../interfaces/api';
 import { DataTableCellDirective } from '../../../components/data-table/data-table-cell.directive';
 import { DataTableMobileDirective } from '../../../components/data-table/data-table-mobile.directive';
 import { DataTableComponent } from '../../../components/data-table/data-table';
 import type { DataTableColumn } from '../../../components/data-table/data-table.types';
-import { isOrgAdmin } from '../../../utils/org-role';
+import { isOrgAdmin } from '../../../utils/workspace-role';
 
 const PERMISSIONS = ['NONE', 'VIEW', 'ANALYZE', 'MANAGE', 'ADMIN'] as const;
 
@@ -23,7 +23,7 @@ interface PermissionRow extends RepositoryAccessGrant {
 }
 
 @Component({
-  selector: 'app-organization-permissions-page',
+  selector: 'app-workspace-permissions-page',
   imports: [
     MatButtonModule,
     MatCardModule,
@@ -34,17 +34,17 @@ interface PermissionRow extends RepositoryAccessGrant {
     DataTableMobileDirective,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  templateUrl: './organization-permissions.html',
+  templateUrl: './workspace-permissions.html',
 })
-export class OrganizationPermissionsPage {
-  private readonly organizations = inject(OrganizationStore);
+export class WorkspacePermissionsPage {
+  private readonly workspaces = inject(WorkspaceStore);
   private readonly scm = inject(ScmService);
   private readonly catalog = inject(CatalogApi);
   private readonly toast = inject(ToastService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
-  readonly org = signal<Organization | null>(null);
+  readonly org = signal<Workspace | null>(null);
   readonly rows = signal<PermissionRow[]>([]);
   readonly drafts = signal<Record<string, RepositoryAccessGrant['permission']>>({});
   readonly loading = signal(true);
@@ -81,9 +81,9 @@ export class OrganizationPermissionsPage {
   readonly trackRow = (row: PermissionRow) => this.draftKey(row);
 
   constructor() {
-    const id = this.route.snapshot.paramMap.get('organizationId');
+    const id = this.route.snapshot.paramMap.get('workspaceId');
     if (!id) {
-      this.toast.show('Missing organization id', 'error');
+      this.toast.show('Missing workspace id', 'error');
       this.loading.set(false);
       return;
     }
@@ -143,12 +143,12 @@ export class OrganizationPermissionsPage {
   private async load(id: string): Promise<void> {
     try {
       const [org, repositories] = await Promise.all([
-        this.organizations.get(id),
+        this.workspaces.get(id),
         this.scm.listRepositories(id).catch(() => [] as Repository[]),
       ]);
       this.org.set(org);
       if (!isOrgAdmin(org.role)) {
-        await this.router.navigate(['/organizations', id]);
+        await this.router.navigate(['/workspaces', id]);
         return;
       }
       const grants = await Promise.all(

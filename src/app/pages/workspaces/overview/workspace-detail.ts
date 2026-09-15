@@ -1,13 +1,13 @@
 import { DatePipe } from '@angular/common';
 import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
-import { OrganizationStore } from '../../../stores/organization.store';
+import { WorkspaceStore } from '../../../stores/workspace.store';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { ScmService } from '../../../services/scm.service';
 import { CatalogApi } from '../../../api/catalog.api';
 import { ToastService } from '../../../services/toast.service';
 import { scmProviderLabel, type ScmProviderName } from '../../../utils/scm-providers';
-import type { Finding, Organization, Repository, ScmInstallation } from '../../../interfaces/api';
+import type { Finding, Workspace, Repository, ScmInstallation } from '../../../interfaces/api';
 import { DataTableCellDirective } from '../../../components/data-table/data-table-cell.directive';
 import { DataTableMobileDirective } from '../../../components/data-table/data-table-mobile.directive';
 import { DataTableComponent } from '../../../components/data-table/data-table';
@@ -16,7 +16,7 @@ import { findingColumns, repositoryColumns } from '../../../utils/data-table-col
 import { categoryPath, findingCategory } from '../../../utils/finding-category';
 
 @Component({
-  selector: 'app-organization-detail-page',
+  selector: 'app-workspace-detail-page',
   imports: [
     DatePipe,
     RouterLink,
@@ -27,17 +27,17 @@ import { categoryPath, findingCategory } from '../../../utils/finding-category';
     SkeletonComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  templateUrl: './organization-detail.html',
+  templateUrl: './workspace-detail.html',
 })
-export class OrganizationDetailPage {
-  private readonly organizations = inject(OrganizationStore);
+export class WorkspaceDetailPage {
+  private readonly workspaces = inject(WorkspaceStore);
   private readonly scm = inject(ScmService);
   private readonly catalog = inject(CatalogApi);
   private readonly toast = inject(ToastService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
-  readonly org = signal<Organization | null>(null);
+  readonly org = signal<Workspace | null>(null);
   readonly installations = signal<ScmInstallation[]>([]);
   readonly repositories = signal<Repository[]>([]);
   readonly findings = signal<Finding[]>([]);
@@ -56,9 +56,9 @@ export class OrganizationDetailPage {
   }
 
   constructor() {
-    const id = this.route.snapshot.paramMap.get('organizationId');
+    const id = this.route.snapshot.paramMap.get('workspaceId');
     if (!id) {
-      this.toast.show('Missing organization id', 'error');
+      this.toast.show('Missing workspace id', 'error');
       this.loading.set(false);
       return;
     }
@@ -91,20 +91,20 @@ export class OrganizationDetailPage {
 
   openRepository(repo: Repository): void {
     void this.router.navigate(['/repositories', repo.id, 'overview'], {
-      queryParams: { organizationId: repo.organizationId },
+      queryParams: { workspaceId: repo.workspaceId },
     });
   }
 
   openFinding(finding: Finding): void {
     void this.router.navigate(['/repositories', finding.repositoryId, 'findings'], {
-      queryParams: { organizationId: finding.organizationId },
+      queryParams: { workspaceId: finding.workspaceId },
     });
   }
 
   private async load(id: string): Promise<void> {
     try {
       const [org, installations, repositories, findings] = await Promise.all([
-        this.organizations.get(id),
+        this.workspaces.get(id),
         this.scm.listInstallations(id).catch(() => [] as ScmInstallation[]),
         this.scm.listRepositories(id).catch(() => [] as Repository[]),
         this.catalog.listFindings(id).catch(() => [] as Finding[]),

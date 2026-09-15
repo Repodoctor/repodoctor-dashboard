@@ -15,11 +15,11 @@
           <mat-card-content class="space-y-3">
             <p class="text-3xl font-semibold tracking-tight">$0</p>
             <ul class="list-disc space-y-1.5 pl-5 text-sm text-ink-200">
-              <li>{{ plan.maxOwnedOrganizations }} organizations you own</li>
-              <li>{{ plan.maxRepositoriesPerOrganization }} repositories per organization</li>
-              <li>{{ plan.maxMembersPerOrganization }} members per organization</li>
-              <li>{{ plan.maxPendingInvitesPerOrganization }} pending invites</li>
-              <li>{{ plan.maxScmInstallationsPerOrganization }} GitHub App installation per organization</li>
+              <li>{{ plan.maxOwnedWorkspaces }} workspaces you own</li>
+              <li>{{ plan.maxRepositoriesPerWorkspace }} repositories per workspace</li>
+              <li>{{ plan.maxMembersPerWorkspace }} members per workspace</li>
+              <li>{{ plan.maxPendingInvitesPerWorkspace }} pending invites</li>
+              <li>{{ plan.maxScmInstallationsPerWorkspace }} GitHub App installations per workspace</li>
               <li>{{ plan.maxManualAnalysisRunsPerRepositoryPerDay }} manual scans per repository per day</li>
             </ul>
             <a mat-flat-button routerLink="/signup">Start on Free</a>
@@ -32,7 +32,7 @@
           <mat-card-content class="space-y-3">
             <p class="font-mono text-xs uppercase tracking-[0.16em] text-pulse">Coming later</p>
             <p class="text-sm leading-relaxed text-ink-200">
-              Higher organization, repository, member, and analysis limits. Checkout will go through Stripe.
+              Higher workspace, repository, member, and analysis limits. Checkout will go through Stripe.
               Nothing to buy during alpha.
             </p>
             <button mat-stroked-button type="button" disabled>Not available yet</button>

@@ -6,7 +6,7 @@ Version: `0.1.0-alpha.1` (alpha).
 
 ## Purpose
 
-Public marketing pages plus a developer dashboard for authentication, organizations, repositories, findings, and analysis.
+Public marketing pages plus a developer dashboard for authentication, workspaces, repositories, findings, and analysis.
 
 ## Visual system
 
@@ -16,7 +16,7 @@ Near-black panels with pulse green (`#3ee0b2`), in the spirit of GitHub and Supa
 
 - `src/app/pages/public/` — home, Products, Solutions, Pricing, Docs
 - `src/app/pages/auth/` — login, signup, password, callback, error
-- `src/app/pages/organizations/` — list, overview, details, integrations, members, permissions
+- `src/app/pages/workspaces/` — list, overview, details, integrations, members, permissions
 - `src/app/pages/repositories/` — all-repos list plus repository detail
 - `src/app/pages/findings/` — Code, Secrets, and Supply chain inboxes
 - `src/app/pages/account/` — profile settings and SCM callback
@@ -27,7 +27,7 @@ Near-black panels with pulse green (`#3ee0b2`), in the spirit of GitHub and Supa
 - `/` `/products` `/solutions` `/pricing` `/docs`
 - `/login` `/signup` `/forgot-password`
 - `/dashboard`
-- `/organizations` `/organizations/:organizationId` (tabs: overview, details, integrations, members, permissions — permissions is OWNER/ADMIN only)
+- `/workspaces` `/workspaces/:workspaceId` (tabs: overview, details, integrations, members, permissions — permissions is OWNER/ADMIN only)
 - `/repositories` `/repositories/:repositoryId/{overview,findings,analysis,settings}`
 - `/code` `/secrets` `/supply-chain`
 - `/settings`
@@ -36,7 +36,7 @@ Near-black panels with pulse green (`#3ee0b2`), in the spirit of GitHub and Supa
 
 Only Free is available. Paid checkout (Stripe) is not implemented yet.
 
-- 2 organizations you own
+- 2 workspaces you own
 - 20 repositories per organization
 - 5 members per organization
 - 10 pending invites

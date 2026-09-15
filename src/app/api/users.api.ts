@@ -14,7 +14,7 @@ export class UsersApi {
     return this.api.patch<User>('/users/me', { displayName });
   }
 
-  deleteMe(): Promise<{ deletedOrganizationIds: string[] }> {
-    return this.api.delete<{ deletedOrganizationIds: string[] }>('/users/me');
+  deleteMe(): Promise<{ deletedWorkspaceIds: string[] }> {
+    return this.api.delete<{ deletedWorkspaceIds: string[] }>('/users/me');
   }
 }

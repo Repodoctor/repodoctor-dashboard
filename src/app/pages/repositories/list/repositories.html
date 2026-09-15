@@ -2,12 +2,12 @@
       <app-page-header
         eyebrow="Inventory"
         title="Repositories"
-        subtitle="Every repository you can access across organizations, with scan and finding counts."
+        subtitle="Every repository you can access across workspaces, with scan and finding counts."
       />
       @if (!loading() && repositories().length === 0) {
         <mat-card appearance="outlined">
           <mat-card-content>
-            <p class="text-sm text-ink-200">No repositories yet. Connect GitHub from an organization Integrations tab.</p>
+            <p class="text-sm text-ink-200">No repositories yet. Connect GitHub from a workspace Integrations tab.</p>
           </mat-card-content>
         </mat-card>
       } @else {
@@ -48,9 +48,10 @@
                   class="w-full rounded-xl border border-line bg-panel p-4 text-left"
                   (click)="openRepository(repo)"
                 >
-                  <p class="font-medium">{{ repo.fullName }}</p>
+                  <p class="font-medium">{{ repo.name }}</p>
                   <p class="mt-2 font-mono text-xs text-ink-200">
-                    {{ repo.defaultBranch }} · {{ repo.private ? 'private' : 'public' }}
+                    {{ repo.owner }} · {{ repo.workspaceName || 'Workspace' }} · {{ repo.defaultBranch }} ·
+                    {{ repo.private ? 'private' : 'public' }}
                   </p>
                   <p class="mt-1 font-mono text-xs text-mute">
                     {{ repo.lastAnalyzedAt ? (repo.lastAnalyzedAt | date: 'medium') : 'Never scanned' }}

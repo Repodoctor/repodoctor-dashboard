@@ -11,13 +11,13 @@ export class CatalogApi {
     return response.items ?? [];
   }
 
-  getRepository(repositoryId: string, organizationId?: string): Promise<Repository> {
-    return this.api.get<Repository>(`/repositories/${repositoryId}`, { organizationId });
+  getRepository(repositoryId: string, workspaceId?: string): Promise<Repository> {
+    return this.api.get<Repository>(`/repositories/${repositoryId}`, { workspaceId });
   }
 
-  async listAnalysis(organizationId: string, repositoryId: string): Promise<AnalysisRun[]> {
+  async listAnalysis(workspaceId: string, repositoryId: string): Promise<AnalysisRun[]> {
     const response = await this.api.get<{ items: AnalysisRun[] }>('/analysis', {
-      organizationId,
+      workspaceId,
       repositoryId,
     });
     return response.items ?? [];
@@ -25,7 +25,7 @@ export class CatalogApi {
 
   requestAnalysis(
     repositoryId: string,
-    organizationId: string,
+    workspaceId: string,
     input: { commitSha: string; branch: string },
   ): Promise<AnalysisRun> {
     return this.api.post<AnalysisRun>(
@@ -36,23 +36,23 @@ export class CatalogApi {
         commitSha: input.commitSha,
         branch: input.branch,
       },
-      { organizationId },
+      { workspaceId },
     );
   }
 
-  async listFindings(organizationId?: string, repositoryId?: string): Promise<Finding[]> {
+  async listFindings(workspaceId?: string, repositoryId?: string): Promise<Finding[]> {
     const response = await this.api.get<{ items: Finding[] }>('/findings', {
-      organizationId,
+      workspaceId,
       repositoryId,
       pageSize: 100,
     });
     return response.items ?? [];
   }
 
-  async listRepositoryAccess(repositoryId: string, organizationId?: string): Promise<RepositoryAccessGrant[]> {
+  async listRepositoryAccess(repositoryId: string, workspaceId?: string): Promise<RepositoryAccessGrant[]> {
     const response = await this.api.get<{ items: RepositoryAccessGrant[] }>(
       `/repositories/${repositoryId}/access`,
-      { organizationId },
+      { workspaceId },
     );
     return response.items ?? [];
   }
@@ -61,16 +61,16 @@ export class CatalogApi {
     repositoryId: string,
     userId: string,
     permission: RepositoryAccessGrant['permission'],
-    organizationId?: string,
+    workspaceId?: string,
   ): Promise<RepositoryAccessGrant> {
     return this.api.put<RepositoryAccessGrant>(
       `/repositories/${repositoryId}/access/${userId}`,
       { permission },
-      { organizationId },
+      { workspaceId },
     );
   }
 
-  resetRepositoryAccess(repositoryId: string, userId: string, organizationId?: string): Promise<void> {
-    return this.api.delete(`/repositories/${repositoryId}/access/${userId}`, { organizationId });
+  resetRepositoryAccess(repositoryId: string, userId: string, workspaceId?: string): Promise<void> {
+    return this.api.delete(`/repositories/${repositoryId}/access/${userId}`, { workspaceId });
   }
 }

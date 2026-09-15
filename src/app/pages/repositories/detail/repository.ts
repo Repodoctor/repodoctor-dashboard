@@ -137,7 +137,7 @@ export class RepositoryPage {
     const repo = this.repository();
     if (!repo) return;
     try {
-      const updated = await this.catalog.updateRepositoryAccess(repo.id, grant.userId, permission, repo.organizationId);
+      const updated = await this.catalog.updateRepositoryAccess(repo.id, grant.userId, permission, repo.workspaceId);
       this.access.set(this.access().map((item) => (item.userId === updated.userId ? updated : item)));
     } catch {
       // HTTP errors are toasted by the interceptor.
@@ -150,7 +150,7 @@ export class RepositoryPage {
     this.requesting.set(true);
     try {
       const latest = this.latestAnalysis();
-      const run = await this.catalog.requestAnalysis(repo.id, repo.organizationId, {
+      const run = await this.catalog.requestAnalysis(repo.id, repo.workspaceId, {
         commitSha: latest?.commitSha ?? '0000000',
         branch: repo.defaultBranch,
       });
@@ -169,14 +169,14 @@ export class RepositoryPage {
       return;
     }
     try {
-      const organizationId = this.route.snapshot.queryParamMap.get('organizationId') ?? undefined;
-      const repo = await this.catalog.getRepository(this.repositoryId, organizationId);
+      const workspaceId = this.route.snapshot.queryParamMap.get('workspaceId') ?? undefined;
+      const repo = await this.catalog.getRepository(this.repositoryId, workspaceId);
       this.repository.set(repo);
       const [analyses, findings, access] = await Promise.all([
-        this.catalog.listAnalysis(repo.organizationId, repo.id),
-        this.catalog.listFindings(repo.organizationId, repo.id).catch(() => [] as Finding[]),
+        this.catalog.listAnalysis(repo.workspaceId, repo.id),
+        this.catalog.listFindings(repo.workspaceId, repo.id).catch(() => [] as Finding[]),
         repo.permission === 'ADMIN'
-          ? this.catalog.listRepositoryAccess(repo.id, repo.organizationId).catch(() => [] as RepositoryAccessGrant[])
+          ? this.catalog.listRepositoryAccess(repo.id, repo.workspaceId).catch(() => [] as RepositoryAccessGrant[])
           : Promise.resolve([] as RepositoryAccessGrant[]),
       ]);
       this.analyses.set(analyses);

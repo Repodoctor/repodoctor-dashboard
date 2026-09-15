@@ -1,11 +1,11 @@
     <div class="flex flex-col gap-2">
       <app-page-header eyebrow="Overview" [title]="'Welcome back' + (auth.user() ? ', ' + auth.user()!.displayName : '')" />
-      @if (!loading() && organizations().length === 0) {
+      @if (!loading() && workspaces().length === 0) {
         <mat-card appearance="outlined">
           <mat-card-content>
-            <h2 class="text-lg font-medium">No organizations yet</h2>
-            <p class="mt-2 text-sm text-ink-200">Create an organization to start connecting repositories.</p>
-            <a mat-flat-button class="mt-4" routerLink="/organizations">Create organization</a>
+            <h2 class="text-lg font-medium">No workspaces yet</h2>
+            <p class="mt-2 text-sm text-ink-200">Create a workspace to start connecting repositories.</p>
+            <a mat-flat-button class="mt-4" routerLink="/workspaces">Create workspace</a>
           </mat-card-content>
         </mat-card>
       } @else {
@@ -22,8 +22,8 @@
           } @else {
             <mat-card appearance="outlined">
               <mat-card-content>
-                <p class="text-xs uppercase text-ink-200">Organizations</p>
-                <p class="mt-2 font-mono text-3xl text-moss-300">{{ organizations().length }}</p>
+                <p class="text-xs uppercase text-ink-200">Workspaces</p>
+                <p class="mt-2 font-mono text-3xl text-moss-300">{{ workspaces().length }}</p>
               </mat-card-content>
             </mat-card>
             <mat-card appearance="outlined">
@@ -108,17 +108,17 @@
         }
         <mat-card appearance="outlined">
           <mat-card-header>
-            <mat-card-title>Your organizations</mat-card-title>
+            <mat-card-title>Your workspaces</mat-card-title>
           </mat-card-header>
           <mat-card-content>
             <app-data-table
-              [rows]="organizations()"
+              [rows]="workspaces()"
               [columns]="orgColumns"
               [loading]="loading()"
-              searchLabel="Search organizations"
-              emptyLabel="No matching organizations."
+              searchLabel="Search workspaces"
+              emptyLabel="No matching workspaces."
               [clickable]="true"
-              (rowClick)="openOrganization($event)"
+              (rowClick)="openWorkspace($event)"
             />
           </mat-card-content>
         </mat-card>

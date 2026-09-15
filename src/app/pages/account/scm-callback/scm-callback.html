@@ -4,7 +4,7 @@
           <p class="text-xs uppercase tracking-[0.2em] text-moss-400">Source control</p>
           <h1 class="text-3xl font-semibold">{{ label() }}</h1>
         </div>
-        <a mat-stroked-button routerLink="/organizations">Back to organizations</a>
+        <a mat-stroked-button routerLink="/workspaces">Back to workspaces</a>
       } @else if (needsOrg()) {
         <div>
           <p class="text-xs uppercase tracking-[0.2em] text-moss-400">Source control</p>
@@ -12,13 +12,13 @@
         </div>
         <mat-card appearance="outlined">
           <mat-card-content class="space-y-3">
-            <p>Choose the organization that should own this installation.</p>
+            <p>Choose the workspace that should own this installation.</p>
             <app-data-table
-              [rows]="organizations()"
+              [rows]="workspaces()"
               [columns]="orgColumns"
-              searchLabel="Search organizations"
-              emptyLabel="No matching organizations."
-              loadingLabel="Loading organizations…"
+              searchLabel="Search workspaces"
+              emptyLabel="No matching workspaces."
+              loadingLabel="Loading workspaces…"
               [clickable]="true"
               (rowClick)="complete($event.id)"
             />

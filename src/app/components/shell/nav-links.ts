@@ -6,7 +6,7 @@ export interface AppNavLink {
 
 export const APP_PRIMARY_NAV: readonly AppNavLink[] = [
   { path: '/dashboard', label: 'Dashboard', icon: 'dashboard' },
-  { path: '/organizations', label: 'Organizations', icon: 'groups' },
+  { path: '/workspaces', label: 'Workspaces', icon: 'groups' },
   { path: '/repositories', label: 'Repositories', icon: 'folder' },
   { path: '/code', label: 'Code', icon: 'code' },
   { path: '/secrets', label: 'Secrets', icon: 'key' },

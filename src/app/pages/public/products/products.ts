@@ -25,7 +25,7 @@ export class ProductsPage {
     },
     {
       name: 'Access control',
-      body: 'Organization roles plus per-repository grants, including NONE so members never see a private repo.',
+      body: 'Workspace roles plus per-repository grants, including NONE so members never see a private repo.',
     },
   ];
 }

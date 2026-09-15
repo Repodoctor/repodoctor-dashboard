@@ -13,7 +13,7 @@ export class SolutionsPage {
   readonly solutions = [
     {
       name: 'Platform teams',
-      body: 'One organization per product area. Members see only the repositories you grant. NONE hides the rest.',
+      body: 'One workspace per product area. Members see only the repositories you grant. NONE hides the rest.',
     },
     {
       name: 'Security reviews',

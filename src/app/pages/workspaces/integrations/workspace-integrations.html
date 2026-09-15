@@ -53,7 +53,7 @@
                       <span class="font-medium text-ink">{{ connectionActor(row) }}</span>
                       @if (connectionAccounts(row).length > 0) {
                         to {{ connectionAccounts(row).length }}
-                        {{ connectionAccounts(row).length === 1 ? 'organization' : 'organizations' }}
+                        {{ connectionAccounts(row).length === 1 ? 'GitHub organization' : 'GitHub organizations' }}
                       }
                     </span>
                     @if (row.provider === 'github' && connectionAccounts(row).length > 0) {
@@ -84,7 +84,7 @@
                   </button>
                   <mat-menu #manageMenu="matMenu">
                     <button mat-menu-item type="button" (click)="addProvider(row.provider, true)">
-                      Add organization
+                      Connect another installation
                     </button>
                     <button mat-menu-item type="button" (click)="manage(row)">
                       Manage in {{ providerLabel(row.provider) }}

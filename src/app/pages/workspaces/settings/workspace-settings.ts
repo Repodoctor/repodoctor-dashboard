@@ -1,5 +1,5 @@
 import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
-import { OrganizationStore } from '../../../stores/organization.store';
+import { WorkspaceStore } from '../../../stores/workspace.store';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -9,14 +9,14 @@ import { MatInputModule } from '@angular/material/input';
 import { ActivatedRoute, Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { ToastService } from '../../../services/toast.service';
-import type { Organization } from '../../../interfaces/api';
+import type { Workspace } from '../../../interfaces/api';
 import { ConfirmDialogComponent } from '../../../components/confirm-dialog/confirm-dialog';
 import { SkeletonComponent } from '../../../components/skeleton/skeleton';
 import { BusyOverlayComponent } from '../../../components/busy-overlay/busy-overlay';
-import { isOrgAdmin } from '../../../utils/org-role';
+import { isOrgAdmin } from '../../../utils/workspace-role';
 
 @Component({
-  selector: 'app-organization-settings-page',
+  selector: 'app-workspace-settings-page',
   imports: [
     ReactiveFormsModule,
     MatButtonModule,
@@ -27,17 +27,17 @@ import { isOrgAdmin } from '../../../utils/org-role';
     BusyOverlayComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  templateUrl: './organization-settings.html',
+  templateUrl: './workspace-settings.html',
 })
-export class OrganizationSettingsPage {
-  private readonly organizations = inject(OrganizationStore);
+export class WorkspaceSettingsPage {
+  private readonly workspaces = inject(WorkspaceStore);
   private readonly toast = inject(ToastService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
 
-  readonly org = signal<Organization | null>(null);
+  readonly org = signal<Workspace | null>(null);
   readonly loading = signal(true);
   readonly saving = signal(false);
   readonly nameForm = this.fb.nonNullable.group({
@@ -47,9 +47,9 @@ export class OrganizationSettingsPage {
   readonly canAdmin = () => isOrgAdmin(this.org()?.role);
 
   constructor() {
-    const id = this.route.snapshot.paramMap.get('organizationId');
+    const id = this.route.snapshot.paramMap.get('workspaceId');
     if (!id) {
-      this.toast.show('Missing organization id', 'error');
+      this.toast.show('Missing workspace id', 'error');
       this.loading.set(false);
       return;
     }
@@ -61,9 +61,9 @@ export class OrganizationSettingsPage {
     if (!org || this.nameForm.invalid) return;
     this.saving.set(true);
     try {
-      const updated = await this.organizations.update(org.id, this.nameForm.getRawValue().name);
+      const updated = await this.workspaces.update(org.id, this.nameForm.getRawValue().name);
       this.org.set({ ...updated, role: org.role });
-      this.toast.show('Organization updated.', 'success');
+      this.toast.show('Workspace updated.', 'success');
     } catch {
       // HTTP errors are toasted by the interceptor.
     } finally {
@@ -78,10 +78,10 @@ export class OrganizationSettingsPage {
       this.dialog
         .open(ConfirmDialogComponent, {
           data: {
-            title: 'Delete organization',
-            body: `Delete ${org.name}? Repositories, analysis, findings, and every source-control installation are removed. Type the organization name to confirm. This cannot be undone.`,
-            confirm: 'Delete organization',
-            typedValueLabel: 'Type the organization name to confirm',
+            title: 'Delete workspace',
+            body: `Delete ${org.name}? Repositories, analysis, findings, and every source-control installation are removed. Type the workspace name to confirm. This cannot be undone.`,
+            confirm: 'Delete workspace',
+            typedValueLabel: 'Type the workspace name to confirm',
             typedValueToMatch: org.name,
           },
         })
@@ -90,9 +90,9 @@ export class OrganizationSettingsPage {
     if (!confirmed) return;
     this.saving.set(true);
     try {
-      await this.organizations.delete(org.id);
+      await this.workspaces.delete(org.id);
       this.toast.show(`${org.name} was deleted.`, 'success');
-      await this.router.navigateByUrl('/organizations');
+      await this.router.navigateByUrl('/workspaces');
     } catch {
       this.saving.set(false);
     }
@@ -100,7 +100,7 @@ export class OrganizationSettingsPage {
 
   private async load(id: string): Promise<void> {
     try {
-      const org = await this.organizations.get(id);
+      const org = await this.workspaces.get(id);
       this.org.set(org);
       this.nameForm.patchValue({ name: org.name });
     } catch {

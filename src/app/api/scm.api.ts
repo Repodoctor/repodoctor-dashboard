@@ -7,36 +7,36 @@ export class ScmApi {
   private readonly api = inject(ApiClient);
 
   getInstallUrl(
-    organizationId: string,
+    workspaceId: string,
     provider: ScmProviderName,
     externalInstallationId?: string,
   ): Promise<{ url: string; slug: string; configured: boolean; label: string }> {
-    return this.api.get(`/organizations/${organizationId}/scm/${provider}/install`, {
+    return this.api.get(`/workspaces/${workspaceId}/scm/${provider}/install`, {
       externalInstallationId,
     });
   }
 
   connect(
-    organizationId: string,
+    workspaceId: string,
     provider: ScmProviderName,
     input: { externalInstallationId?: string; callback?: Record<string, string | null> },
   ): Promise<{ installation: ScmInstallation; repositories: Array<{ fullName: string }> }> {
-    return this.api.post(`/organizations/${organizationId}/scm/${provider}`, input);
+    return this.api.post(`/workspaces/${workspaceId}/scm/${provider}`, input);
   }
 
-  disconnect(organizationId: string, installationId: string): Promise<void> {
-    return this.api.delete(`/organizations/${organizationId}/scm/installations/${installationId}`);
+  disconnect(workspaceId: string, installationId: string): Promise<void> {
+    return this.api.delete(`/workspaces/${workspaceId}/scm/installations/${installationId}`);
   }
 
-  async listInstallations(organizationId: string): Promise<ScmInstallation[]> {
+  async listInstallations(workspaceId: string): Promise<ScmInstallation[]> {
     const response = await this.api.get<{ items: ScmInstallation[] }>(
-      `/organizations/${organizationId}/scm`,
+      `/workspaces/${workspaceId}/scm`,
     );
     return response.items ?? [];
   }
 
-  async listRepositories(organizationId: string): Promise<Repository[]> {
-    const response = await this.api.get<{ items: Repository[] }>('/repositories', { organizationId });
+  async listRepositories(workspaceId: string): Promise<Repository[]> {
+    const response = await this.api.get<{ items: Repository[] }>('/repositories', { workspaceId });
     return response.items ?? [];
   }
 }

@@ -23,7 +23,8 @@ export const routes: Routes = [
       },
       {
         path: 'pricing',
-        loadComponent: () => import('./pages/public/pricing/pricing').then((m) => m.PricingPage),
+        redirectTo: '/',
+        pathMatch: 'full',
       },
       {
         path: 'docs',
@@ -81,48 +82,48 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/dashboard/dashboard').then((m) => m.DashboardPage),
       },
       {
-        // Organizations routes
-        path: 'organizations',
+        // Workspaces routes
+        path: 'workspaces',
         loadComponent: () =>
-          import('./pages/organizations/list/organizations').then((m) => m.OrganizationsPage),
+          import('./pages/workspaces/list/workspaces').then((m) => m.WorkspacesPage),
       },
       {
-        // Organization routes
-        path: 'organizations/:organizationId',
+        // Workspace routes
+        path: 'workspaces/:workspaceId',
         loadComponent: () =>
-          import('./components/organization-shell/organization-shell').then((m) => m.OrganizationShellComponent),
+          import('./components/workspace-shell/workspace-shell').then((m) => m.WorkspaceShellComponent),
         children: [
           {
             path: '',
             loadComponent: () =>
-              import('./pages/organizations/overview/organization-detail').then((m) => m.OrganizationDetailPage),
+              import('./pages/workspaces/overview/workspace-detail').then((m) => m.WorkspaceDetailPage),
           },
           {
             path: 'details',
             loadComponent: () =>
-              import('./pages/organizations/settings/organization-settings').then(
-                (m) => m.OrganizationSettingsPage,
+              import('./pages/workspaces/settings/workspace-settings').then(
+                (m) => m.WorkspaceSettingsPage,
               ),
           },
           {
             path: 'integrations',
             loadComponent: () =>
-              import('./pages/organizations/integrations/organization-integrations').then(
-                (m) => m.OrganizationIntegrationsPage,
+              import('./pages/workspaces/integrations/workspace-integrations').then(
+                (m) => m.WorkspaceIntegrationsPage,
               ),
           },
           {
             path: 'members',
             loadComponent: () =>
-              import('./pages/organizations/members/organization-members').then(
-                (m) => m.OrganizationMembersPage,
+              import('./pages/workspaces/members/workspace-members').then(
+                (m) => m.WorkspaceMembersPage,
               ),
           },
           {
             path: 'permissions',
             loadComponent: () =>
-              import('./pages/organizations/permissions/organization-permissions').then(
-                (m) => m.OrganizationPermissionsPage,
+              import('./pages/workspaces/permissions/workspace-permissions').then(
+                (m) => m.WorkspacePermissionsPage,
               ),
           },
         ],

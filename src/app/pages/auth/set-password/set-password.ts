@@ -1,5 +1,5 @@
 import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
-import { OrganizationStore } from '../../../stores/organization.store';
+import { WorkspaceStore } from '../../../stores/workspace.store';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -32,7 +32,7 @@ import { PasswordFieldsComponent } from '../../../components/password-fields/pas
 export class SetPasswordPage {
   private readonly fb = inject(FormBuilder);
   readonly auth = inject(AuthStore);
-  private readonly organizations = inject(OrganizationStore);
+  private readonly workspaces = inject(WorkspaceStore);
   private readonly router = inject(Router);
   private readonly toast = inject(ToastService);
   readonly loading = signal(false);
@@ -87,7 +87,7 @@ export class SetPasswordPage {
       const invite = this.auth.pendingInviteToken();
       if (invite) {
         try {
-          await this.organizations.acceptInvite(invite);
+          await this.workspaces.acceptInvite(invite);
         } catch {
           // ensureUser also attaches pending invites for this email.
         }

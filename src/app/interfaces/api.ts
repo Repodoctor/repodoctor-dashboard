@@ -15,52 +15,52 @@ export interface Session {
   user: User;
 }
 
-export type OrganizationRole = 'OWNER' | 'ADMIN' | 'MEMBER' | 'VIEWER';
+export type WorkspaceRole = 'OWNER' | 'ADMIN' | 'MEMBER' | 'VIEWER';
 
-export interface Organization {
+export interface Workspace {
   id: string;
   name: string;
   slug: string;
-  role?: OrganizationRole;
+  role?: WorkspaceRole;
   createdAt: string;
   updatedAt: string;
 }
 
-export interface OrganizationMember {
+export interface WorkspaceMember {
   userId: string;
   email: string;
   displayName: string;
-  role: OrganizationRole;
+  role: WorkspaceRole;
   createdAt: string;
 }
 
-export interface OrganizationInvite {
+export interface WorkspaceInvite {
   id: string;
-  organizationId: string;
+  workspaceId: string;
   email: string;
-  role: OrganizationRole;
+  role: WorkspaceRole;
   signupUrl?: string;
   expiresAt: string;
   createdAt: string;
 }
 
-export interface OrganizationInvitePreview {
-  organizationName: string;
+export interface WorkspaceInvitePreview {
+  workspaceName: string;
   email: string;
-  role: OrganizationRole;
+  role: WorkspaceRole;
   expiresAt: string;
   expired: boolean;
 }
 
 export type AddMemberResponse =
-  | { status: 'added'; member: OrganizationMember }
-  | { status: 'invited'; invite: OrganizationInvite };
+  | { status: 'added'; member: WorkspaceMember }
+  | { status: 'invited'; invite: WorkspaceInvite };
 
 export type ScmProviderName = 'github' | 'gitlab' | 'bitbucket' | 'azure_devops';
 
 export interface ScmInstallation {
   id: string;
-  organizationId: string;
+  workspaceId: string;
   provider: ScmProviderName;
   externalInstallationId: string;
   accountLogin: string;
@@ -72,7 +72,7 @@ export type RepositoryPermission = 'NONE' | 'VIEW' | 'ANALYZE' | 'MANAGE' | 'ADM
 
 export interface Repository {
   id: string;
-  organizationId: string;
+  workspaceId: string;
   scmProvider: ScmProviderName;
   scmRepositoryId: string;
   installationId: string;
@@ -85,6 +85,7 @@ export interface Repository {
   lastAnalyzedAt: string | null;
   createdAt: string;
   updatedAt: string;
+  workspaceName?: string;
   permission?: RepositoryPermission;
 }
 
@@ -92,7 +93,7 @@ export interface RepositoryAccessGrant {
   userId: string;
   email: string;
   displayName: string;
-  role: OrganizationRole;
+  role: WorkspaceRole;
   permission: RepositoryPermission;
   source: 'role' | 'override';
 }
@@ -100,7 +101,7 @@ export interface RepositoryAccessGrant {
 export interface AnalysisRun {
   id: string;
   repositoryId: string;
-  organizationId: string;
+  workspaceId: string;
   type: string;
   status: 'QUEUED' | 'RUNNING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
   commitSha: string;
@@ -116,7 +117,7 @@ export interface AnalysisRun {
 
 export interface Finding {
   id: string;
-  organizationId: string;
+  workspaceId: string;
   repositoryId: string;
   analysisRunId: string;
   source: string;

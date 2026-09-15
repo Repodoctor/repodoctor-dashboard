@@ -83,7 +83,7 @@ export class FindingsInboxPage {
 
   openFinding(finding: Finding): void {
     void this.router.navigate(['/repositories', finding.repositoryId, 'findings'], {
-      queryParams: { organizationId: finding.organizationId },
+      queryParams: { workspaceId: finding.workspaceId },
     });
   }
 

@@ -31,7 +31,7 @@
             </form>
             <p class="text-xs text-ink-300">
               OWNER cannot be assigned here. VIEWER can read; MEMBER can analyze; ADMIN can manage.
-              Free plan: {{ plan.maxMembersPerOrganization }} members, {{ plan.maxPendingInvitesPerOrganization }} pending invites.
+              Free plan: {{ plan.maxMembersPerWorkspace }} members, {{ plan.maxPendingInvitesPerWorkspace }} pending invites.
             </p>
           }
           @if (!loading() && invites().length > 0) {

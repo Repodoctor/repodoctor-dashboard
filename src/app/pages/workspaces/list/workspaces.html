@@ -1,5 +1,5 @@
     <div class="flex flex-col gap-2">
-      <app-page-header eyebrow="Tenancy" title="Organizations" />
+      <app-page-header eyebrow="Tenancy" title="Workspaces" />
       <mat-card appearance="outlined">
         <mat-card-content>
           <form class="flex flex-wrap items-start gap-3" [formGroup]="form" (ngSubmit)="create()">
@@ -11,30 +11,30 @@
               <mat-label>Slug (optional)</mat-label>
               <input matInput formControlName="slug" />
             </mat-form-field>
-            <button mat-flat-button class="ml-auto" type="submit" [disabled]="form.invalid || saving() || atOrgLimit()">
+            <button mat-flat-button class="ml-auto" type="submit" [disabled]="form.invalid || saving() || atWorkspaceLimit()">
               Create
             </button>
           </form>
           <p class="mt-3 text-xs text-ink-300">
-            Free alpha plan: {{ plan.maxOwnedOrganizations }} organizations, {{ plan.maxRepositoriesPerOrganization }}
+            Free alpha plan: {{ plan.maxOwnedWorkspaces }} workspaces, {{ plan.maxRepositoriesPerWorkspace }}
             repositories each. Paid plans will use Stripe later.
-            @if (atOrgLimit()) {
-              You already own {{ plan.maxOwnedOrganizations }} organizations.
+            @if (atWorkspaceLimit()) {
+              You already own {{ plan.maxOwnedWorkspaces }} workspaces.
             }
           </p>
         </mat-card-content>
       </mat-card>
       @if (!loading() && items().length === 0) {
         <mat-card appearance="outlined">
-          <mat-card-content class="text-ink-200">No organizations yet. Create one to become OWNER.</mat-card-content>
+          <mat-card-content class="text-ink-200">No workspaces yet. Create one to become OWNER.</mat-card-content>
         </mat-card>
       } @else {
         <app-data-table
           [rows]="items()"
           [columns]="orgColumns"
           [loading]="loading()"
-          searchLabel="Search organizations"
-          emptyLabel="No matching organizations."
+          searchLabel="Search workspaces"
+          emptyLabel="No matching workspaces."
           [clickable]="true"
           (rowClick)="open($event)"
         >
@@ -43,7 +43,7 @@
               <button
                 mat-icon-button
                 type="button"
-                aria-label="Organization actions"
+                aria-label="Workspace actions"
                 [matMenuTriggerFor]="menu"
                 (click)="$event.stopPropagation()"
               >
