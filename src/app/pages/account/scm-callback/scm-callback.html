@@ -1,4 +1,4 @@
-    <div class="space-y-6">
+    <div class="flex flex-col gap-2">
       @if (failed()) {
         <div>
           <p class="text-xs uppercase tracking-[0.2em] text-moss-400">Source control</p>
@@ -13,17 +13,20 @@
         <mat-card appearance="outlined">
           <mat-card-content class="space-y-3">
             <p>Choose the organization that should own this installation.</p>
-            <app-organization-table [organizations]="organizations()" (rowClick)="complete($event.id)" />
+            <app-data-table
+              [rows]="organizations()"
+              [columns]="orgColumns"
+              searchLabel="Search organizations"
+              emptyLabel="No matching organizations."
+              loadingLabel="Loading organizations…"
+              [clickable]="true"
+              (rowClick)="complete($event.id)"
+            />
           </mat-card-content>
         </mat-card>
       } @else {
-        <div class="flex min-h-[70vh] flex-col items-center justify-center gap-4 text-center">
+        <div class="flex min-h-[70vh] flex-col items-center justify-center">
           <mat-progress-spinner diameter="40" mode="indeterminate" [attr.aria-label]="'Connecting ' + label()" />
-          <h1 class="text-2xl font-semibold">Connecting {{ label() }}</h1>
-          <p class="max-w-sm text-sm text-ink-200">
-            Fetching repositories. Keep this window open until it closes.
-          </p>
         </div>
       }
     </div>
-  

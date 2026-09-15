@@ -1,19 +1,31 @@
-import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { DatePipe } from '@angular/common';
+import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { OrganizationStore } from '../../../stores/organization.store';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { ScmService } from '../../../services/scm.service';
 import { CatalogApi } from '../../../api/catalog.api';
 import { ToastService } from '../../../services/toast.service';
 import { scmProviderLabel, type ScmProviderName } from '../../../utils/scm-providers';
 import type { Finding, Organization, Repository, ScmInstallation } from '../../../interfaces/api';
-import { FindingTableComponent } from '../../../components/finding-table/finding-table';
-import { LoadingStateComponent } from '../../../components/loading-state/loading-state';
-import { RepositoryTableComponent } from '../../../components/repository-table/repository-table';
+import { DataTableCellDirective } from '../../../components/data-table/data-table-cell.directive';
+import { DataTableMobileDirective } from '../../../components/data-table/data-table-mobile.directive';
+import { DataTableComponent } from '../../../components/data-table/data-table';
+import { SkeletonComponent } from '../../../components/skeleton/skeleton';
+import { findingColumns, repositoryColumns } from '../../../utils/data-table-columns';
+import { categoryPath, findingCategory } from '../../../utils/finding-category';
 
 @Component({
   selector: 'app-organization-detail-page',
-  imports: [MatCardModule, FindingTableComponent, LoadingStateComponent, RepositoryTableComponent],
+  imports: [
+    DatePipe,
+    RouterLink,
+    MatCardModule,
+    DataTableComponent,
+    DataTableCellDirective,
+    DataTableMobileDirective,
+    SkeletonComponent,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './organization-detail.html',
 })
@@ -31,6 +43,13 @@ export class OrganizationDetailPage {
   readonly findings = signal<Finding[]>([]);
   readonly repositoryNames = signal<Record<string, string>>({});
   readonly loading = signal(true);
+  readonly repoColumns = computed(() =>
+    repositoryColumns(
+      (id) => this.codeCount(id),
+      (id) => this.supplyChainCount(id),
+    ),
+  );
+  readonly findingCols = computed(() => findingColumns((finding) => this.repoName(finding)));
 
   providerLabel(provider: ScmProviderName): string {
     return scmProviderLabel(provider);
@@ -44,6 +63,30 @@ export class OrganizationDetailPage {
       return;
     }
     void this.load(id);
+  }
+
+  repoName(finding: Finding): string {
+    return this.repositoryNames()[finding.repositoryId] ?? finding.repositoryId;
+  }
+
+  codeCount(repositoryId: string): number {
+    return this.findings().filter(
+      (item) => item.repositoryId === repositoryId && findingCategory(item.source) === 'code',
+    ).length;
+  }
+
+  supplyChainCount(repositoryId: string): number {
+    return this.findings().filter(
+      (item) => item.repositoryId === repositoryId && findingCategory(item.source) === 'supply-chain',
+    ).length;
+  }
+
+  findingsLink(category: 'code' | 'supply-chain'): string[] {
+    return [categoryPath(category)];
+  }
+
+  findingsQuery(repositoryId: string): { repositoryId: string } {
+    return { repositoryId };
   }
 
   openRepository(repo: Repository): void {

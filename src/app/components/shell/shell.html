@@ -1,8 +1,8 @@
-    <div class="min-h-screen grid grid-cols-1 bg-ink text-cloud lg:grid-cols-[240px_1fr]">
-      <aside class="hidden min-h-screen flex-col border-r border-line bg-panel lg:flex">
+    <div class="min-h-screen grid grid-cols-1 bg-canvas text-ink lg:grid-cols-[240px_1fr]">
+      <aside class="rd-chrome hidden min-h-screen flex-col border-r border-ink-600 bg-ink lg:flex">
         <div class="flex items-center gap-2 px-5 py-5">
           <span class="h-2.5 w-2.5 rounded-full bg-pulse"></span>
-          <a routerLink="/dashboard" class="font-mono text-sm tracking-[0.18em] text-pulse uppercase">RepoDoctor</a>
+          <a routerLink="/dashboard" class="font-mono text-sm tracking-[0.18em] text-white uppercase">RepoDoctor</a>
         </div>
         <mat-nav-list class="!px-2">
           @for (item of primary; track item.path) {
@@ -12,7 +12,7 @@
             </a>
           }
         </mat-nav-list>
-        <div class="mt-auto border-t border-line">
+        <div class="mt-auto border-t border-white/10">
           <mat-nav-list class="!px-2 !py-2">
             @for (item of account; track item.path) {
               <a mat-list-item [routerLink]="item.path" routerLinkActive="mdc-list-item--activated">
@@ -21,7 +21,7 @@
               </a>
             }
           </mat-nav-list>
-          <div class="border-t border-line p-3">
+          <div class="border-t border-white/10 p-3">
             <button mat-button class="w-full !justify-start" type="button" (click)="auth.logout()">
               <mat-icon>logout</mat-icon>
               <span>Sign out</span>
@@ -30,7 +30,7 @@
         </div>
       </aside>
       <div class="min-w-0">
-        <header class="flex items-center justify-between gap-3 border-b border-line px-4 py-3.5 sm:px-6">
+        <header class="flex items-center justify-between gap-3 border-b border-line bg-panel px-4 py-3.5 sm:px-6">
           <p class="text-sm text-mute">Software engineering intelligence</p>
           <app-user-menu />
         </header>

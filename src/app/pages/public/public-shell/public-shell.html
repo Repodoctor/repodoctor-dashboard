@@ -1,17 +1,16 @@
-    <div class="min-h-screen bg-ink text-cloud">
-      <header
-        class="sticky top-0 z-40 border-b border-line/80 bg-ink/85 backdrop-blur-md"
-      >
+    <div class="min-h-screen bg-canvas text-ink">
+      <header class="sticky top-0 z-40 border-b border-line/80 bg-panel/90 backdrop-blur-md">
         <div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3.5 sm:px-6 lg:px-8">
-          <a routerLink="/" class="font-mono text-xs tracking-[0.22em] text-pulse uppercase sm:text-sm">
+          <a routerLink="/" class="inline-flex items-center gap-2 font-mono text-xs tracking-[0.22em] text-ink uppercase sm:text-sm">
+            <span class="h-2 w-2 rounded-full bg-pulse"></span>
             RepoDoctor
           </a>
           <nav class="hidden items-center gap-6 text-sm text-mute md:flex">
             @for (link of links; track link.path) {
               <a
                 [routerLink]="link.path"
-                routerLinkActive="text-cloud"
-                class="transition hover:text-cloud"
+                routerLinkActive="text-ink"
+                class="transition hover:text-ink"
               >
                 {{ link.label }}
               </a>
@@ -28,7 +27,7 @@
         </div>
         <nav class="flex gap-4 overflow-x-auto border-t border-line px-4 py-2 text-sm text-mute md:hidden">
           @for (link of links; track link.path) {
-            <a [routerLink]="link.path" routerLinkActive="text-cloud" class="whitespace-nowrap">
+            <a [routerLink]="link.path" routerLinkActive="text-ink" class="whitespace-nowrap">
               {{ link.label }}
             </a>
           }
@@ -37,19 +36,22 @@
       <main>
         <router-outlet />
       </main>
-      <footer class="border-t border-line">
+      <footer class="border-t border-line bg-panel">
         <div
           class="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-8 text-sm text-mute sm:flex-row sm:items-start sm:justify-between sm:px-6 lg:px-8"
         >
           <div>
-            <p class="font-mono text-xs tracking-[0.18em] text-pulse uppercase">RepoDoctor</p>
+            <p class="inline-flex items-center gap-2 font-mono text-xs tracking-[0.18em] text-ink uppercase">
+              <span class="h-2 w-2 rounded-full bg-pulse"></span>
+              RepoDoctor
+            </p>
             <p class="mt-2 max-w-sm text-ink-200">Diagnose repositories before they fail in production.</p>
           </div>
           <div class="flex flex-wrap gap-x-6 gap-y-2">
             @for (link of links; track link.path) {
-              <a [routerLink]="link.path" class="hover:text-cloud">{{ link.label }}</a>
+              <a [routerLink]="link.path" class="hover:text-ink">{{ link.label }}</a>
             }
-            <a routerLink="/login" class="hover:text-cloud">Sign in</a>
+            <a routerLink="/login" class="hover:text-ink">Sign in</a>
           </div>
         </div>
       </footer>

@@ -1,4 +1,4 @@
-    <div class="space-y-6">
+    <div class="flex flex-col gap-2">
       <app-page-header [eyebrow]="copy.eyebrow" [title]="copy.title" [subtitle]="copy.subtitle" />
       @if (filterLabel(); as repoName) {
         <mat-card appearance="outlined">
@@ -10,13 +10,7 @@
           </mat-card-content>
         </mat-card>
       }
-      @if (loading()) {
-        <mat-card appearance="outlined">
-          <mat-card-content>
-            <app-loading-state label="Loading findings…" />
-          </mat-card-content>
-        </mat-card>
-      } @else if (findings().length === 0) {
+      @if (!loading() && findings().length === 0) {
         <mat-card appearance="outlined">
           <mat-card-content>
             <p class="text-sm text-ink-200">{{ copy.empty }}</p>
@@ -25,11 +19,36 @@
       } @else {
         <mat-card appearance="outlined">
           <mat-card-content>
-            <app-finding-table
-              [findings]="findings()"
-              [repositoryNames]="repositoryNames()"
+            <app-data-table
+              [rows]="findings()"
+              [columns]="findingCols()"
+              [loading]="loading()"
+              searchLabel="Search findings"
+              emptyLabel="No matching findings."
+              [clickable]="true"
               (rowClick)="openFinding($event)"
-            />
+            >
+              <ng-template appDataTableMobile let-finding>
+                <button
+                  type="button"
+                  class="w-full rounded-xl border border-line bg-panel p-4 text-left"
+                  (click)="openFinding(finding)"
+                >
+                  <p class="font-medium">{{ finding.title }}</p>
+                  @if (finding.description) {
+                    <p class="mt-1 line-clamp-2 text-xs text-ink-200">{{ finding.description }}</p>
+                  }
+                  <p class="mt-2 font-mono text-xs text-moss-200">
+                    {{ finding.severity }} · {{ repoName(finding) }} · {{ finding.status }}
+                  </p>
+                  @if (finding.filePath) {
+                    <p class="mt-1 font-mono text-xs text-ink-200">
+                      {{ finding.filePath }}{{ finding.lineNumber ? ':' + finding.lineNumber : '' }}
+                    </p>
+                  }
+                </button>
+              </ng-template>
+            </app-data-table>
           </mat-card-content>
         </mat-card>
       }

@@ -3,19 +3,17 @@ import { OrganizationStore } from '../../../stores/organization.store';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatPaginatorModule } from '@angular/material/paginator';
 import { MatSelectModule } from '@angular/material/select';
-import { MatSortModule } from '@angular/material/sort';
-import { MatTableModule } from '@angular/material/table';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CatalogApi } from '../../../api/catalog.api';
 import { ScmService } from '../../../services/scm.service';
 import { ToastService } from '../../../services/toast.service';
 import type { Organization, Repository, RepositoryAccessGrant } from '../../../interfaces/api';
-import { LoadingStateComponent } from '../../../components/loading-state/loading-state';
-import { TableSearchComponent } from '../../../components/table-search/table-search';
+import { DataTableCellDirective } from '../../../components/data-table/data-table-cell.directive';
+import { DataTableMobileDirective } from '../../../components/data-table/data-table-mobile.directive';
+import { DataTableComponent } from '../../../components/data-table/data-table';
+import type { DataTableColumn } from '../../../components/data-table/data-table.types';
 import { isOrgAdmin } from '../../../utils/org-role';
-import { ClientTable } from '../../../utils/client-table';
 
 const PERMISSIONS = ['NONE', 'VIEW', 'ANALYZE', 'MANAGE', 'ADMIN'] as const;
 
@@ -31,11 +29,9 @@ interface PermissionRow extends RepositoryAccessGrant {
     MatCardModule,
     MatFormFieldModule,
     MatSelectModule,
-    MatTableModule,
-    MatPaginatorModule,
-    MatSortModule,
-    LoadingStateComponent,
-    TableSearchComponent,
+    DataTableComponent,
+    DataTableCellDirective,
+    DataTableMobileDirective,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './organization-permissions.html',
@@ -54,18 +50,35 @@ export class OrganizationPermissionsPage {
   readonly loading = signal(true);
   readonly saving = signal(false);
   readonly permissions = PERMISSIONS;
-  readonly columns = ['repository', 'member', 'permission'];
-  readonly table = new ClientTable(
-    computed(() => this.rows()),
-    (row, column) => {
-      if (column === 'repository') return row.fullName;
-      if (column === 'member') return `${row.displayName} ${row.email} ${row.role}`;
-      if (column === 'permission') return this.draftPermission(row);
-      return '';
+
+  readonly columns = computed<DataTableColumn<PermissionRow>[]>(() => [
+    {
+      key: 'repository',
+      header: 'Repository',
+      value: (row) => row.fullName,
+      mobile: 'title',
     },
-  );
+    {
+      key: 'member',
+      header: 'Member',
+      type: 'subtitle',
+      value: (row) => row.displayName,
+      subtitle: (row) => `${row.email} · ${row.role}`,
+      sortValue: (row) => `${row.displayName} ${row.email} ${row.role}`,
+      mobile: 'detail',
+    },
+    {
+      key: 'permission',
+      header: 'Permission',
+      type: 'custom',
+      sortValue: (row) => this.draftPermission(row),
+      mobile: false,
+    },
+  ]);
 
   readonly canAdmin = () => isOrgAdmin(this.org()?.role);
+
+  readonly trackRow = (row: PermissionRow) => this.draftKey(row);
 
   constructor() {
     const id = this.route.snapshot.paramMap.get('organizationId');

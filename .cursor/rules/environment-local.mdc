@@ -1,0 +1,12 @@
+---
+description: Never modify local Angular environment.ts
+globs: src/environments/**
+alwaysApply: true
+---
+
+# Environment files
+
+- Never edit, overwrite, regenerate, stage, or commit `src/environments/environment.ts`.
+- That file is developer-owned local config.
+- Production builds inject only `src/environments/environment.prod.ts` via `scripts/inject-ng-env.mjs`.
+- If env values are needed for local work, ask the user; do not rewrite the file.

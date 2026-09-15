@@ -28,10 +28,16 @@ test('signup page renders', async ({ page }) => {
   await expect(page.getByText('Confirm password')).toBeVisible();
 });
 
-test('set password page renders for email links', async ({ page }) => {
+test('set password without an email link goes home', async ({ page }) => {
   await page.goto('/set-password');
-  await expect(page.getByRole('heading', { name: 'Choose a new password' })).toBeVisible();
-  await expect(page.getByText('This page is for the link in your email.')).toBeVisible();
+  await expect(page).toHaveURL('/');
+  await expect(page.getByRole('heading', { name: /Find the important problems/ })).toBeVisible();
+});
+
+test('reset password without an email link goes home', async ({ page }) => {
+  await page.goto('/reset-password');
+  await expect(page).toHaveURL('/');
+  await expect(page.getByRole('heading', { name: /Find the important problems/ })).toBeVisible();
 });
 
 test('expired auth links show a centered error page', async ({ page }) => {

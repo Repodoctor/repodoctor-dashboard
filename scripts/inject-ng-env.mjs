@@ -1,10 +1,11 @@
 #!/usr/bin/env node
 /**
- * Writes Angular environment files from NG_APP_* so Cloudflare Pages / Coolify
- * build vars reach the browser bundle. Run before `ng serve` / `ng build`.
+ * Writes `environment.prod.ts` from NG_APP_* so Cloudflare Pages / Coolify
+ * build vars reach the browser bundle. Run before production `ng build`.
  *
- * Loads `.env` when present so local `npm start` can use the same names as Pages.
- * Process env wins over `.env` (CI/Pages).
+ * Does NOT touch `environment.ts` — that file is local/dev-owned.
+ *
+ * Loads `.env` when present. Process env wins over `.env` (CI/Pages).
  */
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -17,20 +18,17 @@ const gateway = (process.env.NG_APP_GATEWAY_URL || 'http://127.0.0.1:43111').rep
 const supabaseUrl = process.env.NG_APP_SUPABASE_URL || '';
 const supabaseAnonKey = process.env.NG_APP_SUPABASE_ANON_KEY || '';
 
-function render(production) {
-  return `export const environment = {
-  production: ${production},
+const contents = `export const environment = {
+  production: true,
   gatewayUrl: ${JSON.stringify(gateway)},
   supabaseUrl: ${JSON.stringify(supabaseUrl)},
   supabaseAnonKey: ${JSON.stringify(supabaseAnonKey)},
   apiBaseUrl: ${JSON.stringify(`${gateway}/api/v1`)},
 };
 `;
-}
 
-writeFileSync(join(root, 'src/environments/environment.ts'), render(false));
-writeFileSync(join(root, 'src/environments/environment.prod.ts'), render(true));
-console.log(`injected NG_APP_GATEWAY_URL=${gateway}`);
+writeFileSync(join(root, 'src/environments/environment.prod.ts'), contents);
+console.log(`injected production NG_APP_GATEWAY_URL=${gateway}`);
 
 function loadDotEnv(file) {
   if (!existsSync(file)) return;

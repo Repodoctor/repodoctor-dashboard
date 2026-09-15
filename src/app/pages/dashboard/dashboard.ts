@@ -1,4 +1,4 @@
-import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { OrganizationStore } from '../../stores/organization.store';
 import { Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -6,10 +6,11 @@ import { MatCardModule } from '@angular/material/card';
 import { CatalogApi } from '../../api/catalog.api';
 import { AuthStore } from '../../stores/auth.store';
 import type { Finding, Organization } from '../../interfaces/api';
-import { FindingTableComponent } from '../../components/finding-table/finding-table';
-import { LoadingStateComponent } from '../../components/loading-state/loading-state';
-import { OrganizationTableComponent } from '../../components/organization-table/organization-table';
+import { DataTableMobileDirective } from '../../components/data-table/data-table-mobile.directive';
+import { DataTableComponent } from '../../components/data-table/data-table';
+import { SkeletonComponent } from '../../components/skeleton/skeleton';
 import { PageHeaderComponent } from '../../components/page-header/page-header';
+import { findingColumns, organizationColumns } from '../../utils/data-table-columns';
 import { findingCategory } from '../../utils/finding-category';
 
 @Component({
@@ -18,9 +19,9 @@ import { findingCategory } from '../../utils/finding-category';
     RouterLink,
     MatButtonModule,
     MatCardModule,
-    FindingTableComponent,
-    LoadingStateComponent,
-    OrganizationTableComponent,
+    DataTableComponent,
+    DataTableMobileDirective,
+    SkeletonComponent,
     PageHeaderComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -36,6 +37,8 @@ export class DashboardPage {
   readonly findings = signal<Finding[]>([]);
   readonly repositoryNames = signal<Record<string, string>>({});
   readonly loading = signal(true);
+  readonly orgColumns = organizationColumns();
+  readonly findingCols = computed(() => findingColumns((finding) => this.repoName(finding)));
   readonly openFindings = () => this.findings().filter((item) => item.status === 'OPEN');
   readonly codeFindings = () =>
     this.openFindings().filter((item) => findingCategory(item.source) === 'code');
@@ -46,6 +49,10 @@ export class DashboardPage {
 
   constructor() {
     void this.refresh();
+  }
+
+  repoName(finding: Finding): string {
+    return this.repositoryNames()[finding.repositoryId] ?? finding.repositoryId;
   }
 
   openOrganization(org: Organization): void {

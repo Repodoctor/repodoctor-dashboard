@@ -1,13 +1,31 @@
-    <button
-      mat-flat-button
-      [class]="hostClass()"
-      [disabled]="disabled() || loading()"
-      [attr.type]="type()"
-      [color]="color()"
-    >
-      @if (loading()) {
-        <mat-progress-spinner class="mr-2" diameter="18" mode="indeterminate" />
-      }
-      {{ loading() ? loadingLabel() : label() }}
-    </button>
-  
+@if (type() === 'basic') {
+  <button
+    mat-flat-button
+    [class]="hostClass()"
+    [disabled]="disabled() || loading()"
+    [color]="color()"
+    (click)="pressed.emit()"
+  >
+    <ng-container *ngTemplateOutlet="buttonContent"></ng-container>
+  </button>
+} @else if (type() === 'stroke') {
+  <button
+    mat-stroked-button
+    [class]="hostClass()"
+    [disabled]="disabled() || loading()"
+    [color]="color()"
+    (click)="pressed.emit()"
+  >
+    <ng-container *ngTemplateOutlet="buttonContent"></ng-container>
+  </button>
+}
+
+<!-- Reusable Content Template to avoid repeating HTML -->
+<ng-template #buttonContent>
+  <div class="flex items-center justify-center">
+    @if (loading()) {
+      <mat-progress-spinner class="mr-2" diameter="18" mode="indeterminate" />
+    }
+    {{ loading() ? loadingLabel() : label() }}
+  </div>
+</ng-template>

@@ -16,7 +16,11 @@ export function captureAuthLinkFromLocation(
   const query = new URLSearchParams(location.search);
   const type = (hash.get('type') ?? query.get('type') ?? '').toLowerCase();
   const invite = query.get('invite');
-  const hasAuthPayload = query.has('code') || hash.has('access_token') || hash.has('refresh_token');
+  const hasAuthPayload =
+    query.has('code') ||
+    query.has('token_hash') ||
+    hash.has('access_token') ||
+    hash.has('refresh_token');
   const path = location.pathname;
   const error = hash.get('error') ?? query.get('error');
   const errorCode = hash.get('error_code') ?? query.get('error_code');
@@ -50,4 +54,21 @@ export function captureAuthLinkFromLocation(
 export function authErrorMessage(link: CapturedAuthLink): string | null {
   if (!link.error && !link.errorDescription) return null;
   return link.errorDescription?.trim() || 'This email link is invalid or has expired.';
+}
+
+export function hasPasswordSetupLink(link: CapturedAuthLink): boolean {
+  return link.hasAuthPayload;
+}
+
+export type PasswordSetupDestination = '/' | '/dashboard' | null;
+
+export function passwordSetupDestination(input: {
+  hasSetupLink: boolean;
+  pendingPassword: boolean;
+  authenticated: boolean;
+}): PasswordSetupDestination {
+  if (input.hasSetupLink) return null;
+  if (input.pendingPassword && input.authenticated) return null;
+  if (input.authenticated) return '/dashboard';
+  return '/';
 }

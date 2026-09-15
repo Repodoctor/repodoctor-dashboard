@@ -1,4 +1,4 @@
-    <div class="space-y-6">
+    <div class="flex flex-col gap-2">
       <app-page-header eyebrow="Tenancy" title="Organizations" />
       <mat-card appearance="outlined">
         <mat-card-content>
@@ -24,23 +24,58 @@
           </p>
         </mat-card-content>
       </mat-card>
-      @if (loading()) {
-        <mat-card appearance="outlined">
-          <mat-card-content>
-            <app-loading-state label="Loading…" />
-          </mat-card-content>
-        </mat-card>
-      } @else if (items().length === 0) {
+      @if (!loading() && items().length === 0) {
         <mat-card appearance="outlined">
           <mat-card-content class="text-ink-200">No organizations yet. Create one to become OWNER.</mat-card-content>
         </mat-card>
       } @else {
-        <app-organization-table
-          [organizations]="items()"
-          [showActions]="true"
+        <app-data-table
+          [rows]="items()"
+          [columns]="orgColumns"
+          [loading]="loading()"
+          searchLabel="Search organizations"
+          emptyLabel="No matching organizations."
+          [clickable]="true"
           (rowClick)="open($event)"
-          (remove)="askDelete($event)"
-        />
+        >
+          <ng-template appDataTableCell="actions" let-org>
+            @if (org.role === 'OWNER' || org.role === 'ADMIN') {
+              <button
+                mat-icon-button
+                type="button"
+                aria-label="Organization actions"
+                [matMenuTriggerFor]="menu"
+                (click)="$event.stopPropagation()"
+              >
+                <mat-icon>more_vert</mat-icon>
+              </button>
+              <mat-menu #menu="matMenu">
+                <button mat-menu-item type="button" (click)="askDelete(org)">Delete</button>
+              </mat-menu>
+            }
+          </ng-template>
+          <ng-template appDataTableMobile let-org>
+            <button
+              type="button"
+              class="w-full rounded-xl border border-line bg-panel p-4 text-left"
+              (click)="open(org)"
+            >
+              <p class="font-medium">{{ org.name }}</p>
+              <p class="mt-1 font-mono text-xs text-ink-200">{{ org.slug }}</p>
+              <p class="mt-2 font-mono text-xs text-moss-200">{{ org.role }}</p>
+              @if (org.role === 'OWNER' || org.role === 'ADMIN') {
+                <button
+                  mat-button
+                  color="warn"
+                  type="button"
+                  class="mt-2 !px-0"
+                  (click)="$event.stopPropagation(); askDelete(org)"
+                >
+                  Delete
+                </button>
+              }
+            </button>
+          </ng-template>
+        </app-data-table>
       }
     </div>
-  

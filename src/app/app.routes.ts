@@ -3,6 +3,7 @@ import { authGuard, guestGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
   {
+    // Public routes
     path: '',
     loadComponent: () =>
       import('./pages/public/public-shell/public-shell').then((m) => m.PublicShellComponent),
@@ -31,51 +32,62 @@ export const routes: Routes = [
     ],
   },
   {
+    // Auth routes
     path: 'login',
     canActivate: [guestGuard],
     loadComponent: () => import('./pages/auth/login/login').then((m) => m.LoginPage),
   },
   {
+    // Auth routes
     path: 'signup',
     canActivate: [guestGuard],
     loadComponent: () => import('./pages/auth/signup/signup').then((m) => m.SignupPage),
   },
   {
+    // Auth routes
     path: 'forgot-password',
     canActivate: [guestGuard],
     loadComponent: () => import('./pages/auth/forgot-password/forgot-password').then((m) => m.ForgotPasswordPage),
   },
   {
+    // Auth routes
     path: 'set-password',
     loadComponent: () => import('./pages/auth/set-password/set-password').then((m) => m.SetPasswordPage),
   },
   {
+    // Auth routes
     path: 'reset-password',
     loadComponent: () => import('./pages/auth/set-password/set-password').then((m) => m.SetPasswordPage),
   },
   {
+    // Auth routes
     path: 'auth/callback',
     loadComponent: () => import('./pages/auth/auth-callback/auth-callback').then((m) => m.AuthCallbackPage),
   },
   {
+    // Auth routes
     path: 'error',
     loadComponent: () => import('./pages/auth/error/error').then((m) => m.ErrorPage),
   },
   {
+    // Protected routes
     path: '',
     canActivate: [authGuard],
     loadComponent: () => import('./components/shell/shell').then((m) => m.ShellComponent),
     children: [
       {
+        // Dashboard routes
         path: 'dashboard',
         loadComponent: () => import('./pages/dashboard/dashboard').then((m) => m.DashboardPage),
       },
       {
+        // Organizations routes
         path: 'organizations',
         loadComponent: () =>
           import('./pages/organizations/list/organizations').then((m) => m.OrganizationsPage),
       },
       {
+        // Organization routes
         path: 'organizations/:organizationId',
         loadComponent: () =>
           import('./components/organization-shell/organization-shell').then((m) => m.OrganizationShellComponent),
@@ -113,56 +125,60 @@ export const routes: Routes = [
                 (m) => m.OrganizationPermissionsPage,
               ),
           },
-          { path: 'repositories', redirectTo: '', pathMatch: 'full' },
-          { path: 'settings', redirectTo: 'details', pathMatch: 'full' },
-          { path: 'settings/integrations', redirectTo: 'integrations' },
-          { path: 'settings/members', redirectTo: 'members' },
-          { path: 'settings/permissions', redirectTo: 'permissions' },
         ],
       },
       {
+        // Repositories routes
         path: 'repositories',
         pathMatch: 'full',
         loadComponent: () =>
           import('./pages/repositories/list/repositories').then((m) => m.RepositoriesPage),
       },
       {
+        // Findings routes
         path: 'code',
         loadComponent: () =>
           import('./pages/findings/findings-inbox').then((m) => m.FindingsInboxPage),
         data: { category: 'code' },
       },
       {
+        // Secrets routes
         path: 'secrets',
         loadComponent: () =>
           import('./pages/findings/findings-inbox').then((m) => m.FindingsInboxPage),
         data: { category: 'secrets' },
       },
       {
+        // Supply chain routes
         path: 'supply-chain',
         loadComponent: () =>
           import('./pages/findings/findings-inbox').then((m) => m.FindingsInboxPage),
         data: { category: 'supply-chain' },
       },
       {
+        // SCM callback routes
         path: 'settings/scm/:provider/callback',
         loadComponent: () =>
           import('./pages/account/scm-callback/scm-callback').then((m) => m.ScmCallbackPage),
       },
       {
+        // Repository routes
         path: 'repositories/:repositoryId',
         redirectTo: 'repositories/:repositoryId/overview',
         pathMatch: 'full',
       },
       {
+        // Repository detail routes
         path: 'repositories/:repositoryId/:section',
         loadComponent: () => import('./pages/repositories/detail/repository').then((m) => m.RepositoryPage),
       },
       {
+        // Settings routes
         path: 'settings',
         loadComponent: () => import('./pages/account/settings/settings').then((m) => m.SettingsPage),
       },
     ],
   },
+  // Catch-all route
   { path: '**', redirectTo: '' },
 ];

@@ -8,7 +8,6 @@ import { MatInputModule } from '@angular/material/input';
 import { AuthStore } from '../../../stores/auth.store';
 import { ToastService } from '../../../services/toast.service';
 import { errorMessage, isHttpError } from '../../../utils/error-message';
-import { GithubButtonComponent } from '../../../components/github-button/github-button';
 import { LoadingButtonComponent } from '../../../components/loading-button/loading-button';
 
 @Component({
@@ -19,7 +18,6 @@ import { LoadingButtonComponent } from '../../../components/loading-button/loadi
     MatButtonModule,
     MatFormFieldModule,
     MatInputModule,
-    GithubButtonComponent,
     LoadingButtonComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,

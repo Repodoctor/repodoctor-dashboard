@@ -4,19 +4,18 @@ import { ActivatedRoute, RouterLink, RouterLinkActive } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatPaginatorModule } from '@angular/material/paginator';
 import { MatSelectModule } from '@angular/material/select';
-import { MatSortModule } from '@angular/material/sort';
-import { MatTableModule } from '@angular/material/table';
 import { MatTabsModule } from '@angular/material/tabs';
 import { map } from 'rxjs';
 import { CatalogApi } from '../../../api/catalog.api';
 import { ToastService } from '../../../services/toast.service';
 import type { AnalysisRun, Finding, Repository, RepositoryAccessGrant } from '../../../interfaces/api';
-import { FindingTableComponent } from '../../../components/finding-table/finding-table';
-import { LoadingStateComponent } from '../../../components/loading-state/loading-state';
-import { TableSearchComponent } from '../../../components/table-search/table-search';
-import { ClientTable } from '../../../utils/client-table';
+import { DataTableCellDirective } from '../../../components/data-table/data-table-cell.directive';
+import { DataTableMobileDirective } from '../../../components/data-table/data-table-mobile.directive';
+import { DataTableComponent } from '../../../components/data-table/data-table';
+import type { DataTableColumn } from '../../../components/data-table/data-table.types';
+import { SkeletonComponent } from '../../../components/skeleton/skeleton';
+import { findingColumns } from '../../../utils/data-table-columns';
 
 const NAV = ['overview', 'findings', 'analysis', 'settings'] as const;
 
@@ -38,13 +37,11 @@ const PERMISSION_RANK: Record<(typeof PERMISSIONS)[number], number> = {
     MatCardModule,
     MatFormFieldModule,
     MatSelectModule,
-    MatTableModule,
-    MatPaginatorModule,
-    MatSortModule,
     MatTabsModule,
-    FindingTableComponent,
-    LoadingStateComponent,
-    TableSearchComponent,
+    SkeletonComponent,
+    DataTableComponent,
+    DataTableCellDirective,
+    DataTableMobileDirective,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './repository.html',
@@ -67,27 +64,53 @@ export class RepositoryPage {
   readonly loading = signal(true);
   readonly requesting = signal(false);
   readonly permissions = PERMISSIONS;
-  readonly analysisColumns = ['type', 'status', 'detail', 'created'];
-  readonly accessColumns = ['name', 'email', 'permission'];
-  readonly analysisTable = new ClientTable(
-    computed(() => this.analyses()),
-    (run, column) => {
-      if (column === 'type') return run.type;
-      if (column === 'status') return run.status;
-      if (column === 'detail') return `${run.trigger} ${run.commitSha} ${run.branch}`;
-      if (column === 'created') return run.createdAt;
-      return '';
-    },
+  readonly findingCols = computed(() =>
+    findingColumns((finding) => this.repository()?.fullName ?? finding.repositoryId),
   );
-  readonly accessTable = new ClientTable(
-    computed(() => this.access()),
-    (grant, column) => {
-      if (column === 'name') return grant.displayName;
-      if (column === 'email') return `${grant.email} ${grant.role}`;
-      if (column === 'permission') return grant.permission;
-      return '';
+
+  readonly analysisColumns = computed<DataTableColumn<AnalysisRun>[]>(() => [
+    { key: 'type', header: 'Type', value: (run) => run.type, mobile: 'title' },
+    { key: 'status', header: 'Status', value: (run) => run.status, mobile: 'title' },
+    {
+      key: 'detail',
+      header: 'Detail',
+      type: 'mono',
+      value: (run) => `${run.trigger} · ${run.commitSha.slice(0, 7)} · ${run.branch}`,
+      sortValue: (run) => `${run.trigger} ${run.commitSha} ${run.branch}`,
+      mobile: 'detail',
     },
-  );
+    {
+      key: 'created',
+      header: 'Created',
+      type: 'mono',
+      value: (run) => run.createdAt,
+      mobile: 'detail',
+    },
+  ]);
+
+  readonly accessColumns = computed<DataTableColumn<RepositoryAccessGrant>[]>(() => [
+    {
+      key: 'name',
+      header: 'Name',
+      value: (grant) => grant.displayName,
+      mobile: 'title',
+    },
+    {
+      key: 'email',
+      header: 'Email',
+      type: 'mono',
+      value: (grant) => `${grant.email} · ${grant.role}`,
+      sortValue: (grant) => `${grant.email} ${grant.role}`,
+      mobile: 'meta',
+    },
+    {
+      key: 'permission',
+      header: 'Permission',
+      type: 'custom',
+      sortValue: (grant) => grant.permission,
+      mobile: false,
+    },
+  ]);
 
   readonly openFindings = computed(() => this.findings().filter((item) => item.status === 'OPEN'));
   readonly seriousFindings = computed(() =>
@@ -103,6 +126,8 @@ export class RepositoryPage {
     return permission ? PERMISSION_RANK[permission] >= PERMISSION_RANK.ANALYZE : false;
   };
   readonly canAdminRepo = () => this.repository()?.permission === 'ADMIN';
+
+  readonly trackAccess = (grant: RepositoryAccessGrant) => grant.userId;
 
   constructor() {
     void this.load();

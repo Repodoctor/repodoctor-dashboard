@@ -8,11 +8,12 @@ import { ScmService } from '../../../services/scm.service';
 import { ToastService } from '../../../services/toast.service';
 import { scmProviderLabel, type ScmProviderName } from '../../../utils/scm-providers';
 import type { Organization } from '../../../interfaces/api';
-import { OrganizationTableComponent } from '../../../components/organization-table/organization-table';
+import { DataTableComponent } from '../../../components/data-table/data-table';
+import { organizationColumns } from '../../../utils/data-table-columns';
 
 @Component({
   selector: 'app-scm-callback-page',
-  imports: [RouterLink, MatButtonModule, MatCardModule, MatProgressSpinnerModule, OrganizationTableComponent],
+  imports: [RouterLink, MatButtonModule, MatCardModule, MatProgressSpinnerModule, DataTableComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './scm-callback.html',
 })
@@ -24,6 +25,7 @@ export class ScmCallbackPage {
   private readonly toast = inject(ToastService);
 
   readonly organizations = signal<Organization[]>([]);
+  readonly orgColumns = organizationColumns();
   readonly needsOrg = signal(false);
   readonly saving = signal(false);
   readonly failed = signal(false);

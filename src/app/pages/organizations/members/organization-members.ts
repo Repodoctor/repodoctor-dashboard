@@ -5,17 +5,16 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { MatPaginatorModule } from '@angular/material/paginator';
 import { MatSelectModule } from '@angular/material/select';
-import { MatSortModule } from '@angular/material/sort';
-import { MatTableModule } from '@angular/material/table';
 import { ActivatedRoute } from '@angular/router';
 import { ToastService } from '../../../services/toast.service';
 import type { Organization, OrganizationInvite, OrganizationMember } from '../../../interfaces/api';
-import { LoadingStateComponent } from '../../../components/loading-state/loading-state';
-import { TableSearchComponent } from '../../../components/table-search/table-search';
+import { DataTableCellDirective } from '../../../components/data-table/data-table-cell.directive';
+import { DataTableMobileDirective } from '../../../components/data-table/data-table-mobile.directive';
+import { DataTableComponent } from '../../../components/data-table/data-table';
+import type { DataTableColumn } from '../../../components/data-table/data-table.types';
+import { SkeletonComponent } from '../../../components/skeleton/skeleton';
 import { isOrgAdmin } from '../../../utils/org-role';
-import { ClientTable } from '../../../utils/client-table';
 import { FREE_PLAN } from '../../../utils/plan';
 
 const ASSIGNABLE_ROLES = ['ADMIN', 'MEMBER', 'VIEWER'] as const;
@@ -29,11 +28,10 @@ const ASSIGNABLE_ROLES = ['ADMIN', 'MEMBER', 'VIEWER'] as const;
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
-    MatTableModule,
-    MatPaginatorModule,
-    MatSortModule,
-    LoadingStateComponent,
-    TableSearchComponent,
+    SkeletonComponent,
+    DataTableComponent,
+    DataTableCellDirective,
+    DataTableMobileDirective,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './organization-members.html',
@@ -57,31 +55,67 @@ export class OrganizationMembersPage {
     role: this.fb.nonNullable.control<(typeof ASSIGNABLE_ROLES)[number]>('MEMBER'),
   });
   readonly plan = FREE_PLAN;
-  readonly memberTable = new ClientTable(
-    computed(() => this.members()),
-    (member, column) => {
-      if (column === 'name') return member.displayName;
-      if (column === 'email') return member.email;
-      if (column === 'role') return this.draftRole(member);
-      return '';
-    },
-  );
-  readonly inviteTable = new ClientTable(
-    computed(() => this.invites()),
-    (invite, column) => {
-      if (column === 'email') return invite.email;
-      if (column === 'role') return invite.role;
-      if (column === 'expires') return invite.expiresAt;
-      return '';
-    },
-  );
 
   readonly canAdmin = () => isOrgAdmin(this.org()?.role);
 
-  readonly memberColumns = () =>
-    this.canAdmin() ? ['name', 'email', 'role', 'actions'] : ['name', 'email', 'role'];
-  readonly inviteColumns = () =>
-    this.canAdmin() ? ['email', 'role', 'expires', 'actions'] : ['email', 'role', 'expires'];
+  readonly inviteColumns = computed<DataTableColumn<OrganizationInvite>[]>(() => {
+    const cols: DataTableColumn<OrganizationInvite>[] = [
+      { key: 'email', header: 'Email', type: 'mono', value: (invite) => invite.email, mobile: 'title' },
+      { key: 'role', header: 'Role', value: (invite) => invite.role, mobile: 'meta' },
+      {
+        key: 'expires',
+        header: 'Expires',
+        value: (invite) => invite.expiresAt.slice(0, 10),
+        sortValue: (invite) => invite.expiresAt,
+        mobile: 'meta',
+      },
+    ];
+    if (this.canAdmin()) {
+      cols.push({
+        key: 'actions',
+        header: '',
+        type: 'custom',
+        sortable: false,
+        mobile: false,
+      });
+    }
+    return cols;
+  });
+
+  readonly memberColumns = computed<DataTableColumn<OrganizationMember>[]>(() => {
+    const cols: DataTableColumn<OrganizationMember>[] = [
+      {
+        key: 'name',
+        header: 'Name',
+        value: (member) => member.displayName,
+        mobile: 'title',
+      },
+      {
+        key: 'email',
+        header: 'Email',
+        type: 'mono',
+        value: (member) => member.email,
+        mobile: 'meta',
+      },
+      {
+        key: 'role',
+        header: 'Role',
+        type: 'custom',
+        sortValue: (member) => this.draftRole(member),
+        mobile: false,
+      },
+    ];
+    if (this.canAdmin()) {
+      cols.push({
+        key: 'actions',
+        header: '',
+        type: 'custom',
+        sortable: false,
+        mobile: false,
+      });
+    }
+    return cols;
+  });
 
   readonly rolesDirty = () =>
     this.members().some((member) => this.draftRole(member) !== member.role);
@@ -104,6 +138,8 @@ export class OrganizationMembersPage {
     if (role === 'OWNER') return;
     this.drafts.update((current) => ({ ...current, [member.userId]: role }));
   }
+
+  readonly trackMember = (member: OrganizationMember) => member.userId;
 
   async invite(): Promise<void> {
     const org = this.org();

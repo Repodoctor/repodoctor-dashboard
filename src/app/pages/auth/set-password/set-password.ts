@@ -8,6 +8,7 @@ import { MatInputModule } from '@angular/material/input';
 import { AuthStore } from '../../../stores/auth.store';
 import { ToastService } from '../../../services/toast.service';
 import { errorMessage, isHttpError } from '../../../utils/error-message';
+import { passwordSetupDestination } from '../../../utils/auth-link';
 import { passwordRules, passwordsMatch } from '../../../utils/password-strength';
 import { AuthShellComponent } from '../../../components/auth-shell/auth-shell';
 import { LoadingButtonComponent } from '../../../components/loading-button/loading-button';
@@ -45,10 +46,23 @@ export class SetPasswordPage {
   );
 
   constructor() {
-    void this.auth.whenReady().then(() => {
+    void this.auth.whenReady().then(async () => {
       if (this.auth.consumeAuthUrlError()) return;
-      if (this.auth.isAuthenticated() && !this.auth.pendingPassword()) {
-        void this.router.navigateByUrl('/dashboard');
+      if (this.auth.hasPasswordSetupLink() && !this.auth.isAuthenticated()) {
+        await this.auth.waitForSession();
+      }
+      const destination = passwordSetupDestination({
+        hasSetupLink: this.auth.hasPasswordSetupLink(),
+        pendingPassword: Boolean(this.auth.pendingPassword()),
+        authenticated: this.auth.isAuthenticated(),
+      });
+      if (destination === '/') {
+        this.auth.clearPendingPassword();
+        await this.router.navigateByUrl('/', { replaceUrl: true });
+        return;
+      }
+      if (destination === '/dashboard') {
+        await this.router.navigateByUrl('/dashboard', { replaceUrl: true });
         return;
       }
       const name = this.auth.user()?.displayName;

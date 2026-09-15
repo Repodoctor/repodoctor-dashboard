@@ -9,7 +9,6 @@ import { ToastService } from '../../../services/toast.service';
 import { errorMessage, isHttpError } from '../../../utils/error-message';
 import { passwordRules, passwordsMatch } from '../../../utils/password-strength';
 import { AuthShellComponent } from '../../../components/auth-shell/auth-shell';
-import { GithubButtonComponent } from '../../../components/github-button/github-button';
 import { LoadingButtonComponent } from '../../../components/loading-button/loading-button';
 import { PasswordFieldsComponent } from '../../../components/password-fields/password-fields';
 
@@ -21,7 +20,6 @@ import { PasswordFieldsComponent } from '../../../components/password-fields/pas
     MatFormFieldModule,
     MatInputModule,
     AuthShellComponent,
-    GithubButtonComponent,
     LoadingButtonComponent,
     PasswordFieldsComponent,
   ],
@@ -74,18 +72,6 @@ export class SignupPage {
 
   unlock(field: 'displayName' | 'email'): void {
     this.locked.update((current) => ({ ...current, [field]: false }));
-  }
-
-  async github(): Promise<void> {
-    this.loading.set(true);
-    try {
-      await this.auth.signInWithGithub({ invite: this.inviteToken() || undefined });
-    } catch (error) {
-      this.loading.set(false);
-      if (!isHttpError(error)) {
-        this.toast.show(errorMessage(error, 'Unable to start GitHub sign-in'), 'error');
-      }
-    }
   }
 
   async submit(): Promise<void> {

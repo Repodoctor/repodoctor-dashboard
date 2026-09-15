@@ -1,4 +1,4 @@
-import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -6,9 +6,10 @@ import { MatCardModule } from '@angular/material/card';
 import { map } from 'rxjs';
 import { CatalogApi } from '../../api/catalog.api';
 import type { Finding, Repository } from '../../interfaces/api';
-import { FindingTableComponent } from '../../components/finding-table/finding-table';
-import { LoadingStateComponent } from '../../components/loading-state/loading-state';
+import { DataTableMobileDirective } from '../../components/data-table/data-table-mobile.directive';
+import { DataTableComponent } from '../../components/data-table/data-table';
 import { PageHeaderComponent } from '../../components/page-header/page-header';
+import { findingColumns } from '../../utils/data-table-columns';
 import { isFindingCategory, type FindingCategory } from '../../utils/finding-category';
 
 const COPY: Record<
@@ -41,8 +42,8 @@ const COPY: Record<
     RouterLink,
     MatButtonModule,
     MatCardModule,
-    FindingTableComponent,
-    LoadingStateComponent,
+    DataTableComponent,
+    DataTableMobileDirective,
     PageHeaderComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -62,11 +63,16 @@ export class FindingsInboxPage {
   readonly findings = signal<Finding[]>([]);
   readonly repositoryNames = signal<Record<string, string>>({});
   readonly loading = signal(true);
+  readonly findingCols = computed(() => findingColumns((finding) => this.repoName(finding)));
 
   constructor() {
     this.route.queryParamMap.subscribe(() => {
       void this.refresh();
     });
+  }
+
+  repoName(finding: Finding): string {
+    return this.repositoryNames()[finding.repositoryId] ?? finding.repositoryId;
   }
 
   filterLabel(): string | null {

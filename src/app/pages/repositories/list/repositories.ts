@@ -1,15 +1,27 @@
-import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
-import { Router } from '@angular/router';
+import { DatePipe } from '@angular/common';
+import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { CatalogApi } from '../../../api/catalog.api';
 import type { Finding, Repository } from '../../../interfaces/api';
-import { LoadingStateComponent } from '../../../components/loading-state/loading-state';
+import { DataTableCellDirective } from '../../../components/data-table/data-table-cell.directive';
+import { DataTableMobileDirective } from '../../../components/data-table/data-table-mobile.directive';
+import { DataTableComponent } from '../../../components/data-table/data-table';
 import { PageHeaderComponent } from '../../../components/page-header/page-header';
-import { RepositoryTableComponent } from '../../../components/repository-table/repository-table';
+import { repositoryColumns } from '../../../utils/data-table-columns';
+import { categoryPath, findingCategory } from '../../../utils/finding-category';
 
 @Component({
   selector: 'app-repositories-page',
-  imports: [MatCardModule, LoadingStateComponent, PageHeaderComponent, RepositoryTableComponent],
+  imports: [
+    DatePipe,
+    RouterLink,
+    MatCardModule,
+    PageHeaderComponent,
+    DataTableComponent,
+    DataTableCellDirective,
+    DataTableMobileDirective,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './repositories.html',
 })
@@ -19,6 +31,12 @@ export class RepositoriesPage {
   readonly repositories = signal<Repository[]>([]);
   readonly findings = signal<Finding[]>([]);
   readonly loading = signal(true);
+  readonly repoColumns = computed(() =>
+    repositoryColumns(
+      (id) => this.codeCount(id),
+      (id) => this.supplyChainCount(id),
+    ),
+  );
 
   constructor() {
     void this.refresh();
@@ -28,6 +46,26 @@ export class RepositoriesPage {
     void this.router.navigate(['/repositories', repo.id, 'overview'], {
       queryParams: { organizationId: repo.organizationId },
     });
+  }
+
+  codeCount(repositoryId: string): number {
+    return this.findings().filter(
+      (item) => item.repositoryId === repositoryId && findingCategory(item.source) === 'code',
+    ).length;
+  }
+
+  supplyChainCount(repositoryId: string): number {
+    return this.findings().filter(
+      (item) => item.repositoryId === repositoryId && findingCategory(item.source) === 'supply-chain',
+    ).length;
+  }
+
+  findingsLink(category: 'code' | 'supply-chain'): string[] {
+    return [categoryPath(category)];
+  }
+
+  findingsQuery(repositoryId: string): { repositoryId: string } {
+    return { repositoryId };
   }
 
   private async refresh(): Promise<void> {

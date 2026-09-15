@@ -1,0 +1,178 @@
+@if (loading()) {
+  <div class="space-y-3">
+    <app-table-search [query]="''" [label]="searchLabel()" [disabled]="true" />
+
+    <div class="space-y-3 md:hidden">
+      @for (_ of skeletonRows; track $index) {
+        <div class="rounded-xl border border-line bg-panel p-4 space-y-2">
+          <app-skeleton height="1rem" width="55%" />
+          <app-skeleton height="0.65rem" width="40%" />
+          <app-skeleton height="0.65rem" width="70%" />
+        </div>
+      }
+    </div>
+
+    <div class="rd-table-wrap rd-table-static hidden md:block">
+      <table class="w-full">
+        <thead>
+          <tr class="border-b border-line">
+            @for (col of columns(); track col.key) {
+              <th class="px-4 py-3 text-left text-sm font-medium" [class.rd-col-end]="col.align === 'end'">
+                {{ col.header }}
+              </th>
+            }
+          </tr>
+        </thead>
+        <tbody>
+          @for (_ of skeletonRows; track $index) {
+            <tr class="border-b border-line last:border-b-0">
+              @for (col of columns(); track col.key) {
+                <td class="px-4 py-3" [class.rd-col-end]="col.align === 'end'">
+                  <app-skeleton
+                    height="0.75rem"
+                    [width]="col.align === 'end' ? '2rem' : col.type === 'subtitle' ? '70%' : '50%'"
+                  />
+                </td>
+              }
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+} @else {
+  @defer (on viewport; prefetch on idle) {
+    <div class="space-y-3">
+      <app-table-search
+        [query]="table.query()"
+        (queryChange)="table.onSearch($event)"
+        [label]="searchLabel()"
+      />
+
+      <div class="space-y-3 md:hidden">
+        @for (row of table.page(); track trackRow(row)) {
+          @if (mobileTemplate(); as mobile) {
+            <ng-container *ngTemplateOutlet="mobile.template; context: { $implicit: row }" />
+          } @else if (clickable()) {
+            <button
+              type="button"
+              class="w-full rounded-xl border border-line bg-panel p-4 text-left"
+              (click)="onRowActivate(row)"
+            >
+              <ng-container *ngTemplateOutlet="mobileBody; context: { $implicit: row }" />
+            </button>
+          } @else {
+            <div class="rounded-xl border border-line bg-panel p-4">
+              <ng-container *ngTemplateOutlet="mobileBody; context: { $implicit: row }" />
+            </div>
+          }
+        } @empty {
+          <p class="px-1 text-sm text-ink-200">{{ emptyLabel() }}</p>
+        }
+      </div>
+
+      <div class="rd-table-wrap hidden md:block" [class.rd-table-static]="!clickable()">
+        <table mat-table [dataSource]="table.page()" matSort (matSortChange)="table.onSort($event)">
+          @for (col of columns(); track col.key) {
+            <ng-container [matColumnDef]="col.key">
+              <th
+                mat-header-cell
+                *matHeaderCellDef
+                [mat-sort-header]="col.key"
+                [disabled]="col.sortable === false"
+                [class.rd-col-end]="col.align === 'end'"
+              >
+                {{ col.header }}
+              </th>
+              <td mat-cell *matCellDef="let row" [class.rd-col-end]="col.align === 'end'">
+                @switch (col.type ?? 'text') {
+                  @case ('mono') {
+                    <span class="font-mono text-xs text-ink-200">{{ displayText(row, col) }}</span>
+                  }
+                  @case ('accent') {
+                    <span class="font-mono text-xs text-moss-200">{{ displayText(row, col) }}</span>
+                  }
+                  @case ('date') {
+                    @if (dateValue(row, col); as dateVal) {
+                      <span class="font-mono text-xs text-ink-200">{{ dateVal | date: col.dateFormat ?? 'medium' }}</span>
+                    } @else {
+                      <span class="font-mono text-xs text-ink-200">{{ col.emptyLabel ?? '—' }}</span>
+                    }
+                  }
+                  @case ('subtitle') {
+                    <p class="font-medium">{{ displayText(row, col) }}</p>
+                    @if (subtitleText(row, col); as subtitle) {
+                      <p class="mt-0.5 line-clamp-1 text-xs text-ink-200">{{ subtitle }}</p>
+                    }
+                  }
+                  @case ('custom') {
+                    @if (cellTemplate(col.key); as tpl) {
+                      <ng-container *ngTemplateOutlet="tpl; context: { $implicit: row }" />
+                    }
+                  }
+                  @default {
+                    {{ displayText(row, col) }}
+                  }
+                }
+              </td>
+            </ng-container>
+          }
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns()"></tr>
+          <tr
+            mat-row
+            *matRowDef="let row; columns: displayedColumns()"
+            [class.cursor-pointer]="clickable()"
+            [class.cursor-default]="!clickable()"
+            (click)="onRowActivate(row)"
+          ></tr>
+        </table>
+        <mat-paginator
+          [length]="table.total()"
+          [pageIndex]="table.pageIndex()"
+          [pageSize]="table.pageSize()"
+          [pageSizeOptions]="pageSizeOptions()"
+          [showFirstLastButtons]="true"
+          (page)="table.onPage($event)"
+        />
+      </div>
+    </div>
+  } @placeholder {
+    <p class="p-4 text-sm text-mute">{{ loadingLabel() }}</p>
+  }
+}
+
+<ng-template #mobileBody let-row>
+  @for (col of mobileTitleColumns(); track col.key) {
+    @if (col.type === 'subtitle') {
+      <p class="font-medium">{{ displayText(row, col) }}</p>
+      @if (subtitleText(row, col); as subtitle) {
+        <p class="mt-1 line-clamp-2 text-xs text-ink-200">{{ subtitle }}</p>
+      }
+    } @else {
+      <p class="font-medium">{{ displayText(row, col) }}</p>
+    }
+  }
+  @for (col of mobileMetaColumns(); track col.key) {
+    <p
+      class="mt-2 font-mono text-xs"
+      [class.text-moss-200]="col.type === 'accent'"
+      [class.text-ink-200]="col.type !== 'accent'"
+    >
+      {{ displayText(row, col) }}
+    </p>
+  }
+  @for (col of mobileDetailColumns(); track col.key) {
+    @if (col.type === 'date') {
+      <p class="mt-1 font-mono text-xs text-mute">
+        @if (dateValue(row, col); as dateVal) {
+          {{ dateVal | date: col.dateFormat ?? 'medium' }}
+        } @else {
+          {{ col.emptyLabel ?? '—' }}
+        }
+      </p>
+    } @else {
+      <p class="mt-1 font-mono text-xs text-ink-200">{{ displayText(row, col) }}</p>
+    }
+  }
+</ng-template>

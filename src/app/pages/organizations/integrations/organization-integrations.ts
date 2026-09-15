@@ -12,7 +12,7 @@ import { ToastService } from '../../../services/toast.service';
 import { SCM_PROVIDERS, scmProviderLabel, type ScmProviderName } from '../../../utils/scm-providers';
 import type { Organization, Repository, ScmInstallation } from '../../../interfaces/api';
 import { ConfirmDialogComponent } from '../../../components/confirm-dialog/confirm-dialog';
-import { LoadingStateComponent } from '../../../components/loading-state/loading-state';
+import { SkeletonComponent } from '../../../components/skeleton/skeleton';
 import { BusyOverlayComponent } from '../../../components/busy-overlay/busy-overlay';
 import { isOrgAdmin } from '../../../utils/org-role';
 
@@ -28,7 +28,7 @@ interface ProviderRow {
     MatCardModule,
     MatIconModule,
     MatMenuModule,
-    LoadingStateComponent,
+    SkeletonComponent,
     BusyOverlayComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -5,15 +5,19 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
+import { MatMenuModule } from '@angular/material/menu';
 import { ActivatedRoute, Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { ToastService } from '../../../services/toast.service';
 import type { Organization } from '../../../interfaces/api';
 import { ConfirmDialogComponent } from '../../../components/confirm-dialog/confirm-dialog';
-import { LoadingStateComponent } from '../../../components/loading-state/loading-state';
-import { OrganizationTableComponent } from '../../../components/organization-table/organization-table';
+import { DataTableCellDirective } from '../../../components/data-table/data-table-cell.directive';
+import { DataTableMobileDirective } from '../../../components/data-table/data-table-mobile.directive';
+import { DataTableComponent } from '../../../components/data-table/data-table';
 import { PageHeaderComponent } from '../../../components/page-header/page-header';
+import { organizationColumns } from '../../../utils/data-table-columns';
 import { FREE_PLAN } from '../../../utils/plan';
 
 @Component({
@@ -23,9 +27,12 @@ import { FREE_PLAN } from '../../../utils/plan';
     MatButtonModule,
     MatCardModule,
     MatFormFieldModule,
+    MatIconModule,
     MatInputModule,
-    LoadingStateComponent,
-    OrganizationTableComponent,
+    MatMenuModule,
+    DataTableComponent,
+    DataTableCellDirective,
+    DataTableMobileDirective,
     PageHeaderComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -42,6 +49,7 @@ export class OrganizationsPage {
   readonly loading = signal(true);
   readonly saving = signal(false);
   readonly plan = FREE_PLAN;
+  readonly orgColumns = organizationColumns(true);
   readonly ownedCount = () => this.items().filter((org) => org.role === 'OWNER').length;
   readonly atOrgLimit = () => this.ownedCount() >= FREE_PLAN.maxOwnedOrganizations;
   readonly form = this.fb.nonNullable.group({

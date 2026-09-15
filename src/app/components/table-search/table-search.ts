@@ -1,4 +1,4 @@
-import { Component, model, ChangeDetectionStrategy } from '@angular/core';
+import { Component, input, model, ChangeDetectionStrategy } from '@angular/core';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
@@ -12,4 +12,5 @@ import { MatInputModule } from '@angular/material/input';
 export class TableSearchComponent {
   readonly query = model('');
   readonly label = model('Search');
+  readonly disabled = input(false);
 }

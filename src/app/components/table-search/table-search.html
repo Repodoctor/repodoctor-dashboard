@@ -3,6 +3,7 @@
       <input
         matInput
         [value]="query()"
+        [disabled]="disabled()"
         (input)="query.set($any($event.target).value)"
         autocomplete="off"
       />

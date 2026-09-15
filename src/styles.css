@@ -11,7 +11,7 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 html,
@@ -20,19 +20,19 @@ body {
 }
 
 body {
-  @apply bg-ink text-cloud antialiased;
+  @apply bg-canvas text-ink antialiased;
 }
 
 .rd-input {
-  @apply w-full rounded-md border border-line bg-panel px-3 py-2 text-sm text-cloud placeholder:text-mute focus:border-pulse focus:outline-none focus:ring-1 focus:ring-pulse;
+  @apply w-full rounded-md border border-line bg-panel px-3 py-2 text-sm text-ink placeholder:text-mute focus:border-pulse focus:outline-none focus:ring-1 focus:ring-pulse;
 }
 
 .rd-btn {
-  @apply inline-flex items-center justify-center rounded-md bg-pulse px-4 py-2 text-sm font-semibold text-ink transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50;
+  @apply inline-flex items-center justify-center rounded-md bg-pulse px-4 py-2 text-sm font-semibold text-ink transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50;
 }
 
 .rd-btn-ghost {
-  @apply inline-flex items-center justify-center rounded-md border border-line bg-panel px-4 py-2 text-sm font-medium text-cloud transition hover:border-pulse/45 hover:text-cloud;
+  @apply inline-flex items-center justify-center rounded-md border border-line bg-panel px-4 py-2 text-sm font-medium text-ink transition hover:border-pulse/50 hover:text-ink;
 }
 
 .rd-card {
@@ -52,7 +52,7 @@ body {
 }
 
 .rd-menu-item {
-  @apply flex w-full flex-col items-start gap-0.5 px-3 py-2 text-left text-sm text-cloud transition hover:bg-line disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent;
+  @apply flex w-full flex-col items-start gap-0.5 px-3 py-2 text-left text-sm text-ink transition hover:bg-canvas disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent;
 }
 
 .rd-table-wrap {
@@ -64,11 +64,12 @@ body {
 }
 
 .rd-table-wrap .mat-mdc-row {
+  background: #ffffff;
   cursor: pointer;
 }
 
 .rd-table-wrap .mat-mdc-row:hover {
-  background: rgba(62, 224, 178, 0.08);
+  background: rgba(62, 207, 142, 0.08);
 }
 
 .rd-table-wrap.rd-table-static .mat-mdc-row {
@@ -76,11 +77,15 @@ body {
 }
 
 .rd-table-wrap .mat-mdc-paginator {
-  background: transparent;
+  background: #ffffff;
 }
 
 .mat-mdc-paginator {
-  background: transparent;
+  background: #ffffff;
+}
+
+.mat-mdc-paginator .mat-mdc-paginator-container {
+  justify-content: center;
 }
 
 .mat-mdc-form-field {
@@ -93,8 +98,8 @@ body {
 }
 
 .mat-mdc-card.mat-mdc-card-outlined {
-  --mat-card-outlined-container-color: #12181f;
-  --mat-card-outlined-outline-color: #1e2a36;
+  --mat-card-outlined-container-color: #ffffff;
+  --mat-card-outlined-outline-color: #e2e8f0;
 }
 
 .mat-mdc-card-header {
@@ -110,23 +115,41 @@ body {
   font-weight: 500;
 }
 
+.rd-chrome {
+  --mat-sys-on-surface: #e2e8f0;
+  --mat-sys-on-surface-variant: #94a3b8;
+  --mat-sys-primary: #3ecf8e;
+  --mat-sys-on-primary: #0f172a;
+  --mat-list-list-item-label-text-color: #e2e8f0;
+  --mat-list-list-item-leading-icon-color: #94a3b8;
+  --mat-list-list-item-hover-label-text-color: #ffffff;
+  --mat-list-list-item-hover-leading-icon-color: #3ecf8e;
+  --mat-list-list-item-focus-label-text-color: #ffffff;
+  --mat-list-active-indicator-color: rgba(62, 207, 142, 0.16);
+  --mat-button-text-label-text-color: #e2e8f0;
+  color: #e2e8f0;
+}
+
 .rd-org-tabs {
-  --mat-tab-active-label-text-color: #3ee0b2;
-  --mat-tab-active-focus-label-text-color: #3ee0b2;
-  --mat-tab-active-hover-label-text-color: #3ee0b2;
-  --mat-tab-active-indicator-color: #3ee0b2;
-  --mat-tab-inactive-label-text-color: #8b9bb0;
-  --mat-tab-active-indicator-color: #3ee0b2;
+  --mat-tab-active-label-text-color: #0f172a;
+  --mat-tab-active-focus-label-text-color: #0f172a;
+  --mat-tab-active-hover-label-text-color: #0f172a;
+  --mat-tab-active-indicator-color: #3ecf8e;
+  --mat-tab-inactive-label-text-color: #64748b;
 }
 
 .rd-org-tabs .mat-mdc-tab-link.mdc-tab--active {
-  color: #3ee0b2;
+  color: #0f172a;
 }
 
 .rd-col-end {
   text-align: right;
   width: 1%;
   white-space: nowrap;
+}
+
+.rd-skeleton {
+  @apply animate-pulse rounded-md bg-line;
 }
 
 .rd-user-menu {

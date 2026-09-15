@@ -14,11 +14,12 @@ import { errorMessage, isHttpError } from '../../../utils/error-message';
 import { passwordRules, passwordsMatch } from '../../../utils/password-strength';
 import type { Organization } from '../../../interfaces/api';
 import { ConfirmDialogComponent } from '../../../components/confirm-dialog/confirm-dialog';
-import { OrganizationTableComponent } from '../../../components/organization-table/organization-table';
+import { DataTableComponent } from '../../../components/data-table/data-table';
 import { AvatarComponent } from '../../../components/avatar/avatar';
 import { LoadingButtonComponent } from '../../../components/loading-button/loading-button';
 import { PageHeaderComponent } from '../../../components/page-header/page-header';
 import { PasswordFieldsComponent } from '../../../components/password-fields/password-fields';
+import { organizationColumns } from '../../../utils/data-table-columns';
 
 @Component({
   selector: 'app-settings-page',
@@ -28,7 +29,7 @@ import { PasswordFieldsComponent } from '../../../components/password-fields/pas
     MatCardModule,
     MatFormFieldModule,
     MatInputModule,
-    OrganizationTableComponent,
+    DataTableComponent,
     AvatarComponent,
     LoadingButtonComponent,
     PageHeaderComponent,
@@ -46,6 +47,7 @@ export class SettingsPage {
   private readonly dialog = inject(MatDialog);
 
   readonly organizations = signal<Organization[]>([]);
+  readonly orgColumns = organizationColumns();
   readonly saving = signal(false);
   readonly savingPassword = signal(false);
   readonly deleting = signal(false);

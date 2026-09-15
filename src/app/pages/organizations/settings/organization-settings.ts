@@ -11,7 +11,7 @@ import { firstValueFrom } from 'rxjs';
 import { ToastService } from '../../../services/toast.service';
 import type { Organization } from '../../../interfaces/api';
 import { ConfirmDialogComponent } from '../../../components/confirm-dialog/confirm-dialog';
-import { LoadingStateComponent } from '../../../components/loading-state/loading-state';
+import { SkeletonComponent } from '../../../components/skeleton/skeleton';
 import { BusyOverlayComponent } from '../../../components/busy-overlay/busy-overlay';
 import { isOrgAdmin } from '../../../utils/org-role';
 
@@ -23,7 +23,7 @@ import { isOrgAdmin } from '../../../utils/org-role';
     MatCardModule,
     MatFormFieldModule,
     MatInputModule,
-    LoadingStateComponent,
+    SkeletonComponent,
     BusyOverlayComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,

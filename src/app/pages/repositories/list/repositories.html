@@ -1,16 +1,10 @@
-    <div class="space-y-6">
+    <div class="flex flex-col gap-2">
       <app-page-header
         eyebrow="Inventory"
         title="Repositories"
         subtitle="Every repository you can access across organizations, with scan and finding counts."
       />
-      @if (loading()) {
-        <mat-card appearance="outlined">
-          <mat-card-content>
-            <app-loading-state label="Loading repositories…" />
-          </mat-card-content>
-        </mat-card>
-      } @else if (repositories().length === 0) {
+      @if (!loading() && repositories().length === 0) {
         <mat-card appearance="outlined">
           <mat-card-content>
             <p class="text-sm text-ink-200">No repositories yet. Connect GitHub from an organization Integrations tab.</p>
@@ -19,11 +13,54 @@
       } @else {
         <mat-card appearance="outlined">
           <mat-card-content>
-            <app-repository-table
-              [repositories]="repositories()"
-              [findings]="findings()"
+            <app-data-table
+              [rows]="repositories()"
+              [columns]="repoColumns()"
+              [loading]="loading()"
+              searchLabel="Search repositories"
+              emptyLabel="No matching repositories."
+              [clickable]="true"
               (rowClick)="openRepository($event)"
-            />
+            >
+              <ng-template appDataTableCell="codeFindings" let-repo>
+                <a
+                  class="font-mono text-xs text-pulse hover:underline"
+                  [routerLink]="findingsLink('code')"
+                  [queryParams]="findingsQuery(repo.id)"
+                  (click)="$event.stopPropagation()"
+                >
+                  {{ codeCount(repo.id) }}
+                </a>
+              </ng-template>
+              <ng-template appDataTableCell="supplyChainFindings" let-repo>
+                <a
+                  class="font-mono text-xs text-pulse hover:underline"
+                  [routerLink]="findingsLink('supply-chain')"
+                  [queryParams]="findingsQuery(repo.id)"
+                  (click)="$event.stopPropagation()"
+                >
+                  {{ supplyChainCount(repo.id) }}
+                </a>
+              </ng-template>
+              <ng-template appDataTableMobile let-repo>
+                <button
+                  type="button"
+                  class="w-full rounded-xl border border-line bg-panel p-4 text-left"
+                  (click)="openRepository(repo)"
+                >
+                  <p class="font-medium">{{ repo.fullName }}</p>
+                  <p class="mt-2 font-mono text-xs text-ink-200">
+                    {{ repo.defaultBranch }} · {{ repo.private ? 'private' : 'public' }}
+                  </p>
+                  <p class="mt-1 font-mono text-xs text-mute">
+                    {{ repo.lastAnalyzedAt ? (repo.lastAnalyzedAt | date: 'medium') : 'Never scanned' }}
+                  </p>
+                  <p class="mt-2 font-mono text-xs text-moss-200">
+                    Code {{ codeCount(repo.id) }} · Supply chain {{ supplyChainCount(repo.id) }}
+                  </p>
+                </button>
+              </ng-template>
+            </app-data-table>
           </mat-card-content>
         </mat-card>
       }

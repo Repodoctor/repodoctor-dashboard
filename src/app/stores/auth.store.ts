@@ -10,7 +10,12 @@ import {
   type User as SupabaseUser,
 } from '@supabase/supabase-js';
 import { environment } from '../../environments/environment';
-import { captureAuthLinkFromLocation, authErrorMessage, type CapturedAuthLink } from '../utils/auth-link';
+import {
+  captureAuthLinkFromLocation,
+  authErrorMessage,
+  hasPasswordSetupLink,
+  type CapturedAuthLink,
+} from '../utils/auth-link';
 import type { Session, User } from '../interfaces/api';
 
 const ACCESS_KEY = 'repodoctor.accessToken';
@@ -71,6 +76,10 @@ export class AuthStore {
   consumeAuthUrlError(): boolean {
     this.capturedLink = captureAuthLinkFromLocation();
     return this.redirectAuthError();
+  }
+
+  hasPasswordSetupLink(): boolean {
+    return hasPasswordSetupLink(this.capturedLink);
   }
 
   clearPendingPassword(): void {

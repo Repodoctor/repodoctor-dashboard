@@ -1,4 +1,4 @@
-    <div class="space-y-5">
+    <div class="flex flex-col gap-2">
       <nav mat-tab-nav-bar [tabPanel]="panel" mat-stretch-tabs="false" class="rd-org-tabs">
         @for (item of nav; track item) {
           <a
@@ -16,9 +16,28 @@
       <mat-tab-nav-panel #panel />
 
       @if (loading()) {
+        <div>
+          <app-skeleton height="0.65rem" width="5rem" />
+          <app-skeleton class="mt-2" height="1.75rem" width="16rem" />
+          <app-skeleton class="mt-2" height="0.65rem" width="14rem" />
+        </div>
+        <div class="grid gap-4 sm:grid-cols-3">
+          @for (_ of [1, 2, 3]; track $index) {
+            <mat-card appearance="outlined">
+              <mat-card-content>
+                <app-skeleton height="0.65rem" width="4rem" />
+                <app-skeleton class="mt-3" height="1.75rem" width="3rem" />
+              </mat-card-content>
+            </mat-card>
+          }
+        </div>
         <mat-card appearance="outlined">
-          <mat-card-content>
-            <app-loading-state label="Loading repository…" />
+          <mat-card-header>
+            <mat-card-title>Latest analysis</mat-card-title>
+          </mat-card-header>
+          <mat-card-content class="space-y-2">
+            <app-skeleton height="0.85rem" width="60%" />
+            <app-skeleton height="0.65rem" width="40%" />
           </mat-card-content>
         </mat-card>
       } @else {
@@ -84,7 +103,31 @@
               @if (findings().length === 0) {
                 <p class="text-sm text-ink-200">No findings yet. Scan the repository to run Semgrep. Secrets and supply-chain scanners land in their inboxes when those adapters ship.</p>
               } @else {
-                <app-finding-table [findings]="findings()" [clickable]="false" />
+                <app-data-table
+                  [rows]="findings()"
+                  [columns]="findingCols()"
+                  searchLabel="Search findings"
+                  emptyLabel="No matching findings."
+                  loadingLabel="Loading findings…"
+                  [clickable]="false"
+                >
+                  <ng-template appDataTableMobile let-finding>
+                    <div class="rounded-xl border border-line bg-panel p-4">
+                      <p class="font-medium">{{ finding.title }}</p>
+                      @if (finding.description) {
+                        <p class="mt-1 line-clamp-2 text-xs text-ink-200">{{ finding.description }}</p>
+                      }
+                      <p class="mt-2 font-mono text-xs text-moss-200">
+                        {{ finding.severity }} · {{ finding.status }}
+                      </p>
+                      @if (finding.filePath) {
+                        <p class="mt-1 font-mono text-xs text-ink-200">
+                          {{ finding.filePath }}{{ finding.lineNumber ? ':' + finding.lineNumber : '' }}
+                        </p>
+                      }
+                    </div>
+                  </ng-template>
+                </app-data-table>
               }
             </mat-card-content>
           </mat-card>
@@ -102,58 +145,23 @@
               @if (analyses().length === 0) {
                 <p class="text-sm text-ink-200">No scans yet. Free plan allows 10 manual scans per repository per day.</p>
               } @else {
-                @defer (on viewport; prefetch on idle) {
-                  <div class="space-y-3">
-                    <app-table-search [query]="analysisTable.query()" (queryChange)="analysisTable.onSearch($event)" label="Search runs" />
-                    <div class="space-y-3 md:hidden">
-                      @for (run of analysisTable.page(); track run.id) {
-                        <div class="rounded-xl border border-line bg-panel p-4">
-                          <p class="font-medium">{{ run.type }} · {{ run.status }}</p>
-                          <p class="mt-1 font-mono text-xs text-ink-200">
-                            {{ run.trigger }} · {{ run.commitSha.slice(0, 7) }} · {{ run.branch }}
-                          </p>
-                          <p class="mt-1 font-mono text-xs text-ink-300">{{ run.createdAt }}</p>
-                        </div>
-                      }
+                <app-data-table
+                  [rows]="analyses()"
+                  [columns]="analysisColumns()"
+                  searchLabel="Search runs"
+                  emptyLabel="No matching runs."
+                  loadingLabel="Loading analysis runs…"
+                >
+                  <ng-template appDataTableMobile let-run>
+                    <div class="rounded-xl border border-line bg-panel p-4">
+                      <p class="font-medium">{{ run.type }} · {{ run.status }}</p>
+                      <p class="mt-1 font-mono text-xs text-ink-200">
+                        {{ run.trigger }} · {{ run.commitSha.slice(0, 7) }} · {{ run.branch }}
+                      </p>
+                      <p class="mt-1 font-mono text-xs text-ink-300">{{ run.createdAt }}</p>
                     </div>
-                    <div class="rd-table-wrap rd-table-static hidden md:block">
-                      <table mat-table [dataSource]="analysisTable.page()" matSort (matSortChange)="analysisTable.onSort($event)">
-                        <ng-container matColumnDef="type">
-                          <th mat-header-cell *matHeaderCellDef mat-sort-header>Type</th>
-                          <td mat-cell *matCellDef="let run">{{ run.type }}</td>
-                        </ng-container>
-                        <ng-container matColumnDef="status">
-                          <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
-                          <td mat-cell *matCellDef="let run">{{ run.status }}</td>
-                        </ng-container>
-                        <ng-container matColumnDef="detail">
-                          <th mat-header-cell *matHeaderCellDef mat-sort-header>Detail</th>
-                          <td mat-cell *matCellDef="let run">
-                            <span class="font-mono text-xs text-ink-200">{{ run.trigger }} · {{ run.commitSha.slice(0, 7) }} · {{ run.branch }}</span>
-                          </td>
-                        </ng-container>
-                        <ng-container matColumnDef="created">
-                          <th mat-header-cell *matHeaderCellDef mat-sort-header>Created</th>
-                          <td mat-cell *matCellDef="let run">
-                            <span class="font-mono text-xs text-ink-300">{{ run.createdAt }}</span>
-                          </td>
-                        </ng-container>
-                        <tr mat-header-row *matHeaderRowDef="analysisColumns"></tr>
-                        <tr mat-row *matRowDef="let row; columns: analysisColumns"></tr>
-                      </table>
-                    </div>
-                    <mat-paginator
-                      [length]="analysisTable.total()"
-                      [pageIndex]="analysisTable.pageIndex()"
-                      [pageSize]="analysisTable.pageSize()"
-                      [pageSizeOptions]="[5, 10, 25]"
-                      showFirstLastButtons
-                      (page)="analysisTable.onPage($event)"
-                    />
-                  </div>
-                } @placeholder {
-                  <p class="p-4 text-sm text-mute">Loading analysis runs…</p>
-                }
+                  </ng-template>
+                </app-data-table>
               }
             </mat-card-content>
           </mat-card>
@@ -173,72 +181,45 @@
               @if (access().length === 0) {
                 <p class="text-sm text-ink-200">{{ canAdminRepo() ? 'No members to show yet.' : 'Access grants are hidden unless you have ADMIN on this repository.' }}</p>
               } @else {
-                @defer (on viewport; prefetch on idle) {
-                  <div class="space-y-3">
-                    <app-table-search [query]="accessTable.query()" (queryChange)="accessTable.onSearch($event)" label="Search members" />
-                    <div class="space-y-3 md:hidden">
-                      @for (grant of accessTable.page(); track grant.userId) {
-                        <div class="rounded-xl border border-line bg-panel p-4">
-                          <p class="font-medium">{{ grant.displayName }}</p>
-                          <p class="font-mono text-xs text-ink-200">{{ grant.email }} · {{ grant.role }}</p>
-                          @if (canAdminRepo() && grant.role !== 'OWNER' && grant.role !== 'ADMIN') {
-                            <mat-form-field appearance="outline" subscriptSizing="dynamic" class="mt-3 !w-full">
-                              <mat-select [value]="grant.permission" (selectionChange)="changeAccess(grant, $event.value)">
-                                @for (permission of permissions; track permission) {
-                                  <mat-option [value]="permission">{{ permission }}</mat-option>
-                                }
-                              </mat-select>
-                            </mat-form-field>
-                          } @else {
-                            <p class="mt-2 font-mono text-xs text-moss-200">{{ grant.permission }}</p>
+                <app-data-table
+                  [rows]="access()"
+                  [columns]="accessColumns()"
+                  searchLabel="Search members"
+                  emptyLabel="No matching members."
+                  loadingLabel="Loading access…"
+                  [trackBy]="trackAccess"
+                >
+                  <ng-template appDataTableCell="permission" let-grant>
+                    @if (canAdminRepo() && grant.role !== 'OWNER' && grant.role !== 'ADMIN') {
+                      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="!w-36">
+                        <mat-select [value]="grant.permission" (selectionChange)="changeAccess(grant, $event.value)">
+                          @for (permission of permissions; track permission) {
+                            <mat-option [value]="permission">{{ permission }}</mat-option>
                           }
-                        </div>
+                        </mat-select>
+                      </mat-form-field>
+                    } @else {
+                      <span class="font-mono text-xs text-moss-200">{{ grant.permission }}</span>
+                    }
+                  </ng-template>
+                  <ng-template appDataTableMobile let-grant>
+                    <div class="rounded-xl border border-line bg-panel p-4">
+                      <p class="font-medium">{{ grant.displayName }}</p>
+                      <p class="font-mono text-xs text-ink-200">{{ grant.email }} · {{ grant.role }}</p>
+                      @if (canAdminRepo() && grant.role !== 'OWNER' && grant.role !== 'ADMIN') {
+                        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="mt-3 !w-full">
+                          <mat-select [value]="grant.permission" (selectionChange)="changeAccess(grant, $event.value)">
+                            @for (permission of permissions; track permission) {
+                              <mat-option [value]="permission">{{ permission }}</mat-option>
+                            }
+                          </mat-select>
+                        </mat-form-field>
+                      } @else {
+                        <p class="mt-2 font-mono text-xs text-moss-200">{{ grant.permission }}</p>
                       }
                     </div>
-                    <div class="rd-table-wrap rd-table-static hidden md:block">
-                      <table mat-table [dataSource]="accessTable.page()" matSort (matSortChange)="accessTable.onSort($event)">
-                        <ng-container matColumnDef="name">
-                          <th mat-header-cell *matHeaderCellDef mat-sort-header>Name</th>
-                          <td mat-cell *matCellDef="let grant">{{ grant.displayName }}</td>
-                        </ng-container>
-                        <ng-container matColumnDef="email">
-                          <th mat-header-cell *matHeaderCellDef mat-sort-header>Email</th>
-                          <td mat-cell *matCellDef="let grant">
-                            <span class="font-mono text-xs text-ink-200">{{ grant.email }} · {{ grant.role }}</span>
-                          </td>
-                        </ng-container>
-                        <ng-container matColumnDef="permission">
-                          <th mat-header-cell *matHeaderCellDef mat-sort-header>Permission</th>
-                          <td mat-cell *matCellDef="let grant">
-                            @if (canAdminRepo() && grant.role !== 'OWNER' && grant.role !== 'ADMIN') {
-                              <mat-form-field appearance="outline" subscriptSizing="dynamic" class="!w-36">
-                                <mat-select [value]="grant.permission" (selectionChange)="changeAccess(grant, $event.value)">
-                                  @for (permission of permissions; track permission) {
-                                    <mat-option [value]="permission">{{ permission }}</mat-option>
-                                  }
-                                </mat-select>
-                              </mat-form-field>
-                            } @else {
-                              <span class="font-mono text-xs text-moss-200">{{ grant.permission }}</span>
-                            }
-                          </td>
-                        </ng-container>
-                        <tr mat-header-row *matHeaderRowDef="accessColumns"></tr>
-                        <tr mat-row *matRowDef="let row; columns: accessColumns"></tr>
-                      </table>
-                    </div>
-                    <mat-paginator
-                      [length]="accessTable.total()"
-                      [pageIndex]="accessTable.pageIndex()"
-                      [pageSize]="accessTable.pageSize()"
-                      [pageSizeOptions]="[5, 10, 25]"
-                      showFirstLastButtons
-                      (page)="accessTable.onPage($event)"
-                    />
-                  </div>
-                } @placeholder {
-                  <p class="p-4 text-sm text-mute">Loading access…</p>
-                }
+                  </ng-template>
+                </app-data-table>
               }
             </mat-card-content>
           </mat-card>

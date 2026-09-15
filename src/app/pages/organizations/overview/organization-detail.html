@@ -1,70 +1,136 @@
-    <div class="space-y-6">
-      @if (loading()) {
+    <div class="flex flex-col gap-2">
+      <div class="grid gap-4 md:grid-cols-2">
         <mat-card appearance="outlined">
-          <mat-card-content>
-            <app-loading-state label="Loading overview…" />
-          </mat-card-content>
-        </mat-card>
-      } @else {
-        @if (org(); as current) {
-        <div class="grid gap-4 md:grid-cols-2">
-          <mat-card appearance="outlined">
-            <mat-card-header>
-              <mat-card-title>Source control</mat-card-title>
-            </mat-card-header>
-            <mat-card-content class="space-y-2">
-              @if (installations().length === 0) {
-                <p class="text-sm text-ink-200">Not connected. Add a provider from the Integrations tab.</p>
-              } @else {
-                @for (install of installations(); track install.id) {
-                  <p class="text-sm text-ink-200">
-                    {{ providerLabel(install.provider) }} as
-                    <span class="font-mono text-moss-200">{{ install.accountLogin }}</span>
-                  </p>
-                }
-              }
-            </mat-card-content>
-          </mat-card>
-          <mat-card appearance="outlined">
-            <mat-card-header>
-              <mat-card-title>Details</mat-card-title>
-            </mat-card-header>
-            <mat-card-content class="space-y-2">
-              <p class="text-sm text-ink-200">{{ current.name }}</p>
-              <p class="font-mono text-xs text-ink-300">{{ current.slug }} · {{ current.role }}</p>
-            </mat-card-content>
-          </mat-card>
-        </div>
-        <mat-card appearance="outlined">
-          <mat-card-content>
-            <h2 class="mb-4 text-lg font-medium">Repositories</h2>
-            @if (repositories().length === 0) {
-              <p class="text-sm text-ink-200">No repositories connected yet.</p>
+          <mat-card-header>
+            <mat-card-title>Source control</mat-card-title>
+          </mat-card-header>
+          <mat-card-content class="space-y-2">
+            @if (loading()) {
+              <app-skeleton height="0.85rem" width="75%" />
+              <app-skeleton height="0.85rem" width="55%" />
+            } @else if (installations().length === 0) {
+              <p class="text-sm text-ink-200">Not connected. Add a provider from the Integrations tab.</p>
             } @else {
-            <app-repository-table
-              [repositories]="repositories()"
-              [findings]="findings()"
-              (rowClick)="openRepository($event)"
-            />
+              @for (install of installations(); track install.id) {
+                <p class="text-sm text-ink-200">
+                  {{ providerLabel(install.provider) }} as
+                  <span class="font-mono text-moss-200">{{ install.accountLogin }}</span>
+                </p>
+              }
             }
           </mat-card-content>
         </mat-card>
         <mat-card appearance="outlined">
           <mat-card-header>
-            <mat-card-title>Findings</mat-card-title>
+            <mat-card-title>Details</mat-card-title>
           </mat-card-header>
-          <mat-card-content>
-            @if (findings().length === 0) {
-              <p class="text-sm text-ink-200">No findings yet for this organization.</p>
-            } @else {
-            <app-finding-table
-              [findings]="findings()"
-              [repositoryNames]="repositoryNames()"
-              (rowClick)="openFinding($event)"
-            />
+          <mat-card-content class="space-y-2">
+            @if (loading()) {
+              <app-skeleton height="0.85rem" width="50%" />
+              <app-skeleton height="0.65rem" width="40%" />
+            } @else if (org(); as current) {
+              <p class="text-sm text-ink-200">{{ current.name }}</p>
+              <p class="font-mono text-xs text-ink-300">{{ current.slug }} · {{ current.role }}</p>
             }
           </mat-card-content>
         </mat-card>
-        }
-      }
+      </div>
+      <mat-card appearance="outlined">
+        <mat-card-content>
+          <h2 class="mb-4 text-lg font-medium">Repositories</h2>
+          @if (!loading() && repositories().length === 0) {
+            <p class="text-sm text-ink-200">No repositories connected yet.</p>
+          } @else {
+            <app-data-table
+              [rows]="repositories()"
+              [columns]="repoColumns()"
+              [loading]="loading()"
+              searchLabel="Search repositories"
+              emptyLabel="No matching repositories."
+              [clickable]="true"
+              (rowClick)="openRepository($event)"
+            >
+              <ng-template appDataTableCell="codeFindings" let-repo>
+                <a
+                  class="font-mono text-xs text-pulse hover:underline"
+                  [routerLink]="findingsLink('code')"
+                  [queryParams]="findingsQuery(repo.id)"
+                  (click)="$event.stopPropagation()"
+                >
+                  {{ codeCount(repo.id) }}
+                </a>
+              </ng-template>
+              <ng-template appDataTableCell="supplyChainFindings" let-repo>
+                <a
+                  class="font-mono text-xs text-pulse hover:underline"
+                  [routerLink]="findingsLink('supply-chain')"
+                  [queryParams]="findingsQuery(repo.id)"
+                  (click)="$event.stopPropagation()"
+                >
+                  {{ supplyChainCount(repo.id) }}
+                </a>
+              </ng-template>
+              <ng-template appDataTableMobile let-repo>
+                <button
+                  type="button"
+                  class="w-full rounded-xl border border-line bg-panel p-4 text-left"
+                  (click)="openRepository(repo)"
+                >
+                  <p class="font-medium">{{ repo.fullName }}</p>
+                  <p class="mt-2 font-mono text-xs text-ink-200">
+                    {{ repo.defaultBranch }} · {{ repo.private ? 'private' : 'public' }}
+                  </p>
+                  <p class="mt-1 font-mono text-xs text-mute">
+                    {{ repo.lastAnalyzedAt ? (repo.lastAnalyzedAt | date: 'medium') : 'Never scanned' }}
+                  </p>
+                  <p class="mt-2 font-mono text-xs text-moss-200">
+                    Code {{ codeCount(repo.id) }} · Supply chain {{ supplyChainCount(repo.id) }}
+                  </p>
+                </button>
+              </ng-template>
+            </app-data-table>
+          }
+        </mat-card-content>
+      </mat-card>
+      <mat-card appearance="outlined">
+        <mat-card-header>
+          <mat-card-title>Findings</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          @if (!loading() && findings().length === 0) {
+            <p class="text-sm text-ink-200">No findings yet for this organization.</p>
+          } @else {
+            <app-data-table
+              [rows]="findings()"
+              [columns]="findingCols()"
+              [loading]="loading()"
+              searchLabel="Search findings"
+              emptyLabel="No matching findings."
+              [clickable]="true"
+              (rowClick)="openFinding($event)"
+            >
+              <ng-template appDataTableMobile let-finding>
+                <button
+                  type="button"
+                  class="w-full rounded-xl border border-line bg-panel p-4 text-left"
+                  (click)="openFinding(finding)"
+                >
+                  <p class="font-medium">{{ finding.title }}</p>
+                  @if (finding.description) {
+                    <p class="mt-1 line-clamp-2 text-xs text-ink-200">{{ finding.description }}</p>
+                  }
+                  <p class="mt-2 font-mono text-xs text-moss-200">
+                    {{ finding.severity }} · {{ repoName(finding) }} · {{ finding.status }}
+                  </p>
+                  @if (finding.filePath) {
+                    <p class="mt-1 font-mono text-xs text-ink-200">
+                      {{ finding.filePath }}{{ finding.lineNumber ? ':' + finding.lineNumber : '' }}
+                    </p>
+                  }
+                </button>
+              </ng-template>
+            </app-data-table>
+          }
+        </mat-card-content>
+      </mat-card>
     </div>
