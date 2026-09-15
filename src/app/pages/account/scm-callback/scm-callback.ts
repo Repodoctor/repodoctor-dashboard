@@ -1,5 +1,6 @@
 import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { WorkspaceStore } from '../../../stores/workspace.store';
+import { AuthStore } from '../../../stores/auth.store';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -21,6 +22,7 @@ export class ScmCallbackPage {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly scm = inject(ScmService);
+  private readonly auth = inject(AuthStore);
   private readonly workspaceStore = inject(WorkspaceStore);
   private readonly toast = inject(ToastService);
 
@@ -97,6 +99,12 @@ export class ScmCallbackPage {
   }
 
   private async start(): Promise<void> {
+    const ready = await this.auth.waitForSession();
+    if (!ready) {
+      this.failed.set(true);
+      this.toast.show('Sign in again, then reconnect GitHub.', 'error');
+      return;
+    }
     const fromState = this.scm.workspaceIdFromState(this.route.snapshot.queryParamMap.get('state'));
     const workspaceId = fromState ?? this.scm.readPendingWorkspace();
     if (workspaceId) {

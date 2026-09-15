@@ -192,7 +192,8 @@ export class WorkspaceIntegrationsPage {
         window.location.assign(url);
         return;
       }
-      await this.waitForPopup(popup);
+      const existing = new Set(this.installations().map((item) => item.id));
+      await this.waitForInstallComplete(popup, org.id, existing);
       await this.load(org.id);
     } catch {
       // HTTP errors are toasted by the interceptor.
@@ -208,29 +209,38 @@ export class WorkspaceIntegrationsPage {
     await this.load(workspaceId);
   }
 
-  private waitForPopup(popup: Window): Promise<void> {
+  private waitForInstallComplete(popup: Window, workspaceId: string, existing: Set<string>): Promise<void> {
     return new Promise((resolve) => {
       let done = false;
       const finish = () => {
         if (done) return;
         done = true;
-        window.clearInterval(timer);
+        window.clearInterval(closedTimer);
+        window.clearInterval(pollTimer);
         window.removeEventListener('message', onMessage);
+        try {
+          popup.close();
+        } catch {
+          // GitHub may have already navigated away from a scriptable document.
+        }
         resolve();
       };
       const onMessage = (event: MessageEvent) => {
         if (event.origin !== window.location.origin) return;
         if (event.data?.type !== 'repodoctor-scm-connected') return;
-        try {
-          popup.close();
-        } catch {
-          // The callback window also tries to close itself.
-        }
         finish();
       };
-      const timer = window.setInterval(() => {
+      const closedTimer = window.setInterval(() => {
         if (popup.closed) finish();
       }, 400);
+      const pollTimer = window.setInterval(() => {
+        void this.scm
+          .listInstallations(workspaceId)
+          .then((items) => {
+            if (items.some((item) => !existing.has(item.id))) finish();
+          })
+          .catch(() => undefined);
+      }, 1500);
       window.addEventListener('message', onMessage);
     });
   }

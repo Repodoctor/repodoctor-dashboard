@@ -24,6 +24,11 @@ export class AuthCallbackPage {
   }
 
   private async finish(): Promise<void> {
+    try {
+      await this.auth.completeOAuthRedirect();
+    } catch {
+      // Hash tokens and already-established sessions still work below.
+    }
     await this.auth.waitForSession();
     if (this.auth.pendingPassword()) {
       await this.router.navigateByUrl(this.auth.passwordSetupUrl());

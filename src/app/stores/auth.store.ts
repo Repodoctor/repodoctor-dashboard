@@ -61,7 +61,13 @@ export class AuthStore {
       this.redirectAuthError();
     });
     if (this.supabaseConfigured) {
-      this.supabase = createClient(environment.supabaseUrl, environment.supabaseAnonKey);
+      this.supabase = createClient(environment.supabaseUrl, environment.supabaseAnonKey, {
+        auth: {
+          detectSessionInUrl: false,
+          persistSession: true,
+          autoRefreshToken: true,
+        },
+      });
       this.supabase.auth.onAuthStateChange((event, session) => {
         this.handleAuthEvent(event, session);
       });
@@ -109,19 +115,26 @@ export class AuthStore {
   }
 
   async getAccessToken(): Promise<string | null> {
-    const cached = sessionStorage.getItem(ACCESS_KEY);
+    const cached = sessionStorage.getItem(ACCESS_KEY) ?? localStorage.getItem(ACCESS_KEY);
     if (cached) return cached;
     if (this.supabase) {
       const { data } = await this.supabase.auth.getSession();
       if (data.session?.access_token) {
-        sessionStorage.setItem(ACCESS_KEY, data.session.access_token);
-        if (data.session.refresh_token) {
-          sessionStorage.setItem(REFRESH_KEY, data.session.refresh_token);
-        }
+        writeAuthTokens(data.session.access_token, data.session.refresh_token);
         return data.session.access_token;
       }
     }
     return null;
+  }
+
+  async completeOAuthRedirect(): Promise<void> {
+    if (!this.supabase) return;
+    const params = new URLSearchParams(window.location.search);
+    const hash = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+    const code = params.get('code') ?? hash.get('code');
+    if (!code) return;
+    const { error } = await this.supabase.auth.exchangeCodeForSession(code);
+    if (error) throw error;
   }
 
   async signup(input: { email: string; password: string; displayName: string }, options?: { keepSession?: boolean }): Promise<void> {
@@ -239,14 +252,14 @@ export class AuthStore {
     const user = await this.usersApi.me();
     const merged: User = { ...user, avatarUrl: user.avatarUrl ?? this.userSignal()?.avatarUrl };
     this.userSignal.set(merged);
-    sessionStorage.setItem(USER_KEY, JSON.stringify(merged));
+    writeUser(merged);
   }
 
   async updateProfile(displayName: string): Promise<User> {
     const user = await this.usersApi.updateMe(displayName);
     const merged: User = { ...user, avatarUrl: user.avatarUrl ?? this.userSignal()?.avatarUrl };
     this.userSignal.set(merged);
-    sessionStorage.setItem(USER_KEY, JSON.stringify(merged));
+    writeUser(merged);
     return merged;
   }
 
@@ -270,16 +283,14 @@ export class AuthStore {
     if (this.supabase) {
       await this.supabase.auth.signOut();
     } else {
-      const refreshToken = sessionStorage.getItem(REFRESH_KEY);
+      const refreshToken = sessionStorage.getItem(REFRESH_KEY) ?? localStorage.getItem(REFRESH_KEY);
       if (refreshToken) {
         void this.authApi.logout(refreshToken);
       }
     }
-    sessionStorage.removeItem(ACCESS_KEY);
-    sessionStorage.removeItem(REFRESH_KEY);
-    sessionStorage.removeItem(USER_KEY);
     sessionStorage.removeItem(PENDING_PASSWORD_KEY);
     sessionStorage.removeItem(PENDING_INVITE_KEY);
+    clearAuthStorage();
     this.pendingPassword.set(null);
     this.userSignal.set(null);
     void this.router.navigateByUrl('/login');
@@ -391,9 +402,7 @@ export class AuthStore {
     const supabaseUser = session?.user;
     if (!supabaseUser || !session) {
       this.userSignal.set(null);
-      sessionStorage.removeItem(ACCESS_KEY);
-      sessionStorage.removeItem(REFRESH_KEY);
-      sessionStorage.removeItem(USER_KEY);
+      clearAuthStorage();
       return;
     }
     const email = supabaseUser.email ?? '';
@@ -412,21 +421,19 @@ export class AuthStore {
       createdAt: supabaseUser.created_at,
       updatedAt: supabaseUser.updated_at ?? supabaseUser.created_at,
     };
-    sessionStorage.setItem(ACCESS_KEY, session.access_token);
-    sessionStorage.setItem(REFRESH_KEY, session.refresh_token);
-    sessionStorage.setItem(USER_KEY, JSON.stringify(user));
+    writeAuthTokens(session.access_token, session.refresh_token);
+    writeUser(user);
     this.userSignal.set(user);
   }
 
   private persist(session: Session): void {
-    sessionStorage.setItem(ACCESS_KEY, session.accessToken);
-    sessionStorage.setItem(REFRESH_KEY, session.refreshToken);
-    sessionStorage.setItem(USER_KEY, JSON.stringify(session.user));
+    writeAuthTokens(session.accessToken, session.refreshToken);
+    writeUser(session.user);
     this.userSignal.set(session.user);
   }
 
   private readUser(): User | null {
-    const raw = sessionStorage.getItem(USER_KEY);
+    const raw = sessionStorage.getItem(USER_KEY) ?? localStorage.getItem(USER_KEY);
     if (!raw) return null;
     try {
       return JSON.parse(raw) as User;
@@ -434,6 +441,30 @@ export class AuthStore {
       return null;
     }
   }
+}
+
+function writeAuthTokens(accessToken: string, refreshToken?: string | null): void {
+  sessionStorage.setItem(ACCESS_KEY, accessToken);
+  localStorage.setItem(ACCESS_KEY, accessToken);
+  if (refreshToken) {
+    sessionStorage.setItem(REFRESH_KEY, refreshToken);
+    localStorage.setItem(REFRESH_KEY, refreshToken);
+  }
+}
+
+function writeUser(user: User): void {
+  const raw = JSON.stringify(user);
+  sessionStorage.setItem(USER_KEY, raw);
+  localStorage.setItem(USER_KEY, raw);
+}
+
+function clearAuthStorage(): void {
+  sessionStorage.removeItem(ACCESS_KEY);
+  sessionStorage.removeItem(REFRESH_KEY);
+  sessionStorage.removeItem(USER_KEY);
+  localStorage.removeItem(ACCESS_KEY);
+  localStorage.removeItem(REFRESH_KEY);
+  localStorage.removeItem(USER_KEY);
 }
 
 function readStoredPendingPassword(): PendingPassword | null {
