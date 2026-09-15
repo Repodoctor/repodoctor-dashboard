@@ -28,7 +28,7 @@ body {
 }
 
 .rd-btn {
-  @apply inline-flex items-center justify-center rounded-md bg-pulse px-4 py-2 text-sm font-semibold text-ink transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50;
+  @apply inline-flex items-center justify-center rounded-md bg-pulse px-4 py-2 text-sm font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50;
 }
 
 .rd-btn-ghost {
@@ -69,7 +69,7 @@ body {
 }
 
 .rd-table-wrap .mat-mdc-row:hover {
-  background: rgba(62, 207, 142, 0.08);
+  background: rgba(27, 158, 108, 0.08);
 }
 
 .rd-table-wrap.rd-table-static .mat-mdc-row {
@@ -118,14 +118,14 @@ body {
 .rd-chrome {
   --mat-sys-on-surface: #e2e8f0;
   --mat-sys-on-surface-variant: #94a3b8;
-  --mat-sys-primary: #3ecf8e;
-  --mat-sys-on-primary: #0f172a;
+  --mat-sys-primary: #1b9e6c;
+  --mat-sys-on-primary: #ffffff;
   --mat-list-list-item-label-text-color: #e2e8f0;
   --mat-list-list-item-leading-icon-color: #94a3b8;
   --mat-list-list-item-hover-label-text-color: #ffffff;
-  --mat-list-list-item-hover-leading-icon-color: #3ecf8e;
+  --mat-list-list-item-hover-leading-icon-color: #1b9e6c;
   --mat-list-list-item-focus-label-text-color: #ffffff;
-  --mat-list-active-indicator-color: rgba(62, 207, 142, 0.16);
+  --mat-list-active-indicator-color: rgba(27, 158, 108, 0.16);
   --mat-button-text-label-text-color: #e2e8f0;
   color: #e2e8f0;
 }
@@ -134,7 +134,7 @@ body {
   --mat-tab-active-label-text-color: #0f172a;
   --mat-tab-active-focus-label-text-color: #0f172a;
   --mat-tab-active-hover-label-text-color: #0f172a;
-  --mat-tab-active-indicator-color: #3ecf8e;
+  --mat-tab-active-indicator-color: #1b9e6c;
   --mat-tab-inactive-label-text-color: #64748b;
 }
 

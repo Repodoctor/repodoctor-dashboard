@@ -25,6 +25,6 @@ export class AvatarComponent {
   });
   readonly imageClass = computed(() => `${this.sizeClass()} rounded-full object-cover`);
   readonly fallbackClass = computed(
-    () => `${this.sizeClass()} flex items-center justify-center rounded-full bg-pulse font-semibold text-ink`,
+    () => `${this.sizeClass()} flex items-center justify-center rounded-full bg-pulse font-semibold text-white`,
   );
 }
